@@ -161,7 +161,7 @@ object (self)
 	new game_engine_with_iface generic_cursor 
 	  (string_of_val (args_parser#get_val#get_val (`String "map_type_file")))
 	  (string_of_val (args_parser#get_val#get_val (`String "iface_file")))
-	  (text_of_val (args_parser#get_val#get_val (`String "engine_iface_script")))
+	  (text_of_val (args_parser#get_val#get_val (`String "script")))
       in
 	self#init_object (o:>stage);
 	(o:>stage)	  
