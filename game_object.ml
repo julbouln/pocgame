@@ -10,7 +10,7 @@ open Binding;;
 open Oxml;;
 open Anim;;
 open Action;;
-
+open Oval;;
 open Otype;;
 
 open Olua;;
@@ -19,32 +19,40 @@ open Properties;;
 
 
 (*
- <game_type name="wol_decor"/>
+ <game_object_metatype name="wol_decor"/>
   <!-- graphics definitions -->
   <graphics>
-   <graphic_from_drawing_fun id="!self.args.name">
-     <!-- relative position -->
-     <position x="0" y="0"/>
-     <drawing_values>
-      <val_string str="with_alpha"/>
-      <val_color r="255" g="255" b="255"/>
-      <val_string str="load_multiple"/>
-      <val_string str="!self.args.filename"/> 
-      <val_size w="!self.args.pixel_size.w" h="!self.args.pixel_size.h"/>
-     </drawing_values>
+   <graphic_from_drawing_fun>
+     <fun_args>
+       <val_string str="with_alpha"/>
+       <val_color r="255" g="255" b="255"/>
+       <val_string str="load_multiple"/>
+       <val_string str="!return args.filename"/> 
+       <val_size w="!return args.pixel_size.w" h="!return args.pixel_size.h"/>
+     </fun_args>
+     <values>
+      <!-- relative position -->
+      <val_position name="rel_position" x="0" y="0"/>
+     </values>
     </graphic_from_drawing_fun>
   </graphics>
   <script>
   </script>
- </game_type>
+ </game_object_metatype>
 
-<game_object type="wol_decor"/>
+<game_object_type metatype="wol_decor"/>
  <args>
   <val_string name="name" str="montagne2"/>
   <val_string name="filename" str="medias/misc/montagne2.png"/>
   <val_size name="pixel_size" w="500" h="500"/> 
   <val_size name="case_size" w="15" h="5"/> 
  </args>
+</game_object>
+
+<game_object type="montagne2">
+ <values>
+  <val_position name="position" x="10" y="10"/>
+ </values>
 </game_object>
 
 *)
@@ -284,51 +292,42 @@ object(self)
   method resize w h=rect#set_size w h
   method move x y=self#set_case_position x y
 
-    method set_case_position x y=
-      rect#set_position x y
-
-    method get_case_x=rect#get_x
-    method get_case_y=rect#get_y
-
-    method get_case_w=rect#get_w
-    method get_case_h=rect#get_h
-
-    method around_object out_of_map (f:int->int->unit)=
-	for x=(self#get_case_x - self#get_case_w/2 ) to (self#get_case_x + self#get_case_w/2 ) do
-	  for y=(self#get_case_y - self#get_case_h/2 ) to (self#get_case_y + self#get_case_h/2 ) do
+  method set_case_position x y=
+    rect#set_position x y
+      
+  method get_case_x=rect#get_x
+  method get_case_y=rect#get_y
+      
+  method get_case_w=rect#get_w
+  method get_case_h=rect#get_h
+      
+  method around_object out_of_map (f:int->int->unit)=
+    for x=(self#get_case_x - self#get_case_w/2 ) to (self#get_case_x + self#get_case_w/2 ) do
+      for y=(self#get_case_y - self#get_case_h/2 ) to (self#get_case_y + self#get_case_h/2 ) do
 	    if out_of_map x y=false then f x y	    
 	  done;
 	done;
 
 
-    method around_object1 out_of_map (f:int->int->unit)=
-      let left=(self#get_case_x - self#get_case_w/2 -1)  
-      and right=(self#get_case_x + self#get_case_w/2 +1)
-      and top=(self#get_case_y - self#get_case_h/2 -1)
-      and bottom=(self#get_case_y + self#get_case_h/2 +1) 
-      in
+  method around_object1 out_of_map (f:int->int->unit)=
+    let left=(self#get_case_x - self#get_case_w/2 -1)  
+    and right=(self#get_case_x + self#get_case_w/2 +1)
+    and top=(self#get_case_y - self#get_case_h/2 -1)
+    and bottom=(self#get_case_y + self#get_case_h/2 +1) 
+    in
 	
-	for x=(self#get_case_x - self#get_case_w/2 -1) to (self#get_case_x + self#get_case_w/2 +1) do
-	  for y=(self#get_case_y - self#get_case_h/2 -1) to (self#get_case_y + self#get_case_h/2 +1) do
-	    if out_of_map x y=false	     
-	    then
-	      if (x<>left || y<>top)
-		&& (x<>left || y<>bottom)
-		&& (x<>right || y<>top)
-		&& (x<>right || y<>bottom) then
-		  f x y	    
-	  done;
+      for x=(self#get_case_x - self#get_case_w/2 -1) to (self#get_case_x + self#get_case_w/2 +1) do
+	for y=(self#get_case_y - self#get_case_h/2 -1) to (self#get_case_y + self#get_case_h/2 +1) do
+	  if out_of_map x y=false	     
+	  then
+	    if (x<>left || y<>top)
+	      && (x<>left || y<>bottom)
+	      && (x<>right || y<>top)
+	      && (x<>right || y<>bottom) then
+		f x y	    
 	done;
-	
-
-  
-(* DEPRECATED *)
-    val mutable layer=0
-    method set_layer l=layer<-l
-    method get_layer=layer
-(* /DEPRECATED *)
-
-
+      done;
+      
 end;;
 
 class game_graphics_container=
@@ -346,52 +345,11 @@ object
 end;;
 
 
-
-
-
-
-let get_rpos dr=
-  let rcol=(255,36,196) in
-  let x1=ref (-1) and
-      x2=ref (-1) and
-      y1=ref (-1) and
-      y2=ref (-1) in
-    
-    for i=0 to dr#get_w -1 do
-      for j=0 to dr#get_h -1 do
-	if (dr#get_pixel i j)=rcol then
-	  if !x1=(-1) && !y1=(-1) then 
-	    (
-	      x1:=i;
-	      y1:=j;
-	    )
-	  else
-	    (
-	      x2:=i;
-	      y2:=j;
-	    )
-      done;
-    done;
-    print_string "get_rpos: ";
-    print_int !x1;
-    print_string "-";
-    print_int !y1;
-    print_string "-";
-    print_int !x2;
-    print_string "-";
-    print_int !y2;
-    print_newline();
-    if !x1=(-1) then x1:=0;
-    if !y1=(-1) then y1:=0;
-    if !x2=(-1) then x2:=0;
-    if !y2=(-1) then y2:=0;
-    new rectangle !x1 !y1 !x2 !y2;;
-
 class game_object nm tilesfile gwi ghi wi hi=
 object(self)
   inherit game_generic_object nm wi hi gwi ghi as super
 
-  val mutable graphic=new graphic_object_from_file tilesfile gwi ghi
+  val mutable graphic=new graphic_from_file tilesfile gwi ghi
 
   initializer
     self#init_bcentre()
@@ -415,7 +373,7 @@ object(self)
 
   method graphic=graphic
   method get_graphic=graphic
-  method set_graphic()=graphic<-new graphic_object_from_file tilesfile gwi ghi
+  method set_graphic()=graphic<-new graphic_from_file tilesfile gwi ghi
 
 
   (* baricentre *)
@@ -427,16 +385,14 @@ object(self)
   method init_bcentre()=
 (*    let rpos=self#graphic#get_rpos in *)
 (*    let rpos=get_rpos (drawing_vault#get_cache_simple tilesfile) in *)
-    let rpos=
-      let dr=(drawing_vault#get_cache_simple tilesfile) in
-	get_draw_op_rect [(
-	  dr#exec_op_read "get_rpos" [DrawValColor(255,36,196)]
-	)] 0 in
+    let dr=(drawing_vault#get_cache_simple tilesfile) in
+    let lv=list_of_val (
+	dr#exec_op_read_from_list "get_rpos" [`Color(255,36,196)]
+    ) in
+      
 
-    let x1=rpos#get_x and
-	y1=rpos#get_y and
-	x2=rpos#get_w and
-	y2=rpos#get_h in
+    let (x1,y1)=position_of_val (List.nth lv 0) and
+	(x2,y2)=position_of_val (List.nth lv 1) in
       
       bcentre<-
 	(
@@ -444,7 +400,7 @@ object(self)
 	  (y1+y2)/2
 	)
 (*	
-  method init_bcentre_with (graph:graphic_object)=
+  method init_bcentre_with (graph:graphic_obect)=
     let rpos=graph#get_rpos in
     let x1=rpos#get_x and
 	y1=rpos#get_y and

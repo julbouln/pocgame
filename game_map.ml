@@ -38,16 +38,16 @@ object(self)
 
   method is_obj_with_type t=
     let r=ref false in
-    self#foreach_object
-      ( fun i o->
-	  if o#get_name=t then r:=true
-      );
+      self#foreach_object
+	( fun i o->
+	    if o#get_name=t then r:=true
+	);
       !r
-
+	
   method get_objs_xml_string f=
     let n=xml_reduce (Xml.parse_file f) (fun n->
-					     self#is_obj_with_type (Xml.attrib n "name")
-					  ) in
+					   self#is_obj_with_type (Xml.attrib n "name")
+					) in
     let s=Xml.to_string n in
       s
 
@@ -89,25 +89,25 @@ object(self)
   method object_types_from_xml_string_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=
     let obj_xml=new xml_node (Xml.parse_string f) in
     let p=new xml_game_objs_parser n fu in p#parse obj_xml;
-	Array.iter (
-	  fun v-> 
-	    self#add_object_type (fst v) (snd v);
-(*
-(fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
-*)
-	) p#get_objs;
+      Array.iter (
+	fun v-> 
+	  self#add_object_type (fst v) (snd v);
+	  (*
+	    (fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
+	  *)
+      ) p#get_objs;
 
 
   method object_types_from_xml_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=
     let obj_xml=new xml_node (Xml.parse_file f) in
     let p=new xml_game_objs_parser n fu in p#parse obj_xml;
-	Array.iter (
-	  fun v-> 
+      Array.iter (
+	fun v-> 
 	    self#add_object_type (fst v) (snd v);
-(*
-(fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
-*)
-	) p#get_objs;
+	  (*
+	    (fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
+	  *)
+      ) p#get_objs;
 
 
   method add_object_at (o:'a) (x:int) (y:int)=
@@ -189,21 +189,23 @@ exception Game_map_action_not_found of string;;
 
 class virtual ['tl] game_virtual_map w h=
 object(self)
-  val mutable map_actions=Hashtbl.create 2
 
+(* map actions *)
+  val mutable map_actions=Hashtbl.create 2
+    
   method add_map_action (s:string) (o:game_object_map_actions)=Hashtbl.add map_actions s o
+
   method get_map_action (s:string)=
     (try
        Hashtbl.find map_actions s
      with Not_found -> raise (Game_map_action_not_found s))
+
   method foreach_map_action f=
     Hashtbl.iter f map_actions
 (*  val mutable decor_map=[new game_object_map (none_obj) w h 500] *)
 
   method virtual get_rect : rectangle
-
   method virtual get_tile_layer : 'tl
-
   method virtual resize : int -> int -> unit
 
 (* on tile *)
@@ -229,6 +231,28 @@ object(self)
       else false
 *)
 
+(* actions *)
+
+  method add_object mid=
+    let m=self#get_map_action mid in
+      m#map_add_object
+
+  method copy_object mid=
+    let m=self#get_map_action mid in
+      m#map_copy_object
+
+  method move_object mid=
+    let m=self#get_map_action mid in
+      m#map_move_object
+
+  method del_object mid=
+    let m=self#get_map_action mid in
+      m#map_del_object
+
+  method is_object mid=
+    let m=self#get_map_action mid in
+      m#map_is_object
+
 (* update layer *)
 
   method update()=
@@ -242,7 +266,7 @@ object(self)
   method objs_to_save=
     print_string ("GAME_MAP: save maps");print_newline();
     let a=Hashtbl.create 2 in
-    self#foreach_map_action 
+      self#foreach_map_action 
       (
 	
 	fun n act->
@@ -250,7 +274,7 @@ object(self)
 	  Hashtbl.add a n act#map_to_save
       );
       a
-
+	
   method objs_from_load a=
     Hashtbl.iter (
       fun n v->
@@ -258,10 +282,10 @@ object(self)
 	let act=self#get_map_action n in
 	  act#map_from_load v
     ) a;
-
+    
   method private tile_to_save=
     (self#get_tile_layer#get_lay,self#get_tile_layer#get_border_layer_lay)
-
+      
   method save f=
     map_file#save f (self#get_rect#get_w,self#get_rect#get_h,self#tile_to_save,self#objs_to_save)
       
@@ -277,7 +301,6 @@ object(self)
       self#tile_from_load tile_ar;
       self#objs_from_load obj_ar;
       ()
-
 
 end;;
 
@@ -308,13 +331,7 @@ object(self)
   val mutable tile_layer=new game_tile_layer w h 32 32 "medias/tiles/terrains.png"
   method get_tile_layer=tile_layer
 
-
-(*
-  val mutable decor_layer=new game_object_layer_hash w h 500
-  method get_decor_layer=decor_layer
-*)
-
-  val mutable grille=new graphic_object_from_file "medias/misc/grille.png" 32 32
+  val mutable grille=new graphic_from_file "medias/misc/grille.png" 32 32
 
   method put_grille vx vy x y=
     grille#move ((x*32)-vx) ((y*32)-vy);
