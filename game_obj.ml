@@ -176,6 +176,19 @@ new graphic_object gwi ghi tilesfile mirror is_shaded
     method get_bcentre_x=(fst bcentre)
     method get_bcentre_y=(snd bcentre)
 
+    method around_object out_of_map (f:int->int->unit)=
+      let rpos=self#graphic#get_rpos in
+      let x1=rpos#get_x/32 and
+	  y1=rpos#get_y/32 and
+	  x2=rpos#get_w/32 and
+	  y2=rpos#get_h/32 in
+
+      for x=(self#get_case_x + x1 -self#get_bcentre_x/32 -1) to (self#get_case_x + x2 -self#get_bcentre_x/32 -1) do
+	for y=(self#get_case_y + y1 -self#get_bcentre_y/32 -1) to (self#get_case_y + y2 -self#get_bcentre_y/32 -1) do
+	  if out_of_map x y=false then f x y	    
+	done;
+      done;
+
     method init_bcentre()=
       let rpos=self#graphic#get_rpos in
       let x1=rpos#get_x and
