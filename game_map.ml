@@ -110,7 +110,7 @@ object(self)
     let n=self#add_object_from_type t x y in
       print_string ("MAP: add object "^n);print_newline();
       match id with
-	| Some nid ->self#replace_hash n nid;nid
+	| Some nid ->self#map_rename_object n nid;nid
 	| None -> n    
 
   method map_move_object id x y=
@@ -123,8 +123,13 @@ object(self)
     let no=(self#get_object_from_type o#get_name) in
     let n=self#add_object_at no o#get_rect#get_x o#get_rect#get_y in
       match cid with
-	| Some nid ->self#replace_hash n nid;nid
+	| Some nid ->self#map_rename_object n nid;nid
 	| None -> n
+
+  method map_rename_object cid id=
+    let o=self#get_hash_object cid in
+      o#set_id id;
+      self#replace_hash cid id
 
   method map_del_object id=
     print_string ("MAP: del object"^id);print_newline();

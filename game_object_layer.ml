@@ -219,8 +219,6 @@ object(self)
 	f k (self#get_hash_object k)
     ) hash
 
-
-
   method del_hash_object (k:string)=
     let n=self#get_hash k in
     self#del_object n;
