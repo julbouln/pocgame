@@ -40,6 +40,12 @@ class game_generic_object nm wi hi gwi ghi=
 object(self)
   inherit obj nm wi hi gwi ghi
   inherit game_action_object
+
+  val mutable lua_code=""
+  method set_lua l=lua_code<-l
+  method get_lua=lua_code
+
+
   
     val mutable sw=0
     val mutable sh=0
@@ -412,10 +418,18 @@ object(self)
   val mutable hash=Hashtbl.create 2
   val mutable hash_rev=Hashtbl.create 2
 
+  
   method add_hash (k:string) (n:int)=Hashtbl.add hash k n;Hashtbl.add hash_rev n k
+  method replace_hash k n=
+    let i=self#get_hash k in
+      self#del_hash k;
+      self#del_hash_rev i;
+      self#add_hash n i;
   method get_hash k=Hashtbl.find hash k
   method del_hash k=Hashtbl.remove hash k
+ 
   method get_hash_rev n=Hashtbl.find hash_rev n
+  method del_hash_rev n=Hashtbl.remove hash_rev n
 
   method is_hash k=Hashtbl.mem hash k
 

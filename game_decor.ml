@@ -8,7 +8,7 @@ class game_decor nm w h file cw ch fr r=
 object (self)
   inherit game_object nm w h file false false cw ch as super
   val mutable ds=new state_object "idle" fr r 
-
+  
   initializer 
     super#set_blocking true;
     state_manager#add_state ds;

@@ -14,6 +14,10 @@ object
     method get_name=name
     method set_name n=name<-n
 
+    val mutable id=""
+    method get_id=id
+    method set_id i=id<-i
+
     val mutable rect=new rectangle 0 0 wi hi
     method get_rect=rect
 
