@@ -34,8 +34,8 @@ object
      x>=rect#get_x && y>=rect#get_y && x<rect#get_x+rect#get_w && y<rect#get_y+rect#get_h
 
   method foreach_in_visual (f:int->int->unit)=
-    for i=(rect#get_x/32) to (rect#get_x/32) + (rect#get_w/32) do
-      for j=(rect#get_y/32) to (rect#get_y/32) + (rect#get_h/32) do
+    for i=(rect#get_x/32)-1 to (rect#get_x/32) + (rect#get_w/32)+1 do
+      for j=(rect#get_y/32)-1 to (rect#get_y/32) + (rect#get_h/32)+1 do
 	f i j;
       done;
     done;

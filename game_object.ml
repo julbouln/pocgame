@@ -10,6 +10,8 @@ open Action;;
 
 open Otype;;
 
+open Olua;;
+
 (* more generic parent - without graphic *)
 class game_obj (nm:string) (wi:int) (hi:int) (gwi:int) (ghi:int)=
 object
@@ -115,6 +117,7 @@ object(self)
     val mutable blocking=true;
     method set_blocking b=blocking<-b
     method get_blocking=blocking
+
     method get_can_mulsel=false
 
 
@@ -153,11 +156,12 @@ object(self)
     method get_case_h=rect#get_h
 
     method around_object out_of_map (f:int->int->unit)=
-      for x=(self#get_case_x - self#get_case_w/2 ) to (self#get_case_x + self#get_case_w/2 ) do
-	for y=(self#get_case_y - self#get_case_h/2 ) to (self#get_case_y + self#get_case_h/2 ) do
-	  if out_of_map x y=false then f x y	    
+	for x=(self#get_case_x - self#get_case_w/2 ) to (self#get_case_x + self#get_case_w/2 ) do
+	  for y=(self#get_case_y - self#get_case_h/2 ) to (self#get_case_y + self#get_case_h/2 ) do
+	    if out_of_map x y=false then f x y	    
+	  done;
 	done;
-      done;
+
 
     method around_object1 out_of_map (f:int->int->unit)=
       let left=(self#get_case_x - self#get_case_w/2 -1)  
@@ -271,9 +275,9 @@ new graphic_object gwi ghi tilesfile mirror is_shaded
     method init_bcentre_with (graph:graphic_object)=
       let rpos=graph#get_rpos in
       let x1=rpos#get_x and
-	y1=rpos#get_y and
-	x2=rpos#get_w and
-	y2=rpos#get_h in
+	  y1=rpos#get_y and
+	  x2=rpos#get_w and
+	  y2=rpos#get_h in
 
 	bcentre<-
 	(
@@ -281,8 +285,8 @@ new graphic_object gwi ghi tilesfile mirror is_shaded
 	  (y1+y2)/2
 	)
 
-    method get_pixel_x=rect#get_x *32 + 16 + prect#get_x - (fst bcentre) 
-    method get_pixel_y=rect#get_y *32 + 16 + prect#get_y - (snd bcentre) 
+    method get_pixel_x=(rect#get_x*32) + prect#get_x - (fst bcentre) 
+    method get_pixel_y=(rect#get_y*32) + prect#get_y - (snd bcentre) 
 
 (* shadow *)    
 (*    val mutable shadow=new graphic_object 34 11 "medias/misc/shadow.png" false false
@@ -301,9 +305,13 @@ end;;
 class game_object nm gwi ghi tilesfile mirror is_shaded wi hi=
 object (self)
 
+
   inherit game_graphic_object nm gwi ghi tilesfile mirror is_shaded wi hi
   initializer
     self#init_bcentre()
+
+  method lua_register (interp:lua_interp)=()
+
 
    end;;
 

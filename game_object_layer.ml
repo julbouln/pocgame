@@ -126,6 +126,7 @@ class ['a] game_obj_layer (none_obj:'a) wi hi max=
 					     self#set_position i j num;	    
 					  )
 
+
       )
     method move num x y=
       let obj=objs.(num) in
