@@ -19,35 +19,33 @@ object
   val mutable m=Mutex.create();
   val mutable cond=Condition.create();
 
+  val mutable odata=LNone
   val mutable data=LNone
 
   method get_lock()=
-    while (Mutex.try_lock m=false) do
-      usleep(Random.float(1./.25.));
-    done;
-
-(*    Condition.wait cond m; *)
- 
+    Mutex.lock m;
+    while data=odata do
+      Condition.wait cond m; 
+    done
   method get_unlock()=
     Mutex.unlock m;    
 
-  method get_data=
-    let d=data in
-      d
 
   method set_lock()=
-    while (Mutex.try_lock m=false) do 
-      usleep(Random.float(1./.25.));
-    done;
+    Mutex.lock m;
 
   method set_unlock()=
-(*    Condition.signal cond; *)
+    Condition.signal cond; 
     Mutex.unlock m;
 
     (* to avoid interblockade *)
 
-  method set_data d=
-    data<-d;
+  method get_data=
+    odata<-data;
+    data
+  method set_data (d:loading_data)=
+    odata<-data;
+    data<-d; 
 
 end;;
 
