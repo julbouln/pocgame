@@ -49,7 +49,6 @@ object(self)
 					     self#is_obj_with_type (Xml.attrib n "name")
 					  ) in
     let s=Xml.to_string n in
-      print_string s;print_newline();
       s
 
 
