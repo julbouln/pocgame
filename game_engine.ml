@@ -77,8 +77,13 @@ object(self)
   method lua_init()=
     lua#set_val (OLuaVal.String "map_add_object_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#add_object_named_from_type);
     lua#set_val (OLuaVal.String "map_delete_object") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#delete_object);
-    map#lua_init();
+
+    ignore(map#lua_init());
     self#lua_parent_of "map" (map:>lua_object);
+
+    ignore(vrect#lua_init());
+    self#lua_parent_of "visual" (vrect:>lua_object);
+
     super#lua_init();
   
 end;;
@@ -109,9 +114,10 @@ object(self)
       engine_iobj#set_layer (-1);
       engine_iobj#move 0 0;
       engine_iobj#show();
+      engine_iobj#set_grab_focus true;
       engine_iobj#set_lua_script englua;
       engine_iobj#lua_parent_of "engine" (engine:>lua_object);
-      engine_iobj#lua_init();
+      ignore(engine_iobj#lua_init());
 
 
       iface#get_iface#iface_add_object "engine" engine_iobj;
@@ -143,7 +149,7 @@ object(self)
   
     
   method lua_init()=
-    engine#lua_init();
+    ignore(engine#lua_init());
     self#lua_parent_of "engine" (engine:>lua_object);
 
     iface#lua_init();

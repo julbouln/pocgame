@@ -27,9 +27,12 @@ open Main;;
 
 open Event;;
 
+open Olua;;
+
 class game_visual vx vy=
-object
-  val mutable rect=new rectangle vx vy (video#get_w) (video#get_h)
+object(self)
+  inherit lua_object as lo 
+ val mutable rect=new rectangle vx vy (video#get_w) (video#get_h)
   val mutable change=false
 
   method is_in x y=
@@ -52,6 +55,17 @@ object
   method get_w=rect#get_w
   method get_y=rect#get_y		      
   method get_h=rect#get_h
+
+
+  method lua_init()=
+
+    lua#set_val (OLuaVal.String "scroll") (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#scroll);
+    lua#set_val (OLuaVal.String "set_position") (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#set_position);
+
+    lua#set_val (OLuaVal.String "get_x") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_x));
+    lua#set_val (OLuaVal.String "get_y") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_y));
+    lo#lua_init();
+
 end;;
 
 
