@@ -107,6 +107,11 @@ method parse_args()=
   let usage= "usage : "^info#get_cmd^" [-fs] [-ws] [-w width] [-h height] [-fps fps] [-lang lang]" in
     Arg.parse args (fun s -> ()) usage
 
+val mutable icon=""
+method get_icon=icon
+method set_icon i=icon<-i
+
+
 method medias_init()=
   all_init();
 
@@ -116,7 +121,9 @@ method medias_init()=
   video#set_def_size 800 600;
 
   audio#init 44100 2 ;
-  wm_set_caption ( info#get_name^" "^info#get_version) "medias/misc/bfr_rebel.xpm";
+  
+  wm_set_caption ( info#get_name^" "^info#get_version) icon;
+(*"medias/misc/bfr_rebel.xpm"; *)
   
   audio#set_audio_vol ((self#this_config.audio_vol*128)/16);
   audio#set_music_vol ((self#this_config.music_vol*128)/16);
