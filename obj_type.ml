@@ -72,4 +72,7 @@ none_obj
     method is_object_type nm=(Hashtbl.mem objects nm)
 
     method count_objects_type=Hashtbl.length objects			       
+    method foreach_object_type f= 
+      Hashtbl.iter f object_types
+
 end;;

@@ -34,7 +34,7 @@ class ['a] obj_layer (none_obj:'a) wi hi max=
 (*    method get_objects=objs  *)
 	
     method foreach_object d=
-      let f i v=if is_objs.(i)==true then d i v in 
+      let f i v=if is_objs.(i)==true then (if objs.(i)#get_name<>"none" then d i v) in 
       Array.iteri d objs;
 
 
