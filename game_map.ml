@@ -146,7 +146,7 @@ object(self)
 	| None -> n    
 
   method map_move_object id x y=
-    print_string ("GAME_MAP: move object "^id);print_newline();
+(*    print_string ("GAME_MAP: move object "^id);print_newline(); *)
     let o=self#get_hash_object id in
       o#move x y
 
