@@ -30,25 +30,25 @@ object
   val mutable data=LNone
     
   method get_lock()=
-      print_string "GAME_LOADING: get_lock()";print_newline();
+(*      print_string "GAME_LOADING: get_lock()";print_newline(); *)
     Mutex.lock m;
 (*    if data=odata then (  *)
-      print_string "GAME_LOADING: Attente de changement de valeur...";print_newline();
+(*      print_string "GAME_LOADING: Attente de changement de valeur...";print_newline(); *)
       Condition.wait cond m; 
-      print_string "GAME_LOADING: Changement de valeur signalé!";print_newline();
-
+(*      print_string "GAME_LOADING: Changement de valeur signalé!";print_newline();
+*)
 (*    )    *)
 
   method get_unlock()=
-      print_string "GAME_LOADING: get_unlock()";print_newline();
+(*      print_string "GAME_LOADING: get_unlock()";print_newline(); *)
     Mutex.unlock m;    
 
   method set_lock()=
-      print_string "GAME_LOADING: set_lock()";print_newline();
+(*      print_string "GAME_LOADING: set_lock()";print_newline(); *)
     Mutex.lock m;
 
   method set_unlock()=
-      print_string "GAME_LOADING: set_unlock()";print_newline();
+(*      print_string "GAME_LOADING: set_unlock()";print_newline();*)
     Mutex.unlock m;
 
     (* to avoid interblockade *)
@@ -56,16 +56,16 @@ object
 
   method get_data=
 
-    print_string "GAME_LOADING: Recuperation de valeur";print_newline();
+(*    print_string "GAME_LOADING: Recuperation de valeur";print_newline();*)
     odata<-data;
     data
 
   method set_data (d:loading_data)=
-    print_string "GAME_LOADING: Initialisation de valeur...";print_newline();
+(*    print_string "GAME_LOADING: Initialisation de valeur...";print_newline();*)
     odata<-data;
     data<-d; 
     Condition.signal cond; 
-    print_string "GAME_LOADING: Initialisé!";print_newline();
+(*    print_string "GAME_LOADING: Initialisé!";print_newline();*)
 
 end;;
 
@@ -93,10 +93,8 @@ object(self)
       while (!d<>LEnd) do
 	li#get_lock();
 	d:=li#get_data;
-
 	self#on_loop !d;
 	li#get_unlock();
-	Thread.delay (Random.float (0.2));
       done;
 
       print_loading_data_t !d;
