@@ -53,6 +53,7 @@ object(self)
     method get_sw=sw
     method get_sh=sh
 
+(* DEPRECATED *)
     val mutable layer=0
     method set_layer l=layer<-l
     method get_layer=layer
@@ -147,11 +148,25 @@ end;;
 
 class game_graphic_object nm gwi ghi tilesfile mirror  is_shaded wi hi=
 object(self)
-  inherit game_generic_object nm wi hi gwi ghi
+  inherit game_generic_object nm wi hi gwi ghi as super
 
     val mutable graphic=(*new g_object "none"*)
 new graphic_object gwi ghi tilesfile mirror is_shaded 
 
+
+    method act vx vy=
+      super#act vx vy;
+      let cur=self#graphic#get_cur_tile in
+	self#graphic#set_cur_tile (((self#graphic#get_tiles_size)/8)*direction + 
+				     self#get_current_state#get_frame);
+
+    method move x y=
+      super#move x y;
+      self#graphic#move (self#get_pixel_x) (self#get_pixel_y);
+
+
+    method graphics_register (reg:graphic_generic_object->unit)=
+      reg graphic
 
     method graphic=graphic
 
@@ -169,6 +184,7 @@ new graphic_object gwi ghi tilesfile mirror is_shaded
 (* GRAPH *)
     method put vx vy (tw:int) (th:int)=
       if need_put==true then (
+
 	let cur=self#graphic#get_cur_tile in
 	self#graphic#set_cur_tile (((self#graphic#get_tiles_size)/8)*direction + 
 				   self#get_current_state#get_frame);
@@ -226,10 +242,13 @@ new graphic_object gwi ghi tilesfile mirror is_shaded
     method get_pixel_y=rect#get_y *32 + 16 + prect#get_y - (snd bcentre) 
 
 (* shadow *)    
-    val mutable shadow=new graphic_object 34 11 "medias/misc/shadow.png" false false
+(*    val mutable shadow=new graphic_object 34 11 "medias/misc/shadow.png" false false
+*)
     method put_shadow (vx:int) (vy:int) (tw:int) (th:int)=
+(*      shadow#set_cur_tile 0;
       shadow#move (self#get_pixel_x - vx + self#graphic#get_rect#get_w/8) (self#get_pixel_y - vy + (4*self#graphic#get_rect#get_h)/5 + 4);
       shadow#put();
+*)()
     method put_shaded (vx:int) (vy:int) (tw:int) (th:int)=()
 
 
@@ -378,8 +397,112 @@ object(self)
 	    o#init_put(); 
 	(
 	  
-	  o#put_shadow vx vy tw th; 
+(*	  o#put_shadow vx vy tw th;  *)
 	  o#put vx vy tw th;	
+	)
+   )
+
+
+end;;
+
+
+
+class canvas_NEW =
+object(self)
+  val mutable objs_list=RefList.empty()
+
+  val mutable tile_list=RefList.empty()
+
+  val mutable del_list=RefList.empty()
+
+  method clear()=
+    objs_list<-RefList.empty();
+    tile_list<-RefList.empty();
+    del_list<-RefList.empty();
+
+  method foreach_sorted f=
+    self#foreach_obj f;
+
+(** sort tiles to put from layer *)
+  method sort_layer()=
+    self#sort_obj  
+       (fun ao bo ->
+	    match ao#get_layer with
+	      | x when x < bo#get_layer -> -1
+	      | x when x = bo#get_layer -> 0
+	      | x when x > bo#get_layer -> 1
+	      | _ -> 0
+      );
+
+
+  method add_obj (o:graphic_generic_object)=    
+(*    o#set_graphic(); *)
+    RefList.add objs_list o;
+
+
+  method del_obj (od:graphic_generic_object)=
+  RefList.filter
+    ( fun o->
+	  if o#get_rect#get_x=od#get_rect#get_x 
+	  && o#get_rect#get_y=od#get_rect#get_y
+	then false else true
+    )
+    objs_list
+
+(*
+  method del_dead ()=
+    RefList.filter 
+      ( fun o->
+	  if o#will_i_dead=false then true else false	     	    
+      )
+      objs_list
+*) 
+
+  method sort_obj (f:graphic_generic_object->graphic_generic_object->int)=
+    RefList.sort ~cmp:f objs_list;
+
+  method foreach_obj (f:graphic_generic_object->unit)=
+      RefList.iter f objs_list
+
+
+(** sort tiles to put from position *)
+
+  method sort_position()=
+    self#sort_obj 
+      ( fun ao bo ->
+	  match ao#get_rect with
+	    | x when (x#get_y < bo#get_rect#get_y ) -> -1
+	    | x when (x#get_y= bo#get_rect#get_y*32)  -> 0
+	    | x when (x#get_y > bo#get_rect#get_y) -> 1
+	    | x when (x#get_x < bo#get_rect#get_x) -> -1
+	    | x when (x#get_x = bo#get_rect#get_x ) -> 0
+	    | x when (x#get_x> bo#get_rect#get_x) -> 1
+
+	    | _ -> 0
+      );
+
+  (** refresh the canvas. Refresh graphic part of each object *)
+ method refresh (vx:int) (vy:int) (tw:int) (th:int)=
+
+   self#sort_position();
+   self#sort_layer();
+   self#foreach_obj (
+      fun o->
+	let ox=o#get_rect#get_x and
+	    oy=o#get_rect#get_y and
+	    ow=o#get_rect#get_w and
+	    oh=o#get_rect#get_h in
+	  
+	if 
+	  (ox+ow)>vx & (oy+oh)>vy & vx<(ox+800) & vy<(oy+600) then 
+
+	(
+	  let nx=ox-vx and
+	      ny=oy-vy in
+
+	    o#move nx ny;
+	    o#put();	
+	    o#move ox oy
 	)
    )
 
