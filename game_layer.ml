@@ -12,6 +12,10 @@ class game_layer wi hi=
     val mutable lay=
       Array.make_matrix wi hi (-1)
 
+    method resize nw nh=
+      lay<-Array.make_matrix nw nh (-1);
+      rect<-new rectangle 0 0 nw nh;
+
     method init v=
       self#foreach_map_entry (
 	fun x y cv->
@@ -19,7 +23,7 @@ class game_layer wi hi=
       );
 
     method out_of_lay x y=
-      if x>=0 && y>=0 && x<wi && y<hi then false else true 
+      if x>=0 && y>=0 && x<rect#get_w && y<rect#get_h then false else true 
 
     method print_para w x y=print_string ("GAME LAYER PARACHUTE : "^w^" "^string_of_int(x)^"-"^string_of_int(y)^" OUT OF ARRAY");print_newline();
 

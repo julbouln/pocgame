@@ -341,7 +341,6 @@ object(self)
 *)
 
   method resize nw nh=
-
     rect<-new rectangle 0 0 nw nh;
     tile_layer<-new game_tile_layer nw nh 32 32 "medias/tiles/terrains.png";
 
