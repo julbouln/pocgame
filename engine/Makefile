@@ -1,6 +1,6 @@
 OCAMLMAKEFILE = ../OCamlMakefile
 
-PACKS=pocgame
+PACKS=pocgame zip
 
 SOURCES = engine.ml
 THREADS=yes
