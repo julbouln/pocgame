@@ -166,10 +166,6 @@ class ['a] game_obj_layer (none_obj:'a) wi hi max=
 class game_object_layer wi hi max=
 object(self)
   inherit [game_object] game_obj_layer none_obj wi hi max as super
-  method init_put()=
-    self#foreach_object (fun k o->
-			o#init_put();
-		     );
 
   method update_obj num=
     let obj=self#get_object num in
@@ -223,12 +219,7 @@ end;;
 class game_object_layer_hash wi hi max=
 object(self)
   inherit [game_object] game_obj_layer_hash none_obj wi hi max as super
-(*
-  method init_put()=
-    self#foreach_object (fun k o->
-			o#init_put();
-		     );
-*)
+
   method update_obj num=
     let obj=self#get_object num in
       obj#update_prect();

@@ -61,7 +61,6 @@ end;;
 class game_action_object=
 object(self)
 
-(* ACTION NEW *)
     val mutable state_manager=new state_object_manager 
     method set_state nm=
       state_manager#set_state nm 0
@@ -77,8 +76,6 @@ object(self)
     method act_start()=state_manager#current_state#start()
     method act_stop()=state_manager#current_state#stop()
 
-(* /ACTION NEW *)
-
 end;;
 
 
@@ -86,65 +83,17 @@ class game_generic_object nm wi hi gwi ghi=
 object(self)
   inherit game_obj nm wi hi gwi ghi
   inherit game_action_object
-
+    
   val mutable lua_code=""
   method set_lua l=lua_code<-l
   method get_lua=lua_code
+       
+  val mutable blocking=true;
+  method set_blocking b=blocking<-b
+  method get_blocking=blocking
 
-
-  
-    val mutable sw=0
-    val mutable sh=0
-    method get_sw=sw
-    method get_sh=sh
-
-(* DEPRECATED *)
-    val mutable layer=0
-    method set_layer l=layer<-l
-    method get_layer=layer
-
-
-    val mutable act_freq_cur=0;
-    val mutable act_freq=4;
-	
-    method get_killed=0
-    method set_killed (v:int)=()
-
-    val mutable build_by=0
-    method set_build_by v=build_by<-v
-    method get_build_by=build_by
-
-    val mutable blocking=true;
-    method set_blocking b=blocking<-b
-    method get_blocking=blocking
-
-    method get_can_mulsel=false
-
-
-    val mutable will_dead=false
-    method i_will_dead=will_dead<-true;
-    method will_i_dead=will_dead;
-
-
-
-
-
-    method print_name=print_string name
-
-    method play_snd (t:string) (vx:int) (vy:int)=()
-    
-    method resize w h=rect#set_size w h
-    method move x y=self#set_case_position x y
-
-    method dump()=      
-      if name<>"none" then (
-	print_string "UNIT DUMP : ";
-	print_string "name : "; print_string name;print_string " - ";
-	print_string "x : "; print_int (rect#get_x); print_string " - ";
-	print_string "y : "; print_int (rect#get_y); print_string " - ";
-	print_newline();
-       );
-
+  method resize w h=rect#set_size w h
+  method move x y=self#set_case_position x y
 
     method set_case_position x y=
       rect#set_position x y
@@ -183,23 +132,37 @@ object(self)
 	done;
 	
 
+  
+(* DEPRECATED *)
+    val mutable layer=0
+    method set_layer l=layer<-l
+    method get_layer=layer
+(* /DEPRECATED *)
 
-    method set_life (l:int)=()
-    method get_life=0
-    method get_life_tot=0
 
-    method get_cons_speed=0
-    method get_c_cons_s=0
-    method set_c_cons_s (v:int)=()
 end;;
+
+class game_graphics_container=
+object
+  val mutable graphs=DynArray.create()
+
+  method add_graphic (gr:graphic_generic_object)=DynArray.add graphs gr
+
+  method graphics_register reg=
+    DynArray.iter (fun o->reg o) graphs
+ 
+  method graphics_unregister unreg=
+    DynArray.iter (fun o->unreg o) graphs
+ 
+
+end;;
+
 
 class game_graphic_object nm gwi ghi tilesfile mirror  is_shaded wi hi=
 object(self)
   inherit game_generic_object nm wi hi gwi ghi as super
 
-    val mutable graphic=(*new g_object "none"*)
-new graphic_object gwi ghi tilesfile mirror is_shaded 
-
+    val mutable graphic=new graphic_object gwi ghi tilesfile mirror is_shaded 
 
     method act vx vy=
       super#act vx vy;
@@ -209,44 +172,27 @@ new graphic_object gwi ghi tilesfile mirror is_shaded
 
     method move x y=
       super#move x y;
-      self#graphic#move (self#get_pixel_x) (self#get_pixel_y);
+      self#graphics_update()
 
 
     method graphics_register (reg:graphic_generic_object->unit)=
       reg graphic
+    method graphics_update ()=
+      self#graphic#move (self#get_pixel_x) (self#get_pixel_y);
 
     method graphic=graphic
-
     method get_graphic=graphic
-
     method set_graphic()=graphic<-new graphic_object gwi ghi tilesfile mirror is_shaded
 
-    val mutable need_put=true
 
 
-
-(* GRAPH *)
-    method init_put()=need_put<-true;
-
-(* GRAPH *)
-    method put vx vy (tw:int) (th:int)=
-      if need_put==true then (
-
-	let cur=self#graphic#get_cur_tile in
-	self#graphic#set_cur_tile (((self#graphic#get_tiles_size)/8)*direction + 
-				   self#get_current_state#get_frame);
-	  (*	  self#graphic#set_cur_tile ( self#get_current_state#get_frame); *)
-	  self#graphic#move (self#get_pixel_x - vx) (self#get_pixel_y - vy);
-	  self#graphic#put();
-	  need_put<-false;
-      )
-
+    (* baricentre *)
 
     val mutable bcentre=(0,0)
     method get_bcentre_x=(fst bcentre)
     method get_bcentre_y=(snd bcentre)
 
-    method around_object out_of_map (f:int->int->unit)=
+(*    method around_object out_of_map (f:int->int->unit)=
       let rpos=self#graphic#get_rpos in
       let x1=rpos#get_x/32 and
 	  y1=rpos#get_y/32 and
@@ -258,7 +204,7 @@ new graphic_object gwi ghi tilesfile mirror is_shaded
 	  if out_of_map x y=false then f x y	    
 	done;
       done;
-
+*)
     method init_bcentre()=
       let rpos=self#graphic#get_rpos in
       let x1=rpos#get_x and
@@ -285,19 +231,8 @@ new graphic_object gwi ghi tilesfile mirror is_shaded
 	  (y1+y2)/2
 	)
 
-    method get_pixel_x=(rect#get_x*32) + prect#get_x - (fst bcentre) 
-    method get_pixel_y=(rect#get_y*32) + prect#get_y - (snd bcentre) 
-
-(* shadow *)    
-(*    val mutable shadow=new graphic_object 34 11 "medias/misc/shadow.png" false false
-*)
-    method put_shadow (vx:int) (vy:int) (tw:int) (th:int)=
-(*      shadow#set_cur_tile 0;
-      shadow#move (self#get_pixel_x - vx + self#graphic#get_rect#get_w/8) (self#get_pixel_y - vy + (4*self#graphic#get_rect#get_h)/5 + 4);
-      shadow#put();
-*)()
-    method put_shaded (vx:int) (vy:int) (tw:int) (th:int)=()
-
+    method get_pixel_x=(rect#get_x*32) + prect#get_x - (fst bcentre) +16
+    method get_pixel_y=(rect#get_y*32) + prect#get_y - (snd bcentre) +16
 
 end;; 
 
@@ -327,135 +262,9 @@ object(self)
 end;;
 *)
 
-(** DEPRECATED use canvas_NEW in poccore instead *)
-(** FROM POCENGINE *)
-(** graphical canvas *)
-class canvas =
-object(self)
-  val mutable objs_list=RefList.empty()
-
-  val mutable tile_list=RefList.empty()
-
-  val mutable del_list=RefList.empty()
-
-  method clear()=
-    objs_list<-RefList.empty();
-    tile_list<-RefList.empty();
-    del_list<-RefList.empty();
-
-  method foreach_sorted f=
-    self#foreach_obj f;
-
-(** sort tiles to put from layer *)
-  method sort_layer()=
-    self#sort_obj  
-       (fun ao bo ->
-	    match ao#get_layer with
-	      | x when x < bo#get_layer -> -1
-	      | x when x = bo#get_layer -> 0
-	      | x when x > bo#get_layer -> 1
-	      | _ -> 0
-      );
 
 
-  method add_obj (o:game_object)=    
-(*    o#set_graphic(); *)
-    RefList.add objs_list o;
 
-  method del_obj (od:game_object)=
-  RefList.filter
-    ( fun o->
-	if o#get_name=od#get_name 
-	  && o#get_rect#get_x=od#get_rect#get_x 
-	  && o#get_rect#get_y=od#get_rect#get_y
-	then false else true
-    )
-    objs_list
-
-
-  method del_dead ()=
-    RefList.filter 
-      ( fun o->
-	  if o#will_i_dead=false then true else false	     	    
-      )
-      objs_list
- 
-
-  method sort_obj (f:game_object->game_object->int)=
-    RefList.sort ~cmp:f objs_list;
-
-  method foreach_obj (f:game_object->unit)=
-      RefList.iter f objs_list
-
-
-(** sort tiles to put from position *)
-
-  method sort_position_NEW()=
-    self#sort_obj 
-      ( fun ao bo ->
-	  let arect=ao#get_rect and
-	    aprect=ao#get_prect and
-	    arpos=ao#graphic#get_rpos and
-	    brect=ao#get_rect and
-	    bprect=ao#get_prect and
-	    brpos=ao#graphic#get_rpos in
-	  let get_x_p=
-	    match ao#get_rect#get_x with
-	      | x when (x*32 + ao#get_prect#get_x + arpos#get_w
-			< bo#get_rect#get_x*32 + bo#get_prect#get_x + brpos#get_x) -> -1
-	      | x when (x*32 + ao#get_prect#get_x + arpos#get_w 
-			= bo#get_rect#get_x*32 + bo#get_prect#get_x + brpos#get_x) -> 0
-	      | x when (x*32 + ao#get_prect#get_x + arpos#get_w 
-			> bo#get_rect#get_x*32 + bo#get_prect#get_x + brpos#get_x) -> 1
-	      | _ -> 0 and
-
-	  get_y_p=
-	    match ao#get_rect#get_y with
-	      | y when (y*32 + ao#get_prect#get_y + arpos#get_h
-			< bo#get_rect#get_y*32 + bo#get_prect#get_y + brpos#get_y) -> -1
-	      | y when (y*32 + ao#get_prect#get_y + arpos#get_h 
-			= bo#get_rect#get_y*32 + bo#get_prect#get_y + brpos#get_y) -> 0
-	      | y when (y*32 + ao#get_prect#get_y + arpos#get_h 
-			> bo#get_rect#get_y*32 + bo#get_prect#get_y + brpos#get_y) -> 1
-	      | _ -> 0 in
-
-
-	    get_x_p * get_y_p
-
-    );
-
-  method sort_position()=
-    self#sort_obj 
-      ( fun ao bo ->
-	  match ao#get_rect with
-	    | x when (x#get_y*32 + ao#get_prect#get_y < bo#get_rect#get_y*32 + bo#get_prect#get_y ) -> -1
-	    | x when (x#get_y*32 + ao#get_prect#get_y = bo#get_rect#get_y*32 + bo#get_prect#get_y)  -> 0
-	    | x when (x#get_y*32 + ao#get_prect#get_y > bo#get_rect#get_y*32 + bo#get_prect#get_y) -> 1
-	    | x when (x#get_x*32 + ao#get_prect#get_x < bo#get_rect#get_x*32 + bo#get_prect#get_x) -> -1
-	    | x when (x#get_x*32 + ao#get_prect#get_x = bo#get_rect#get_x*32 + bo#get_prect#get_x ) -> 0
-	    | x when (x#get_x*32 + ao#get_prect#get_x > bo#get_rect#get_x*32 + bo#get_prect#get_x) -> 1
-	    | _ -> 0
-      );
-
-  (** refresh the canvas. Refresh graphic part of each object *)
- method refresh check_fow vx vy tw th=
-   self#del_dead();
-   self#sort_layer();
-   self#sort_position();
-   self#foreach_obj (
-      fun o->
-	if o#get_rect#get_x*32>vx & o#get_rect#get_y*32>vy & vx<(o#get_rect#get_x*32+800) & vy<(o#get_rect#get_y*32+600) then 
-	  if (check_fow o#get_case_x o#get_case_y)==2 then
-	    o#init_put(); 
-	(
-	  
-(*	  o#put_shadow vx vy tw th;  *)
-	  o#put vx vy tw th;	
-	)
-   )
-
-
-end;;
 
 
 
