@@ -124,6 +124,7 @@ object(self)
   method del_timer (t:time)=
     Hashtbl.remove timers (self#from_time t)
 
+
   val mutable tasks=Hashtbl.create 2
   method add_task (t:time) (f:unit->unit)=
     Hashtbl.add tasks (self#from_time t) f
@@ -132,6 +133,8 @@ object(self)
 
   val mutable frm=0
   val mutable cfrm=0
+ 
+  method get_cfrm=cfrm
 
   val mutable run=false
 
@@ -149,12 +152,14 @@ object(self)
 	  fun tfr e->
 	    if cfrm mod tfr=0 then e()
 	) tasks;
-      if Hashtbl.mem timers cfrm then
+      if Hashtbl.mem timers cfrm then (
 	let e=Hashtbl.find timers cfrm in e();
-	  if cfrm<frm then
-	    cfrm<-cfrm+1
-	  else
-	    cfrm<-0
+      );
+
+      if cfrm<frm then
+	cfrm<-cfrm+1
+      else
+	cfrm<-0
     )
 
   method to_time fr=
@@ -169,9 +174,16 @@ object(self)
 	f=f;
       }
 	
-  method from_time t=
+  method from_time t=    
     (t.h*108000)+ (t.m * 1800) + (t.s*30) + t.f
 
+  method add_timer_from_now (t:time) (f:unit->unit)=
+    print_string "GAME_TIME: add timer ";
+    let ft=self#from_time t in
+    let nt=self#to_time (ft+cfrm) in
+      print_int cfrm;
+      self#add_timer nt f;
+	print_newline();
 end;;
 
 (* more generic parent - without graphic *)
@@ -300,13 +312,13 @@ object(self)
   val mutable time=new game_time
   initializer
     time#start();
-      time#set_limit       
-	{
-	  h=24;
-	  m=0;
-	  s=0;
-	  f=0;
-	}
+    time#set_limit       
+      {
+	h=24;
+	m=0;
+	s=0;
+	f=0;
+      }
 
   method act vx vy=
     action#act vx vy;

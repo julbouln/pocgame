@@ -74,17 +74,11 @@ object(self)
 
 
   method object_types_from_xml_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=
-    print_string ("GAME_MAP:object types from xml "^f);print_newline();
     let obj_xml=new xml_node (Xml.parse_file f) in
     let p=new xml_game_objs_parser n iv fu in p#parse obj_xml;
-      print_string ("GAME_MAP:xml loaded");print_newline();
 	Array.iter (
 	  fun v-> 
-
-	    print_string "GAME_MAP: new type";print_newline();
-	    print_string ("GAME_MAP: add type "^(fst v));print_newline(); 
 	    self#add_object_type (fst v) (snd v);
-	    print_string "GAME_MAP: type added";print_newline();
 	    load_obj_type#set_data (LData (fst v));
 (*
 (fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
@@ -96,7 +90,7 @@ object(self)
   method add_object_at (o:'a) (x:int) (y:int)=
     o#move x y;
     let n=self#add_object_with_num o in
-    let id=("decor"^string_of_int n) in
+    let id=("object"^string_of_int n) in
       o#set_id id;
       self#add_hash id n;id
 	  
@@ -139,6 +133,13 @@ object(self)
 
   method map_is_object id=
     self#is_hash id
+
+  method foreach_object_hash f=
+    let d i o=
+      let no=self#get_object i in
+      f (no#get_id) no in
+	self#foreach_object d
+
 
 (* persistence *)
 

@@ -3,6 +3,8 @@ open Low;;
 open Video;;
 open Anim;;
 
+open Medias;;
+
 open Game_main;;
 
 
@@ -36,8 +38,9 @@ end;;
 
 class game_loading (li:game_loading_info) msgt=
 object(self)
+(*  val mutable waiting=new graphic_with_anim (let gr=new graphic_white_border "medias/iface/sablier.png" 67 67 in gr#set_over true; gr:>graphic_generic_object) [|0;1;2;3;4;5|] 4
+*)
   val mutable waiting=new graphic_object_anim 67 67 "medias/iface/sablier.png" [|0;1;2;3;4;5|] 4
-
   method loading()=
     self#on_load();
     let d=ref LNone in
