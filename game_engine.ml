@@ -3,6 +3,8 @@ open Event;;
 open Video;;
 open Stage;;
 open Medias;;
+open Graphic;;
+open Binding;;
 
 open Olua;;
 
@@ -13,14 +15,45 @@ class game_engine curs file=
 object(self)
   inherit stage curs as super
 
+
+  val mutable grille=
+    new graphic_from_drawing "grille"
+      (
+      fun()->
+	let dr=drawing_vault#new_drawing() in
+	  dr#exec_op_create_from_list "rect" 
+	    [
+	      `Size(32,32);
+	      `Color(200,200,200)
+	    ];
+	[|dr|]
+    )
+
+
   val mutable canvas=new canvas
   method get_canvas=canvas
 
   val mutable map=new game_map 0 0
   method get_map=map
 
+
   val mutable vrect=new game_visual 0 0
   method get_vrect=vrect
+
+  method put_object_map_grille m=
+    let vx=vrect#get_x and
+	vy=vrect#get_y in
+    map#foreach_object m (
+      fun k obj->
+	obj#around_object (map#get_object_map m)#out_of_lay (
+	  fun x y->
+	    grille#move (x*32-vx) (y*32-vy);
+	    grille#put();
+	)
+    )
+
+
+
 
   method on_load()=
     map#set_canvas (Some canvas);
@@ -58,6 +91,8 @@ object(self)
     )
 
   method lua_init()=
+
+    lua#set_val (OLuaVal.String "put_object_map_grille") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) (self#put_object_map_grille));
 
     ignore(map#lua_init());
     self#lua_parent_of "map" (map:>lua_object);
@@ -112,8 +147,9 @@ object(self)
   method on_loop()=
     t1<-Unix.gettimeofday();
     engine#on_loop();
-    iface#on_loop();
+
       ignore(engine_iobj#get_lua#exec_val_fun (OLuaVal.String "on_loop") [OLuaVal.Nil]);
+    iface#on_loop();
     curs#put();    
     video#flip();
     t2<-Unix.gettimeofday();

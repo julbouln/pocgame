@@ -22,12 +22,6 @@ class ['a] game_obj_layer wi hi=
     inherit ['a] generic_object_handler
 
 
-    method get_object_by_position x y=            
-      let n=self#get_position x y in
-	match n with
-	  | Some k->(Some (self#get_object k))
-	  | None -> None
-
     method get_object_at_position x y=            
       let n=self#get_position x y in
 	match n with

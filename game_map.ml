@@ -58,6 +58,7 @@ object(self)
   method get_object_from_type nm=
     obj_type#get_object_type nm
 
+
   (** xml *)
   method init_object_types_from_xml f=
     obj_type#init_from_xml f;
@@ -70,7 +71,7 @@ object(self)
     o#move x y;
     let n=self#add_object id o in
       print_string ("GAME_OBJECT_MAP: add object "^n);print_newline();
-      o#lua_init();
+(*      o#lua_init();*)
       self#lua_parent_of n (o:>lua_object);
       n
 	  
@@ -94,7 +95,8 @@ object(self)
 	 | Some cvas->o#graphics_unregister cvas#del_obj;
 	 | None -> ());
 
-    super#delete_object id;
+      lo#get_lua#del_val (OLuaVal.String id) ;
+      super#delete_object id;
 
   method copy_object cid id=
     let o=self#get_object id in
@@ -427,6 +429,14 @@ object(self)
     let m=self#get_object_map mid in
       m#get_object
 
+  method get_object_id_at_position mid x y=
+    let m=self#get_object_map mid in
+    m#get_position x y
+
+  method foreach_object mid f=
+    let m=self#get_object_map mid in
+      m#foreach_object f
+
 (* update layer *)
 
   method update()=
@@ -562,6 +572,17 @@ object(self)
     lua#set_val (OLuaVal.String "add_object_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.string) (fun m t x y->self#add_object_from_type m None t x y));
     lua#set_val (OLuaVal.String "add_object_named_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#add_object_named_from_type);
     lua#set_val (OLuaVal.String "delete_object") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#delete_object);
+
+    lua#set_val (OLuaVal.String "get_object_id_at_position") 
+      (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.value) 
+	 (fun m x y->
+	    let n=self#get_object_id_at_position m x y in
+	      match n with 
+		| Some i -> OLuaVal.String i
+		| None -> OLuaVal.Nil
+	 )
+      );
+
 
     lua#set_val (OLuaVal.String "init_tile_layer") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.int **->> OLuaVal.unit) self#tile_layer_init);
 

@@ -246,6 +246,8 @@ object(self)
 
       lua#set_val (OLuaVal.String "get_type") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.string) (fun()->self#get_name));
 
+      lua#set_val (OLuaVal.String "get_id") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.string) (fun()->self#get_id));
+
       lo#lua_init();
 
 
@@ -370,6 +372,8 @@ object(self)
     lua#set_val (OLuaVal.String "get_pixel_x") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_pixel_x));
     lua#set_val (OLuaVal.String "get_pixel_y") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_pixel_y));
     lua#set_val (OLuaVal.String "init_bcentre") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) (self#init_bcentre));
+
+
     lua#set_val (OLuaVal.String "properties") (OLuaVal.Table props#to_lua#to_table);
 
     lua#set_val (OLuaVal.String "turn") (OLuaVal.efunc (OLuaVal.int **->> OLuaVal.unit) self#turn);
@@ -383,6 +387,7 @@ object(self)
     self#lua_parent_of "graphics" (graphics:>lua_object);
     states#lua_init();
     self#lua_parent_of "states" (states:>lua_object);
+
     super#lua_init();
 
 end;; 
