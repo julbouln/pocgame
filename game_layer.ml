@@ -18,6 +18,17 @@ object (self)
   method resize nw nh=
     lay<-Array.make_matrix nw nh None;
     rect<-new rectangle 0 0 nw nh;
+
+  method to_list=
+    let a=DynArray.create() in
+      Array.iter (
+	fun slay->
+	  Array.iter (
+	    fun p->
+	      DynArray.add a p
+	  ) slay
+      ) lay;
+      DynArray.to_list a
     
   method out_of_lay x y=
     if x>=0 && y>=0 && x<rect#get_w && y<rect#get_h then false else true 

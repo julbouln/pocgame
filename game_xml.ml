@@ -1,192 +1,135 @@
+open Graphic;;
+open Action;;
+
+open Otype;;
 open Oxml;;
+open Oval;;
+
+open Core_xml;;
 
 open Game_object;;
 
-type gm_object=
-{
- oname:string;
- ofile:string;
- otype:string;
-(* decal value *)
- odw:int;
- odh:int;
-(* pixel *)
- ow:int;
- oh:int;
- oframes:int list;
- orefresh:int;
- ocw:int;
- och:int;
-};;
 
-class xml_gm_object_parser=
-object
+(** xml part *)
+
+(** metatype *)
+class xml_game_object_mt_parser=
+object(self)
   inherit xml_parser
-  val mutable name=""
-  val mutable t=""
-  val mutable file=""
-  val mutable w=0
-  val mutable h=0
-  val mutable dw=0
-  val mutable dh=0
-  val mutable cw=0
-  val mutable ch=0
-  val mutable frames=[]
-  val mutable refresh=0
 
-  method get_val={oname=name;otype=t;ofile=file;odw=dw;odh=dh;ow=w;oh=h;oframes=frames;orefresh=refresh;ocw=cw;och=ch}
+  val mutable args_parser=new xml_val_ext_list_parser "args"
+  val mutable props_parser=new xml_val_ext_list_parser "properties"
+  val mutable nm=""
 
-  method tag=""
-  method parse_attr k v=
-    match k with 
-      | "name" -> name<-v
-      | "type" -> t<-v
-      | _ -> ()
-   
-  method parse_child k v=
-    match k with
-      | "file" -> let p=(new xml_string_parser "path") in p#parse v;file<-p#get_val    
-      | "pixel_size" -> let p=(new xml_size_parser ) in p#parse v;w<-p#get_w;h<-p#get_h;
-      | "case_size" -> let p=(new xml_size_parser ) in p#parse v;cw<-p#get_w;ch<-p#get_h;
-      | "decal_value" -> let p=(new xml_size_parser ) in p#parse v;dw<-p#get_w;dh<-p#get_h;
-      | "frames" -> let p=(new xml_intlist_parser "frame" (fun()->new xml_int_parser "n"))  in p#parse v;frames<-p#get_list
-      | "refresh" -> let p=(new xml_int_parser "value") in p#parse v;refresh<-p#get_val
-      | _ -> ()
+  val mutable lua=""
 
-end;;
+  val mutable graphics_a=Hashtbl.create 2
+  val mutable states_a=Hashtbl.create 2
 
-class xml_gm_objects_parser name=
-object
-  inherit [gm_object,xml_gm_object_parser] xml_list_parser name (fun()->new xml_gm_object_parser)
-end;;
-
-
-
-type state={frames:int array;refresh:int;action:unit->unit;sound:string array};;
-
-type state_anim=
-    {mutable state_name:string;
-     mutable anim_frames:int array;
-     mutable anim_refresh:int;
-     mutable sounds:string array
-   };;
-
-let state_anim2state s=
-  {frames=s.anim_frames;
-   refresh=s.anim_refresh;
-   action=(function()->());
-   sound=s.sounds
-};;
-
-
-class xml_state_parser=
-object
-  inherit xml_parser
-val mutable name="none"
-val mutable frames=[|0|] 
-val mutable refresh=0;
-val mutable snds=[|"none"|]
-  method tag=""
-method get_val=
-    {state_name=name;
-     anim_frames=frames;
-     anim_refresh=refresh;
-     sounds=snds
-    }
-
-  method parse_attr k v=
-    match k with
-      | "name"-> name<-v
-      | _ -> ()
-  method parse_child k v=
-    match k with
-
-      | "frames" -> let p=(new xml_intlist_parser "frame" (fun()->new xml_int_parser "n"))  in p#parse v;frames<-p#get_array
-      | "sounds" -> let p=(new xml_stringlist_parser "sound" (fun()->new xml_string_parser "sound"))  in p#parse v;snds<-p#get_array
-      | "refresh" -> let p=(new xml_int_parser "value") in p#parse v;refresh<-p#get_val
-      | _ -> ()
-
-
-end;;
-
-class xml_state_list_parser=
-object
-  inherit [state_anim,xml_state_parser] xml_list_parser "state" (fun()->new xml_state_parser)
-end;;
-
-
-exception Container_state_not_found of string;;
-
-(* FIXME must be game_state_container *)
-
-class game_state_container (states:state_anim array)=
-object
-  val mutable sts=Hashtbl.create 2;
-initializer
-
-
-  Array.iter (function s->
-(*		print_string ("add state "^s.state_name);print_newline(); *)
-		Hashtbl.add sts s.state_name (state_anim2state s);
-	     ) states;
-
-method is_state n=
-  Hashtbl.mem sts n 
-method get_state n=
-  if Hashtbl.mem sts n then
-    Hashtbl.find sts n
-  else raise (Container_state_not_found n)
-
-end;;
-
-let none_stc=(new game_state_container [|{state_name="idle";anim_frames=[|0|];anim_refresh=0;sounds=[|"none"|]}|]);;
-
-class xml_gm_object_with_state_parser=
-object
-  inherit xml_gm_object_parser as super
-
-val mutable states=[||] 
-  method parse_child k v=
-    super#parse_child k v;
-    match k with
-    | "states" -> 
-	let p=new xml_state_list_parser in
-	  p#parse v;
-	  states<-p#get_array
-    | _ -> ()
-
-  method get_states=states
+  method get_val=(nm,args_parser#get_val,props_parser#get_val, graphics_a,states_a,lua)
   
-(*
-  method get_obj (f:string->string->string->int->int->int->int->game_state_container->'a)=f name t file w h cw ch (new game_state_container states)
-*)
+  method parse_attr k v=
+    match k with
+      | "name" ->nm<-v
+      | _ -> ()
 
-end;;
-
-
-class ['a] xml_game_obj_parser=
-object
-  inherit xml_gm_object_with_state_parser as super
-
-  method get_obj (f:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=f name t file w h cw ch (new game_state_container states)
-end;;
-
-
-class ['a] xml_game_objs_parser (name:string) (f:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=
-object
-(*  inherit xml_parser *)
-  inherit [gm_object,('a) xml_game_obj_parser] xml_list_parser name (fun()->new xml_game_obj_parser) as super 
-  val mutable objs=DynArray.create()
-
-  method parse_attr k v=()
 
   method parse_child k v=
-(*    super#parse_child k v; *)
+    args_parser#parse_child k v;
+    props_parser#parse_child k v;
     match k with
-      | ct -> let p=new xml_game_obj_parser in 
-	  p#parse v;
-	  DynArray.add objs (p#get_obj f)
+      | "graphics" ->
+	  print_string "graphics meta";print_newline();
+	  let p=new xml_graphics_mt_parser in
+	    p#parse v;
+	    graphics_a<-p#get_hash
+      | "state_actions" ->
+	  print_string "states meta";print_newline();
+	  let p=new xml_states_mt_parser in
+	    p#parse v;
+	    states_a<-p#get_hash
+      | "script" -> lua<-v#get_pcdata;
 
-  method get_objs=
-    (DynArray.to_array objs : (string*(unit->'a)) array)
+      | _ -> ()
 end;;
+
+let game_object_metatype_from_xml f=
+  let obj_mt_xml=new xml_node (Xml.parse_file f) in
+  let pmt=new xml_game_object_mt_parser in
+    pmt#parse obj_mt_xml;
+    pmt#get_val
+
+(** object *)
+
+class xml_game_object_parser=
+object(self)
+  inherit [game_object] xml_object_parser (fun()->new game_object "" "" 0 0 0 0) as super
+  val mutable props_parser=new xml_val_ext_list_parser "properties"
+
+  val mutable graphics_parser=(Global.get xml_default_graphics_parser)()
+  val mutable states_parser=new xml_state_actions_parser    
+
+  val mutable mt=("",new val_ext_handler,new val_ext_handler, Hashtbl.create 2,Hashtbl.create 2,"")
+  method set_metatype m=mt<-m 
+
+  
+  method get_type=nm
+
+ 
+  method parse_attr k v=
+    match k with
+      | "metatype"->mt<-game_object_metatype_from_xml v
+      | "name"->nm<-v
+      | _ -> ()
+  method parse_child k v=
+    let (nm,vha,vhp,grh,sth,l)=mt in
+    super#parse_child k v;
+    props_parser#parse_child k v;
+    match k with
+      | "graphics" ->
+	  graphics_parser#set_metatype ("",grh,"");
+	  graphics_parser#parse v;	  
+      | "state_actions" ->
+	  states_parser#set_metatype ("",sth,"");
+	  states_parser#parse v;
+      | _ -> ()
+
+  method get_val=
+    let ofun()=
+      let o=
+	let args=args_parser#get_val in
+	let (gw,gh)=size_of_val (args#get_val (`String "pixel_size")) and
+	    (w,h)=size_of_val (args#get_val (`String "case_size")) in
+	  new game_object id "" gw gh w h
+      in
+	graphics_parser#init (o#get_graphics#add_graphic);
+	states_parser#init (o#get_states#add_state);
+	o#set_props props_parser#get_val;
+	let (nm,vha,vhp,grh,sth,l)=mt in
+	o#set_lua_script (l^lua);
+	o#lua_init();
+(*	self#init_object o; *)
+	o	  
+    in      
+      (nm,ofun)
+
+end;;
+
+(** object types *)
+
+class xml_game_object_types_parser=
+object(self)
+  inherit [(unit->game_object)] xml_stringhash_parser "game_object" (fun()->new xml_game_object_parser)
+end;;
+
+
+let init_game_object_types_from_xml f add_obj=
+  let obj_mt_xml=new xml_node (Xml.parse_file f) in
+  let pmt=new xml_game_object_types_parser in
+    pmt#parse obj_mt_xml;
+    let h=pmt#get_hash in
+      Hashtbl.iter (
+	fun k v ->
+	  add_obj k v
+      ) h;
+

@@ -5,19 +5,35 @@ open Rect;;
 open File;;
 
 open Olua;;
-
 open Oxml;;
+open Oval;;
+open Otype;;
+open Core_xml;;
 
+open Generic;;
 open Game_xml;;
 open Game_object;;
 open Game_object_layer;;
 open Game_tile_layer;;
 open Game_decor;;
+open Game_xml;;
 
 open Game_loading;;
 
+
+(** game_object types *)
+class game_object_types=
+object(self)
+  inherit [game_object] obj_types
+
+  method init_from_xml f=
+    init_game_object_types_from_xml f self#add_object_type
+
+end;;
+
 class game_object_map wi hi=
 object(self)
+  inherit generic_object
   inherit lua_object as lo
   inherit [game_object] game_obj_layer wi hi
 
@@ -39,65 +55,10 @@ object(self)
     obj_type#get_object_type nm
 
   (** xml *)
-(*
-  method get_objs_xml_string f=
-    let n=xml_reduce (Xml.parse_file f) (fun n->
-					   self#is_obj_with_type (Xml.attrib n "name")
-					) in
-    let s=Xml.to_string n in
-      s
-
-
-  method foreach_objs_xml_from_string f d=
-    let decor_xml=new xml_node (Xml.parse_string f) in
-    let p=new xml_gm_objects_parser "game_object" in p#parse decor_xml;
-      let res=Array.of_list p#get_list in
-	Array.iteri (
-	  fun r v-> 
-	    let nm=v.oname in
-	      d nm v;
-	) res;
-
-  method foreach_objs_xml f d=
-    let decor_xml=new xml_node (Xml.parse_file f) in
-    let p=new xml_gm_objects_parser "game_object" in p#parse decor_xml;
-      let res=Array.of_list p#get_list in
-	Array.iteri (
-	  fun r v-> 
-	    let nm=v.oname in
-	      d nm v;
-	) res;
-  
-
-  method object_types_from_xml_string_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=
-    let obj_xml=new xml_node (Xml.parse_string f) in
-    let p=new xml_game_objs_parser n fu in p#parse obj_xml;
-      Array.iter (
-	fun v-> 
-	  self#add_object_type (fst v) (snd v);
-	  (*
-	    (fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
-	  *)
-      ) p#get_objs;
-
-
-  method object_types_from_xml_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=
-    let obj_xml=new xml_node (Xml.parse_file f) in
-    let p=new xml_game_objs_parser n fu in p#parse obj_xml;
-      Array.iter (
-	fun v-> 
-	    self#add_object_type (fst v) (snd v);
-	  (*
-	    (fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
-	  *)
-      ) p#get_objs;
-
-*)
   method init_object_types_from_xml f=
     obj_type#init_from_xml f
 
-(** general *)
-
+  (** general *)
   method add_object_at (id:string option) (o:'a) (x:int) (y:int)=    
 
     o#move x y;
@@ -123,8 +84,42 @@ object(self)
     let no=(self#get_object_from_type o#get_name) in
     self#add_object_at cid no o#get_rect#get_x o#get_rect#get_y
 
-(* persistence *)
 
+  method to_xml_string=
+    let x=self#to_xml in
+      Xml.to_string x
+
+  method to_xml=
+    Xml.Element 
+      ("game_object_map",[("id",self#get_id)],
+	 let a=DynArray.create() in
+	   self#foreach_object (
+	     fun k o->
+	       let e=
+		 Xml.Element 
+		   ("game_object",[("id",k);("type",o#get_name)],[
+		      (* args *)
+		      (
+			let vh=new val_ext_handler in
+			 vh#set_val (`String "position") (`Position (o#get_rect#get_x,o#get_rect#get_y));
+			 vh#set_id "args";
+			 vh#to_xml
+		      );
+		      (* properties *)
+		      (
+			let pr=(o#get_props) in
+			  pr#to_xml
+				   
+
+		      )		      
+		    ]) in
+		 DynArray.add a e;
+	   );
+	   DynArray.to_list a
+       );
+    
+(* persistence *)
+(* DEPRECATED : use xml instead *)
   method map_to_save=
     let a=DynArray.create() in
       self#foreach_object (
@@ -151,8 +146,129 @@ object(self)
 end;;
 
 
-exception Game_object_map_not_found of string;;
-exception Game_tile_layer_not_found of string;;
+
+class game_tile_layer_handler=
+object
+  inherit [game_generic_tile_layer] generic_object_handler
+end;;
+
+class game_object_map_handler=
+object
+  inherit [game_object_map] generic_object_handler
+end;;
+
+
+(* xml type parser *)
+
+(* game_object_map *)
+
+class xml_game_object_map_type_parser=
+object(self)
+  inherit [game_object_map] xml_object_parser (fun()->new game_object_map 0 0) as super
+
+  method get_type="unique"
+ 
+  val mutable mt=("",new val_ext_handler,"")
+  method set_metatype (m:string*val_ext_handler*string)=mt<-m
+
+  method init_object o=
+    o#set_lua_script lua;
+    o#init_object_types_from_xml (string_of_val (args_parser#get_val#get_val (`String "types")))
+
+  method get_val_from_meta (m:string*val_ext_handler*string)=
+    let ofun()=
+      let (nm,vh,l)=m in
+      let o=new game_object_map 0 0 in
+	o#set_lua_script (l);
+	o in	
+      ofun
+
+end;;
+
+class xml_game_object_maps_type_parser=
+object(self)
+  inherit [xml_game_object_map_type_parser,game_object_map] xml_parser_container "game_object_map_type" (fun()->new xml_game_object_map_type_parser)
+
+  initializer
+    self#parser_add "unique" (fun()->new xml_game_object_map_type_parser)
+
+end;;
+
+(* game_tile_layer *)
+
+class xml_game_tile_layer_type_parser=
+object(self)
+  inherit [game_generic_tile_layer] xml_object_parser (fun()->new game_generic_tile_layer 0 0 32 32) as super
+
+  method get_type="unique"
+
+  val mutable mt=("",new val_ext_handler,"")
+  method set_metatype (m:string*val_ext_handler*string)=mt<-m
+
+  method init_object o=
+    o#set_lua_script lua;
+
+
+  method get_val=
+    let ofun()=
+      let o=
+	new game_tile_layer 0 0 32 32 (string_of_val (args_parser#get_val#get_val (`String "file")))
+      in
+	self#init_object (o:>game_generic_tile_layer);
+	(o:>game_generic_tile_layer)	  
+    in      
+      (id,ofun)
+
+  method get_val_from_meta (m:string*val_ext_handler*string)=
+    let ofun()=
+      let (nm,vh,l)=m in
+      let o=	new game_tile_layer 0 0 32 32 (string_of_val (vh#get_val (`String "file"))) in
+	o#set_lua_script (l);
+	(o:>game_generic_tile_layer)	  	
+    in	
+      ofun
+
+end;;
+
+class xml_game_tile_layers_type_parser=
+object(self)
+  inherit [xml_game_tile_layer_type_parser,game_generic_tile_layer] xml_parser_container "game_tile_layer_type" (fun()->new xml_game_tile_layer_type_parser)
+
+  initializer
+    self#parser_add "unique" (fun()->new xml_game_tile_layer_type_parser)
+end;;
+
+
+class xml_game_map_type_parser=
+object(self)
+  inherit xml_parser
+
+  val mutable maps_type_parser=new xml_game_object_maps_type_parser
+  val mutable layers_type_parser=new xml_game_tile_layers_type_parser
+ 
+  method parse_attr k v=()
+
+  method parse_child k v=
+    match k with
+      | "game_object_maps_type" ->
+	  print_string "object maps";print_newline();
+	  maps_type_parser#parse v;	  
+      | "game_tile_layers_type" ->
+	  print_string "tile layers";print_newline();
+	  layers_type_parser#parse v;
+      | _ -> ()
+
+  method init add_map add_lay=
+    maps_type_parser#init_simple (add_map);
+    layers_type_parser#init_simple (add_lay);
+
+end;;
+
+let init_game_map_type_from_xml f add_map add_lay=
+  let obj_xml=new xml_node (Xml.parse_file f) in
+  let pmt=new xml_game_map_type_parser in
+    pmt#parse obj_xml;
+    pmt#init add_map add_lay;;
 
 class game_map w h=
 object(self)
@@ -160,6 +276,9 @@ object(self)
 
   val mutable rect=new rectangle 0 0 w h
   method get_rect=rect
+
+  method init_type_from_xml f=
+    init_game_map_type_from_xml f self#add_object_map self#add_tile_layer
 
   method resize nw nh=
     self#foreach_tile_layer 
@@ -174,38 +293,19 @@ object(self)
       );
     rect#set_size nw nh;
 
-  val mutable tile_layers=Hashtbl.create 2
+  (* tile layers *)
+  val mutable tile_layers=new game_tile_layer_handler
 
   method add_tile_layer (s:string) (o:game_generic_tile_layer)=
-    Hashtbl.add tile_layers s o
+    print_string "add tile layer";print_newline();
+    ignore(tile_layers#add_object (Some s) o)
 
   method get_tile_layer (s:string)=
-    (try
-       Hashtbl.find tile_layers s
-     with Not_found -> raise (Game_tile_layer_not_found s))
+    tile_layers#get_object s
 
   method foreach_tile_layer f=
-    Hashtbl.iter f tile_layers
+    tile_layers#foreach_object f
 
-  (* map actions *)
-  val mutable object_maps=Hashtbl.create 2
-    
-  method add_object_map (s:string) (o:game_object_map)=
-    self#lua_parent_of s (o:>lua_object);
-    Hashtbl.add object_maps s o
-
-  method get_object_map (s:string)=
-    (try
-       Hashtbl.find object_maps s
-     with Not_found -> raise (Game_object_map_not_found s))
-
-  method foreach_object_map f=
-    Hashtbl.iter f object_maps
-
-(* on tile *)
-(*  method foreach_tile f=
-    self#get_tile_layer#foreach_map_entry f
-*)
   method tile_layer_init tn t=
     let tl=self#get_tile_layer tn in
     for i=0 to self#get_rect#get_w-1 do
@@ -214,6 +314,22 @@ object(self)
 	  tl#set_position i j (Some (t+mt)); 
       done;
     done;
+
+
+  (* object maps *)
+  val mutable object_maps=new game_object_map_handler
+    
+  method add_object_map (s:string) (o:game_object_map)=
+    print_string "add object map";print_newline();
+    self#lua_parent_of s (o:>lua_object);
+    ignore(object_maps#add_object (Some s) o);
+
+  method get_object_map (s:string)=
+    object_maps#get_object s
+
+  method foreach_object_map f=
+    object_maps#foreach_object f
+
 
 (*  method position_blocking x y=
     if self#get_tile_layer#out_of_lay x y then true else false
@@ -226,7 +342,7 @@ object(self)
       else false
 *)
 
-(* actions *)
+(* objects *)
 
   method add_object_from_type mid=
     let m=self#get_object_map mid in
@@ -261,6 +377,36 @@ object(self)
 
   method update()=
     self#foreach_object_map (fun i m->m#update());
+
+
+  method to_xml_string=
+    let x=self#to_xml in
+      Xml.to_string x
+
+  method to_xml=
+    Xml.Element("game_map",[("w",string_of_int self#get_rect#get_w);
+			    ("h",string_of_int self#get_rect#get_h)],
+		[
+		  Xml.Element("game_object_maps",[],
+			      let a=DynArray.create() in
+				self#foreach_object_map(
+				  fun k m->
+				    DynArray.add a m#to_xml
+				);
+				DynArray.to_list a
+			     );
+		  Xml.Element("game_tile_layers",[],
+			      let a=DynArray.create() in
+				self#foreach_tile_layer (
+				  fun k m->
+				    DynArray.add a m#to_xml
+				);
+				DynArray.to_list a
+			     )
+		]
+	       );
+		
+		
 
 
 (* persistance *)
@@ -320,6 +466,14 @@ object(self)
   method lua_init()=
     lua#set_val (OLuaVal.String "add_object_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#add_object_named_from_type);
     lua#set_val (OLuaVal.String "delete_object") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#delete_object);
+
+    lua#set_val (OLuaVal.String "init_tile_layer") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.int **->> OLuaVal.unit) self#tile_layer_init);
+
+    lua#set_val (OLuaVal.String "resize") (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#resize);
+
+
+
+
     lo#lua_init();
 
 end;;

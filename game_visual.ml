@@ -25,6 +25,8 @@ open Medias;;
 
 open Main;;
 
+open Event;;
+
 class game_visual vx vy=
 object
   val mutable rect=new rectangle vx vy (video#get_w) (video#get_h)
@@ -41,8 +43,6 @@ object
     done;
 
 
-
-
   method reinit()=change<-false
   method set_position x y=rect#set_position x y;change<-true
   method scroll x y=
@@ -54,7 +54,7 @@ object
   method get_h=rect#get_h
 end;;
 
-(* FIXME : go in game_visual.ml *)
+
 type scroll_dir=
 | ScrollLeft
 | ScrollRight
@@ -64,7 +64,7 @@ type scroll_dir=
 
 
 class mouse_scroll s b=
-object
+object(self)
   val mutable border=b
   val mutable scroll=s  
 
@@ -78,6 +78,17 @@ object
       | ScrollDown ->vrect#scroll 0 (scroll)
       | NoScroll -> ();
     
+
+  method ev_parse e=
+    (match e with
+       | EventMouse em ->
+	   (match em with 
+	      | MouseMotion(x,y) ->
+		  self#parse x y
+	      | _ ->()
+	   )
+       | _ -> ()
+    )
 
   method parse x y=
     dir<-NoScroll;

@@ -1,4 +1,5 @@
 
+open Generic;;
 open Rect;;
 open Video;;
 open Medias;;
@@ -8,12 +9,33 @@ open Binding;;
 open Game_layer;;
 open Game_visual;;
 
+open Oxml;;
+open Olua;;
 (** Game tile layer class definition *)
 
 
 class game_generic_tile_layer w h tw th=
 object(self)
+  inherit generic_object
   inherit [int] game_generic_layer w h as super    
+  inherit lua_object
+
+  method to_xml_string=
+    let x=self#to_xml in
+      Xml.to_string x
+
+  method to_xml=
+    Xml.Element
+      ("game_tile_layer",[("id",self#get_id)],
+       [Xml.PCData
+	  (String.concat "|" 
+	     (List.map (fun p->
+			  match p with
+			    | Some i->string_of_int i
+			    | None -> ""
+		       ) self#to_list))
+       ]
+      )
 
   method put_map (vrect:game_visual)=()
 end;;
