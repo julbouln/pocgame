@@ -31,9 +31,9 @@ object
 end;;
 
 
-class ['a] game_object_map (iv:'a) wi hi max =
+class ['a] game_object_map wi hi max =
 object(self)
-  inherit ['a] game_obj_layer_hash iv wi hi max
+  inherit ['a] game_obj_layer wi hi max
   inherit game_object_map_actions
 
   method is_obj_with_type t=
@@ -73,7 +73,7 @@ object(self)
 	) res;
   
 
-  val mutable obj_type=new game_obj_types iv
+  val mutable obj_type=new game_obj_types
   method get_obj_type=obj_type
     
   method add_object_type nm (t:unit->'a)=
@@ -88,7 +88,7 @@ object(self)
 
   method object_types_from_xml_string_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=
     let obj_xml=new xml_node (Xml.parse_string f) in
-    let p=new xml_game_objs_parser n iv fu in p#parse obj_xml;
+    let p=new xml_game_objs_parser n fu in p#parse obj_xml;
 	Array.iter (
 	  fun v-> 
 	    self#add_object_type (fst v) (snd v);
@@ -100,7 +100,7 @@ object(self)
 
   method object_types_from_xml_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=
     let obj_xml=new xml_node (Xml.parse_file f) in
-    let p=new xml_game_objs_parser n iv fu in p#parse obj_xml;
+    let p=new xml_game_objs_parser n fu in p#parse obj_xml;
 	Array.iter (
 	  fun v-> 
 	    self#add_object_type (fst v) (snd v);
@@ -112,10 +112,8 @@ object(self)
 
   method add_object_at (o:'a) (x:int) (y:int)=
     o#move x y;
-    let n=self#add_object_with_num o in
-    let id=("object"^string_of_int n) in
-      o#set_id id;
-      self#add_hash id n;id
+    let id=self#add_object None o in
+      id
 	  
   method add_object_from_type (t:string) (x:int) (y:int)=
     let o=self#get_object_from_type t in
@@ -126,7 +124,7 @@ object(self)
 (* map actions *)
  
   method map_update()=
-    self#clean();
+    self#clear();
     self#update_obj_all();
     self#update_action(); 
 
@@ -139,11 +137,11 @@ object(self)
 
   method map_move_object id x y=
 (*    print_string ("GAME_MAP: move object "^id);print_newline(); *)
-    let o=self#get_hash_object id in
+    let o=self#get_object id in
       o#move x y
 
   method map_copy_object cid id=
-    let o=self#get_hash_object id in
+    let o=self#get_object id in
     let no=(self#get_object_from_type o#get_name) in
     let n=self#add_object_at no o#get_rect#get_x o#get_rect#get_y in
       match cid with
@@ -152,16 +150,16 @@ object(self)
 
   method map_rename_object cid id=
     print_string ("GAME_MAP: rename object "^cid^" to "^id);print_newline();
-    let o=self#get_hash_object cid in
+    let o=self#get_object cid in
       o#set_id id;
-      self#replace_hash cid id
+      self#rename_object cid id
 
   method map_del_object id=
     print_string ("GAME_MAP: del object "^id);print_newline();
-    self#del_hash_object id
+    self#delete_object id
 
   method map_is_object id=
-    self#is_hash id
+    self#is_object id
 
 
 (* persistence *)
@@ -217,8 +215,7 @@ object(self)
       for i=0 to self#get_rect#get_w-1 do
 	for j=0 to self#get_rect#get_h-1 do
 	  let mt=randomize 2 in
-
-	    self#get_tile_layer#set_position i j (t+mt); 
+	    self#get_tile_layer#set_position i j (Some (t+mt)); 
 	done;
       done;
 

@@ -6,7 +6,7 @@ open Game_xml;;
 
 class game_decor nm w h file cw ch stc=
 object (self)
-  inherit game_object nm w h file false false cw ch as super
+  inherit game_object nm file w h cw ch as super
 
   initializer 
 (*    super#set_blocking true; *)

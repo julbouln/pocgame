@@ -4,6 +4,9 @@ open Rect;;
 open Video;;
 open Medias;;
 
+open Drawing;;
+open Generic;;
+
 open Oxml;;
 open Anim;;
 open Action;;
@@ -104,14 +107,10 @@ end;;
 (* more generic parent - without graphic *)
 class game_obj (nm:string) (wi:int) (hi:int) (gwi:int) (ghi:int)=
 object
- 
+  inherit generic_object 
     val mutable name=nm
     method get_name=name
     method set_name n=name<-n
-
-    val mutable id=""
-    method get_id=id
-    method set_id i=id<-i
 
     val mutable rect=new rectangle 0 0 wi hi
     method get_rect=rect
@@ -190,17 +189,14 @@ object
 end;;
 
 
-class ['a] game_obj_types (none_obj:'a)=
+class ['a] game_obj_types=
 object
-  inherit ['a] obj_types none_obj
+  inherit ['a] obj_types
 end;;
-
-
 
 class game_action_object=
 object(self)
-
-    val mutable state_manager=new state_object_manager 
+    val mutable state_manager=new state_object_manager
     method set_state nm=
       state_manager#set_state nm 0
 
@@ -318,110 +314,106 @@ object
 end;;
 
 
-class game_graphic_object nm gwi ghi tilesfile mirror  is_shaded wi hi=
+let get_rpos dr=
+  let rcol=(255,36,196) in
+  let x1=ref (-1) and
+      x2=ref (-1) and
+      y1=ref (-1) and
+      y2=ref (-1) in
+    print_string "get_rpos(NEW)";print_newline();
+  for i=0 to dr#get_w -1 do
+    for j=0 to dr#get_h -1 do
+      if (dr#get_pixel i j)=rcol then
+	if !x1=(-1) && !y1=(-1) then 
+	  (
+	    x1:=i;
+	    y1:=j;
+	  )
+	else
+	  (
+	    x2:=i;
+	    y2:=j;
+	  )
+    done;
+  done;
+    new rectangle !x1 !y1 !x2 !y2;;
+
+class game_object nm tilesfile gwi ghi wi hi=
 object(self)
   inherit game_generic_object nm wi hi gwi ghi as super
 
-    val mutable graphic=new graphic_object gwi ghi tilesfile mirror is_shaded 
+  val mutable graphic=new graphic_object_from_file tilesfile gwi ghi
+  method act vx vy=
+    super#act vx vy;
+    let cur=self#graphic#get_cur_tile in
+      self#graphic#set_cur_tile (((self#graphic#get_tiles_size)/8)*direction + 
+				   self#get_current_state#get_frame);
+      
+  method move x y=
+    super#move x y;
+    self#graphics_update()
+      
+  method graphics_register (reg:canvas_object->unit)=
+    reg (graphic:>canvas_object)
+  method graphics_unregister (unreg:canvas_object->unit)=
+    unreg (graphic:>canvas_object)
+  method graphics_update ()=
+    self#graphic#move (self#get_pixel_x) (self#get_pixel_y);
 
-    method act vx vy=
-      super#act vx vy;
-      let cur=self#graphic#get_cur_tile in
-	self#graphic#set_cur_tile (((self#graphic#get_tiles_size)/8)*direction + 
-				     self#get_current_state#get_frame);
-
-    method move x y=
-      super#move x y;
-      self#graphics_update()
-
-
-    method graphics_register (reg:canvas_object->unit)=
-      reg (graphic:>canvas_object)
-    method graphics_unregister (unreg:canvas_object->unit)=
-      unreg (graphic:>canvas_object)
-    method graphics_update ()=
-      self#graphic#move (self#get_pixel_x) (self#get_pixel_y);
-
-    method graphic=graphic
-    method get_graphic=graphic
-    method set_graphic()=graphic<-new graphic_object gwi ghi tilesfile mirror is_shaded
+  method graphic=graphic
+  method get_graphic=graphic
+  method set_graphic()=graphic<-new graphic_object_from_file tilesfile gwi ghi
 
 
+  (* baricentre *)
+    
+  val mutable bcentre=(0,0)
+  method get_bcentre_x=(fst bcentre)
+  method get_bcentre_y=(snd bcentre)
 
-    (* baricentre *)
-
-    val mutable bcentre=(0,0)
-    method get_bcentre_x=(fst bcentre)
-    method get_bcentre_y=(snd bcentre)
-
-(*    method around_object out_of_map (f:int->int->unit)=
-      let rpos=self#graphic#get_rpos in
-      let x1=rpos#get_x/32 and
-	  y1=rpos#get_y/32 and
-	  x2=rpos#get_w/32 and
-	  y2=rpos#get_h/32 in
-
-      for x=(self#get_case_x + x1 -self#get_bcentre_x/32 -1) to (self#get_case_x + x2 -self#get_bcentre_x/32 -1) do
-	for y=(self#get_case_y + y1 -self#get_bcentre_y/32 -1) to (self#get_case_y + y2 -self#get_bcentre_y/32 -1) do
-	  if out_of_map x y=false then f x y	    
-	done;
-      done;
-*)
-    method init_bcentre()=
-      let rpos=self#graphic#get_rpos in
-      let x1=rpos#get_x and
+  method init_bcentre()=
+(*    let rpos=self#graphic#get_rpos in *)
+    let rpos=get_rpos (drawing_vault#get_cache_simple tilesfile) in
+    let x1=rpos#get_x and
 	y1=rpos#get_y and
 	x2=rpos#get_w and
 	y2=rpos#get_h in
-
-	bcentre<-
+      
+      bcentre<-
 	(
 	  (x1+x2)/2,
 	  (y1+y2)/2
 	)
-
-    method init_bcentre_with (graph:graphic_object)=
-      let rpos=graph#get_rpos in
-      let x1=rpos#get_x and
-	  y1=rpos#get_y and
-	  x2=rpos#get_w and
-	  y2=rpos#get_h in
-
-	bcentre<-
+(*	
+  method init_bcentre_with (graph:graphic_object)=
+    let rpos=graph#get_rpos in
+    let x1=rpos#get_x and
+	y1=rpos#get_y and
+	x2=rpos#get_w and
+	y2=rpos#get_h in
+      
+      bcentre<-
 	(
 	  (x1+x2)/2,
 	  (y1+y2)/2
 	)
+*)
+  method get_pixel_x=(rect#get_x*32) + prect#get_x - (fst bcentre) + 16
+  method get_pixel_y=(rect#get_y*32) + prect#get_y - (snd bcentre) + 16
 
-    method get_pixel_x=(rect#get_x*32) + prect#get_x - (fst bcentre) + 16
-    method get_pixel_y=(rect#get_y*32) + prect#get_y - (snd bcentre) + 16
-
-end;; 
-
-
-class game_object nm gwi ghi tilesfile mirror is_shaded wi hi=
-object (self)
-
-
-  inherit game_graphic_object nm gwi ghi tilesfile mirror is_shaded wi hi
-  initializer
-    self#init_bcentre()
 
   method lua_register (interp:lua_interp)=
     interp#parse (id^"={}");
     props#lua_register id interp
 
-end;;
+end;; 
 
 
-
-let none_obj=(new game_object "none" (!tile_w) (!tile_h) "none" false false 1 1 );;
-let none_generic_obj=(new game_generic_object "none" (!tile_w) (!tile_h) 1 1 );;
 
 (** game_object types *)
 class game_object_types=
 object
-  inherit [game_object] obj_types none_obj
+  inherit [game_object] obj_types
 end;;
 
 
