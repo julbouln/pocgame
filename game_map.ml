@@ -223,6 +223,27 @@ object(self)
    
    lua#set_val (OLuaVal.String "delete_object") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) self#delete_object);
 
+
+    lua#set_val (OLuaVal.String "get_object_id_at_position") 
+      (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.value) 
+	 (fun x y->
+	    let n=self#get_position x y in
+	      match n with 
+		| Some i -> OLuaVal.String i
+		| None -> OLuaVal.Nil
+	 )
+      );
+
+    lua#set_val (OLuaVal.String "get_object_at_position") 
+      (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.value) 
+	 (fun x y->
+	    let n=self#get_position x y in
+	      match n with 
+		| Some i -> (lua#get_val (OLuaVal.String i))
+		| None -> OLuaVal.Nil
+	 )
+      );
+
    lo#lua_init();
 
 end;;
@@ -619,13 +640,6 @@ object(self)
     lua#set_val (OLuaVal.String "add_object_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.string) (fun m t x y->self#add_object_from_type m None t x y));
     lua#set_val (OLuaVal.String "add_object_named_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#add_object_named_from_type);
     lua#set_val (OLuaVal.String "delete_object") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#delete_object);
-
-
-    lua#set_val (OLuaVal.String "is_position_blocking") 
-      (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.bool) 
-	 self#is_position_blocking
-      );
-
     lua#set_val (OLuaVal.String "get_object_id_at_position") 
       (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.value) 
 	 (fun m x y->
@@ -634,6 +648,14 @@ object(self)
 		| Some i -> OLuaVal.String i
 		| None -> OLuaVal.Nil
 	 )
+      );
+(* /DEPRECATED *)
+
+
+
+    lua#set_val (OLuaVal.String "is_position_blocking") 
+      (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.bool) 
+	 self#is_position_blocking
       );
 
 
