@@ -8,6 +8,7 @@ open Oxml;;
 open Anim;;
 open Action;;
 
+open Otype;;
 open Obj_type;;
 open Layer;;
 open Obj_layer;;
@@ -389,7 +390,7 @@ let none_obj=(new game_object "none" (!tile_w) (!tile_h) "none" false false 1 1 
 
 class game_object_types=
 object
-  inherit [game_object] game_obj_types none_obj
+  inherit [game_object] obj_types none_obj
 end;;
 
 class game_object_layer wi hi max=
@@ -439,7 +440,10 @@ object(self)
   method is_hash k=Hashtbl.mem hash k
 
   method del_hash_object (k:string)=
-    self#del_object (self#get_hash k)
+    let n=self#get_hash k in
+    self#del_object n;
+    self#del_hash k;
+    self#del_hash_rev n
 
   method get_hash_object (k:string)=
     self#get_object (self#get_hash k)

@@ -76,6 +76,8 @@ object(self)
   val mutable windowed=ref false
   val mutable fps=32
 
+  method set_fs f=fullscreen:=f
+
 method set_scr_w w=scr_w<-w
 method set_scr_h h=scr_h<-h
 method set_fps f=fps<-f
