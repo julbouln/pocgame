@@ -115,7 +115,7 @@ object(self)
 	| None -> n    
 
   method map_move_object id x y=
-    print_string ("GAME_MAP: move object"^id);print_newline();
+    print_string ("GAME_MAP: move object "^id);print_newline();
     let o=self#get_hash_object id in
       o#move x y
 
@@ -128,12 +128,13 @@ object(self)
 	| None -> n
 
   method map_rename_object cid id=
+    print_string ("GAME_MAP: rename object "^cid^" to "^id);print_newline();
     let o=self#get_hash_object cid in
       o#set_id id;
       self#replace_hash cid id
 
   method map_del_object id=
-    print_string ("MAP: del object"^id);print_newline();
+    print_string ("GAME_MAP: del object "^id);print_newline();
     self#del_hash_object id
 
   method map_is_object id=
@@ -144,20 +145,21 @@ object(self)
 
  method map_to_save=
     let a=DynArray.create() in
-    self#foreach_object (
-      fun i o->
-	if o#get_name<>"none" then (
-	  print_string ("SAVE: "^o#get_id^" of type "^o#get_name);print_newline();
-	DynArray.add a (o#get_id,o#get_name,o#get_lua,o#get_rect#get_x,o#get_rect#get_y);
-	)    
-    );
+      self#foreach_object (
+	fun i o->
+	  if o#get_name<>"none" then (
+	    print_string ("GAME_MAP: save "^o#get_id^" of type "^o#get_name);print_newline();
+	    DynArray.add a (o#get_id,o#get_name,o#get_lua,o#get_rect#get_x,o#get_rect#get_y);
+	  )    
+      );
       DynArray.to_array a
 
   method map_from_load (a:(string*string*string*int*int) array)=
     Array.iter (
       fun v->
 	let (id,nm,lua,x,y)=v in
-	let r=self#map_add_object (Some id) nm x y in ()
+	  print_string ("GAME_MAP: load "^id^" of type "^nm);print_newline();  
+	  let r=self#map_add_object (Some id) nm x y in ()
     ) a;
 end;;
 
@@ -224,10 +226,13 @@ object(self)
   val mutable map_file=new file
 
   method objs_to_save=
+    print_string ("GAME_MAP: save maps");print_newline();
     let a=Hashtbl.create 2 in
     self#foreach_map_action 
       (
+	
 	fun n act->
+	  print_string ("GAME_MAP: save "^n^" map");print_newline();
 	  Hashtbl.add a n act#map_to_save
       );
       a
@@ -235,6 +240,7 @@ object(self)
   method objs_from_load a=
     Hashtbl.iter (
       fun n v->
+	print_string ("GAME_MAP: load "^n^" map");print_newline();  
 	let act=self#get_map_action n in
 	  act#map_from_load v
     ) a;
@@ -254,7 +260,7 @@ object(self)
     (self#get_tile_layer#get_lay,self#get_tile_layer#get_border_layer_lay)
 
   method save f=
-    map_file#save f   (self#get_rect#get_w,self#get_rect#get_h,self#tile_to_save,self#objs_to_save)
+    map_file#save f (self#get_rect#get_w,self#get_rect#get_h,self#tile_to_save,self#objs_to_save)
       
 (*
 (* load *)
@@ -273,10 +279,11 @@ object(self)
       self#get_tile_layer#set_border_layer_lay b;
  
   method load f =
-    let (mw,mh,tile_ar,decor_ar)=map_file#load f in
+    print_string ("GAME_MAP: load maps");print_newline();
+    let (mw,mh,tile_ar,obj_ar)=map_file#load f in
       self#resize mw mh;
       self#tile_from_load tile_ar;
-      self#objs_from_load decor_ar;
+      self#objs_from_load obj_ar;
       ()
 (*      self#decor_from_load decor_ar add_decor; *)
 
