@@ -1,0 +1,7 @@
+
+* fixes/improvement
+ - integrate game_loading in types and map load
+
+* new objects
+ - pathfinding must be here, not in poccore
+ - add highlevel game_object click, put and move interaction on map
