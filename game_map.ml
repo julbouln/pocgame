@@ -57,6 +57,7 @@ object(self)
   
 
   method object_types_from_xml_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(unit->'a))=
+    print_string ("GAME_MAP:object types from xml "^f);print_newline();
     let obj_xml=new xml_node (Xml.parse_file f) in
     let p=new xml_game_objs_parser n iv fu in p#parse obj_xml;
 	Array.iter (
