@@ -109,13 +109,13 @@ object(self)
 
   method map_add_object id t x y=
     let n=self#add_object_from_type t x y in
-      print_string ("MAP: add object "^n);print_newline();
+      print_string ("GAME_MAP: add object "^n);print_newline();
       match id with
 	| Some nid ->self#map_rename_object n nid;nid
 	| None -> n    
 
   method map_move_object id x y=
-    print_string ("MAP: move object"^id);print_newline();
+    print_string ("GAME_MAP: move object"^id);print_newline();
     let o=self#get_hash_object id in
       o#move x y
 
