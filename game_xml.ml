@@ -54,7 +54,9 @@ object(self)
 end;;
 
 let game_object_metatype_from_xml f=
-  let obj_mt_xml=new xml_node (Xml.parse_file f) in
+  let otx=(Xml.parse_file f) in
+  let obj_mt_xml=new xml_node otx in
+    
   let pmt=new xml_game_object_mt_parser in
     pmt#parse obj_mt_xml;
     pmt#get_val
@@ -125,7 +127,7 @@ end;;
 
 class xml_game_object_types_parser=
 object(self)
-  inherit [(unit->game_object)] xml_stringhash_parser "game_object" (fun()->new xml_game_object_parser)
+  inherit [(unit->game_object)] xml_stringhash_parser "game_object_type" (fun()->new xml_game_object_parser)
 end;;
 
 
