@@ -24,8 +24,9 @@ open Game_loading;;
 
 
 let loading_init_game_object_types_from_xml f (li:game_loading_info) add_obj=
-  let xinc=xinclude_process_file f in
-  let obj_xml=new xml_node (Xml.parse_string xinc) in
+(*  let xinc=xinclude_process_file f in
+  let obj_xml=new xml_node (Xml.parse_string xinc) in*)
+  let obj_xml=xml_node_from_file f in
   let pmt=new xml_game_object_types_parser in
     pmt#parse obj_xml;
     let h=pmt#get_hash in
@@ -179,11 +180,11 @@ object(self)
 		       fun cc->
 			 match (Xml.tag cc) with
 			 | "args" -> 
-			     let n=new xml_node_NEW in
+			     let n=new xml_node in
 			       n#of_xml_t cc;
 			       args#from_xml n
 			 | "properties" -> 
-			     let n=new xml_node_NEW in
+			     let n=new xml_node in
 			       n#of_xml_t cc;
 			       props#from_xml n
 			 | _ ->()
@@ -371,7 +372,8 @@ object(self)
 end;;
 
 let init_game_map_type_from_xml f add_map add_lay=
-  let obj_xml=new xml_node (Xml.parse_file f) in
+(*  let obj_xml=new xml_node (Xml.parse_file f) in *)
+  let obj_xml=xml_node_from_file f in
   let pmt=new xml_game_map_type_parser in
     pmt#parse obj_xml;
     pmt#init add_map add_lay;;
@@ -580,7 +582,8 @@ object(self)
 		      ) (Xml.children c);
 		      
 		  | "actions" ->
-		      let n=new xml_node c in
+		      let n=new xml_node in
+			n#of_xml_t c;
 		      let p=(Global.get xml_default_actions_parser)() in
 			p#parse n;
 			p#init_simple (actions#add_action);
