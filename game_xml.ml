@@ -57,7 +57,7 @@ end;;
 
 class xml_gm_objects_parser name=
 object
-  inherit [gm_object] xml_list_parser name (fun()->new xml_gm_object_parser)
+  inherit [gm_object,xml_gm_object_parser] xml_list_parser name (fun()->new xml_gm_object_parser)
 end;;
 
 
@@ -111,7 +111,7 @@ end;;
 
 class xml_state_list_parser=
 object
-  inherit [state_anim] xml_list_parser "state" (fun()->new xml_state_parser)
+  inherit [state_anim,xml_state_parser] xml_list_parser "state" (fun()->new xml_state_parser)
 end;;
 
 
@@ -175,11 +175,14 @@ end;;
 
 class ['a] xml_game_objs_parser (name:string) (iv:'a) (f:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=
 object
-  inherit [gm_object] xml_list_parser name (fun()->new xml_game_obj_parser iv) as super
+(*  inherit xml_parser *)
+  inherit [gm_object,('a) xml_game_obj_parser] xml_list_parser name (fun()->new xml_game_obj_parser iv) as super 
   val mutable objs=DynArray.create()
 
+  method parse_attr k v=()
+
   method parse_child k v=
-    super#parse_child k v;
+(*    super#parse_child k v; *)
     match k with
       | ct -> let p=new xml_game_obj_parser iv in 
 	  p#parse v;
