@@ -1,4 +1,4 @@
-open Rect;;
+open Core_rect;;
 
 (** Game layer class definition *)
 

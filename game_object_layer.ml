@@ -1,13 +1,14 @@
 
-open Generic;;
-open Rect;;
-open Video;;
-open Medias;;
+open Core_generic;;
+open Core_rect;;
+open Core_video;;
+open Core_medias;;
+open Core_type;;
 
 open Game_object;;
 open Game_layer;;
 
-open Otype;;
+
 
 (** Game object layer class definition *)
 

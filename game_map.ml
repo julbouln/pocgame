@@ -1,18 +1,18 @@
 
-open Medias;;
-open Graphic;;
-open Rect;;
-open File;;
 
-open Action;;
+open Core_generic;;
+open Core_medias;;
+open Core_graphic;;
+open Core_rect;;
+open Core_file;;
+open Core_action;;
+open Core_xml;;
+open Core_type;;
 
 open Olua;;
 open Oxml;;
 open Oval;;
-open Otype;;
-open Core_xml;;
 
-open Generic;;
 open Game_xml;;
 open Game_object;;
 open Game_object_layer;;

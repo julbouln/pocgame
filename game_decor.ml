@@ -1,4 +1,4 @@
-open Action;;
+open Core_action;;
 
 open Game_object;;
 

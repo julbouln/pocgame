@@ -1,11 +1,12 @@
-open Graphic;;
-open Action;;
+open Core_graphic;;
+open Core_action;;
+open Core_type;;
+open Core_xml;;
 
-open Otype;;
 open Oxml;;
 open Oval;;
 
-open Core_xml;;
+
 
 open Game_object;;
 

@@ -1,9 +1,9 @@
 
-open Event;;
-open Video;;
-open Stage;;
-open Medias;;
-open Graphic;;
+open Core_event;;
+open Core_video;;
+open Core_stage;;
+open Core_medias;;
+open Core_graphic;;
 open Binding;;
 
 open Olua;;
@@ -146,18 +146,20 @@ object(self)
 					 
   method on_loop()=
     t1<-Unix.gettimeofday();
+    video#blank();
     engine#on_loop();
 
       ignore(engine_iobj#get_lua#exec_val_fun (OLuaVal.String "on_loop") [OLuaVal.Nil]);
     iface#on_loop();
     curs#put();    
-    video#flip();
+
     t2<-Unix.gettimeofday();
 
     
     if (t2 -. t1)<(1./. 30.) then
       usleep ((1./. 30.)  -. (t2 -. t1));     
 
+    video#flip();
 
   method ev_parser e=
     iface#ev_parser e;
@@ -176,7 +178,7 @@ end;;
 
 
 open Oval;;
-open Stage;;
+open Core_stage;;
 open Core_xml;;
 
 class xml_game_engine_with_iface_stage_parser=

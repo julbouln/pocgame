@@ -1,21 +1,21 @@
 
-open Rect;;
-open Video;;
-open Medias;;
+open Core_rect;;
+open Core_video;;
+open Core_medias;;
+open Core_drawing;;
+open Core_generic;;
+open Core_graphic;;
+open Core_anim;;
+open Core_action;;
+open Core_type;;
+open Core_timer;;
 
-open Drawing;;
-open Generic;;
 open Binding;;
-open Graphic;;
 
 open Oxml;;
-open Anim;;
-open Action;;
 open Oval;;
-open Otype;;
-
 open Olua;;
-open Timer;;
+
 
 (*
 <game_object_type name="decor">

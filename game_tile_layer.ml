@@ -1,11 +1,13 @@
 
-open Generic;;
-open Rect;;
-open Video;;
-open Medias;;
-open Graphic;;
-open Drawing;;
+open Core_generic;;
+open Core_rect;;
+open Core_video;;
+open Core_medias;;
+open Core_graphic;;
+open Core_drawing;;
+
 open Binding;;
+
 open Game_layer;;
 open Game_visual;;
 

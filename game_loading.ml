@@ -1,9 +1,9 @@
-open Video;;
-open Anim;;
+open Core_video;;
+open Core_anim;;
 
-open Medias;;
+open Core_medias;;
 
-open Main;;
+open Core_main;;
 
 let rec usleep sec = ignore (Unix.select [] [] [] sec);;
 
