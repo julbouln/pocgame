@@ -56,6 +56,15 @@ object(self)
 	) res;
   
 
+  val mutable obj_type=new game_obj_types iv
+  method get_obj_type=obj_type
+    
+  method add_object_type nm (t:unit->'a)=
+    obj_type#add_object_type nm t
+  method get_object_from_type nm=
+    obj_type#get_object_type nm
+
+
   method object_types_from_xml_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->((unit->'a)*string))=
     print_string ("GAME_MAP:object types from xml "^f);print_newline();
     let obj_xml=new xml_node (Xml.parse_file f) in
@@ -72,13 +81,6 @@ object(self)
 *)
 	) p#get_objs;
 
-  val mutable obj_type=new game_obj_types iv
-  method get_obj_type=obj_type
-    
-  method add_object_type nm (t:unit->'a)=
-    obj_type#add_object_type nm t
-  method get_object_from_type nm=
-    obj_type#get_object_type nm
 
   method add_object_at (o:'a) (x:int) (y:int)=
     o#move x y;
