@@ -215,20 +215,11 @@ object(self)
 
   method get_type="unique"
  
-  val mutable mt=("",new val_ext_handler,"")
-  method set_metatype (m:string*val_ext_handler*string)=mt<-m
 
   method init_object o=
     o#set_lua_script lua;
     o#init_object_types_from_xml (string_of_val (args_parser#get_val#get_val (`String "types")))
 
-  method get_val_from_meta (m:string*val_ext_handler*string)=
-    let ofun()=
-      let (nm,vh,l)=m in
-      let o=new game_object_map 0 0 in
-	o#set_lua_script (l);
-	o in	
-      ofun
 
 end;;
 
@@ -249,8 +240,6 @@ object(self)
 
   method get_type="unique"
 
-  val mutable mt=("",new val_ext_handler,"")
-  method set_metatype (m:string*val_ext_handler*string)=mt<-m
 
   method init_object o=
     o#set_lua_script lua;
@@ -266,14 +255,6 @@ object(self)
     in      
       (id,ofun)
 
-  method get_val_from_meta (m:string*val_ext_handler*string)=
-    let ofun()=
-      let (nm,vh,l)=m in
-      let o=	new game_tile_layer 0 0 32 32 (string_of_val (vh#get_val (`String "file"))) in
-	o#set_lua_script (l);
-	(o:>game_generic_tile_layer)	  	
-    in	
-      ofun
 
 end;;
 

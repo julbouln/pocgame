@@ -1,7 +1,7 @@
 OCAMLMAKEFILE = OCamlMakefile
 
-INCDIRS=../poccore ../extlib-1.3 ../xml-light2.1 ../pociface
-LIBS=poccore xml-light extLib str pociface
+INCDIRS=../poccore ../extlib-1.3 ../oxinclude ../xml-light2.1 ../pociface
+LIBS=poccore xinclude xml-light extLib str pociface
 
 # obj_type.ml -> game_object_type.ml
 #   layer.ml -> game_layer.ml
