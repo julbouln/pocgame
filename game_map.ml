@@ -291,7 +291,7 @@ end;;
 
 class xml_game_object_maps_type_parser=
 object(self)
-  inherit [xml_game_object_map_type_parser,game_object_map] xml_parser_container "game_object_map_type" (fun()->new xml_game_object_map_type_parser) as super
+  inherit [xml_game_object_map_type_parser,game_object_map] xml_container_parser "game_object_map_type" (fun()->new xml_game_object_map_type_parser) as super
 
   initializer
     self#parser_add "with_loading" (fun()->new xml_game_object_map_type_parser);
@@ -330,7 +330,7 @@ end;;
 
 class xml_game_tile_layers_type_parser=
 object(self)
-  inherit [xml_game_tile_layer_type_parser,game_generic_tile_layer] xml_parser_container "game_tile_layer_type" (fun()->new xml_game_tile_layer_type_parser)
+  inherit [xml_game_tile_layer_type_parser,game_generic_tile_layer] xml_container_parser "game_tile_layer_type" (fun()->new xml_game_tile_layer_type_parser)
 
   initializer
     self#parser_add "unique" (fun()->new xml_game_tile_layer_type_parser)

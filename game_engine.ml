@@ -154,7 +154,7 @@ object(self)
   val mutable fcount=0				
 
 
-  val mutable fpsgr=new graphic_text "fpsinfo" (FontTTF ("medias/fonts/Vera.ttf",14)) (200,200,200) 
+  val mutable fpsgr=new graphic_text "fpsinfo" (FontEmbed) (200,200,200) 
 					 
   method on_loop()=
 
