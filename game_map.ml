@@ -48,7 +48,9 @@ object(self)
     let n=xml_reduce (Xml.parse_string f) (fun n->
 					     self#is_obj_with_type (Xml.attrib n "name")
 					  ) in
-      Xml.to_string n;
+    let s=Xml.to_string n in
+      print_string s;print_newline();
+      s
 
 
   method foreach_objs_xml_from_string f d=
