@@ -12,9 +12,128 @@ open Otype;;
 
 open Olua;;
 
+
+type game_prop=
+  | PropInt of int
+  | PropFloat of float
+  | PropString of string
+  | PropBool of bool
+  | PropList of game_prop list
+  | PropNil;;
+
+
+exception Bad_game_prop of string
+
+class game_properties=
+object
+  val mutable props=Hashtbl.create 2
+  method add_prop (n:string) (p:game_prop)=Hashtbl.add props n p
+  method set_prop n p=Hashtbl.replace props n p
+  method del_prop n=Hashtbl.remove props n
+
+
+  method lua_register (m:string) (interp:lua_interp)=
+    Hashtbl.iter (fun n v->
+		    interp#parse (
+		      match v with
+			| PropFloat f->(m^"."^n^"="^string_of_float f)
+			| PropInt i->(m^"."^n^"="^string_of_int i)
+			| PropString s->(m^"."^n^"='"^s^"'")
+			| PropBool b->(m^"."^n^"="^(if b then "true" else "false"))
+			| _ -> ""
+		    );()
+		 ) props;
+
+(*
+  method from_db : ?
+  method from_xml f : string -> unit
+  method to_xml_message : unit ->string
+  method to_lua : unit->string
+*)
+
+end;;
+
+
+
+(*
+ 
+ h=30x60x60 f = 108000 f
+ m = 30x60 f = 1800 f
+ s = 30 f
+ f = f
+*)
+
+type time=
+{
+  h:int;
+  m:int;
+  s:int;
+  f:int;
+}
+
+
+class game_time=
+object(self)
+  val mutable timers=Hashtbl.create 2
+  method add_timer (t:time) (f:unit->unit)=
+    Hashtbl.add timers (self#from_time t) f
+  method del_timer (t:time)=
+    Hashtbl.remove timers (self#from_time t)
+
+  val mutable tasks=Hashtbl.create 2
+  method add_task (t:time) (f:unit->unit)=
+    Hashtbl.add tasks (self#from_time t) f
+  method del_task (t:time)=
+    Hashtbl.remove tasks (self#from_time t)
+
+  val mutable frm=0
+  val mutable cfrm=0
+
+  val mutable run=false
+
+  method start()=run<-true
+  method stop()=run<-false
+
+  method set_limit t=frm<-self#from_time t
+
+  method get_cur_frame=cfrm
+
+  method step()=
+    if run then (
+      Hashtbl.iter 
+	(
+	  fun tfr e->
+	    if cfrm mod tfr=0 then e()
+	) tasks;
+      if Hashtbl.mem timers cfrm then
+	let e=Hashtbl.find timers cfrm in e();
+	  if cfrm<frm then
+	    cfrm<-cfrm+1
+	  else
+	    cfrm<-0
+    )
+
+  method to_time fr=
+    let h=fr/108000 and
+	m=(fr mod 108000)/1800 and
+	s=((fr mod 108000) mod 1800)/30 and
+	f=(((fr mod 108000) mod 1800) mod 30) in
+      {
+	h=h;
+	m=m;
+	s=s;
+	f=f;
+      }
+	
+  method from_time t=
+    (t.h*108000)+ (t.m * 1800) + (t.s*30) + t.f
+
+end;;
+
 (* more generic parent - without graphic *)
 class game_obj (nm:string) (wi:int) (hi:int) (gwi:int) (ghi:int)=
 object
+ 
     val mutable name=nm
     method get_name=name
     method set_name n=name<-n
@@ -38,15 +157,64 @@ object
       let xdif= 32-px and
 	ydif= 32-py in
 
-	if px<0 then (rect#set_position (cx-1) cy;prect#set_position (32+px) py);
+	
+	if px<0 then (
+	  if py>=0 && py<32 then (
+	    rect#set_position (cx-1) (cy);
+	    prect#set_position (32+px) (py);
+	  );
+	  if py<0 then (
+	    rect#set_position (cx-1) (cy-1);
+	    prect#set_position (32+px) (32+py);
+	  );
+	  if py>=32 then (
+	    rect#set_position (cx-1) (cy+1);
+	    prect#set_position (32+px) (py-32);
+	  )
+	);
+
+
+	if px>=0 && px<32 then (
+	  if py>=0 && py<32 then (
+	    rect#set_position cx (cy);
+	    prect#set_position px (py);
+	  );
+	  if py<0 then (
+	    rect#set_position (cx) (cy-1);
+	    prect#set_position (px) (32+py);
+	  );
+	  if py>=32 then (
+	    rect#set_position (cx) (cy+1);
+	    prect#set_position (px) (py-32);
+	  )
+	);
+
+	if px>=32 then (
+	  if py>=0 && py<32 then (
+	    rect#set_position (cx+1) (cy);
+	    prect#set_position (px-32) (py);
+	  );
+	  if py<0 then (
+	    rect#set_position (cx+1) (cy-1);
+	    prect#set_position (px-32) (32+py);
+	  );
+	  if py>=32 then (
+	    rect#set_position (cx+1) (cy+1);
+	    prect#set_position (px-32) (py-32);
+	  )
+	);
+
+(*
 	if px>32 then (rect#set_position (cx+1) cy;prect#set_position (px-32) py);
       	if py<0 then (rect#set_position cx (cy-1);prect#set_position px (32+py));
 	if py>32 then (rect#set_position cx (cy+1);prect#set_position px (py-32));
-
+*)
 
     val mutable direction=0
     method get_direction=direction
     method turn dir=direction<-dir;
+
+
 
 end;;
 
@@ -82,8 +250,28 @@ end;;
 class game_generic_object nm wi hi gwi ghi=
 object(self)
   inherit game_obj nm wi hi gwi ghi
-  inherit game_action_object
-    
+  inherit game_action_object as action
+ 
+(** time *)
+  val mutable time=new game_time
+  initializer
+    time#start();
+      time#set_limit       
+	{
+	  h=24;
+	  m=0;
+	  s=0;
+	  f=0;
+	}
+
+  method act vx vy=
+    action#act vx vy;
+    time#step();
+
+(** properties *)
+  val mutable props=new game_properties
+  
+(** lua ? *)
   val mutable lua_code=""
   method set_lua l=lua_code<-l
   method get_lua=lua_code
@@ -245,26 +433,11 @@ object (self)
   initializer
     self#init_bcentre()
 
-  method lua_register (interp:lua_interp)=()
-
-
-   end;;
-
-(*
-class game_object nm gwi ghi tilesfile mirror is_shaded wi hi=
-object(self)
-  inherit game_graphic_object nm gwi ghi tilesfile mirror is_shaded wi hi
-  inherit game_object_NEW nm wi hi
-
-  initializer
-    self#init_bcentre()
+  method lua_register (interp:lua_interp)=
+    interp#parse (id^"={}");
+props#lua_register id interp
 
 end;;
-*)
-
-
-
-
 
 
 
