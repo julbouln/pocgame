@@ -266,6 +266,11 @@ object(self)
 
   val mutable del_list=RefList.empty()
 
+  method clear()=
+    objs_list<-RefList.empty();
+    tile_list<-RefList.empty();
+    del_list<-RefList.empty();
+
   method foreach_sorted f=
     self#foreach_obj f;
 
