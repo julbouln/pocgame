@@ -14,7 +14,8 @@ open Game_object;;
 open Game_tile_layer;;
 open Game_map;;
 open Game_engine;;
-(** xml part *)
+
+(** Game xml interface *)
 
 
 class xml_game_object_type_parser=

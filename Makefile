@@ -1,6 +1,6 @@
 OCAMLMAKEFILE = OCamlMakefile
 
-PACKS=poccore
+PACKS=poccore threads
 
 LIBINSTALL_FILES=*.cmi *.cmo *.cmx *.a pocgame.cma pocgame.cmxa
 

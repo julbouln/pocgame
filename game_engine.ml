@@ -15,6 +15,8 @@ open Binding;;
 open Game_visual;;
 open Game_map;;
 
+(** Engine *)
+
 class game_engine curs=
 object(self)
   inherit stage curs as super
@@ -78,6 +80,7 @@ object(self)
 
 
   method ev_parser e=
+    super#ev_parser e;
     interaction#ev_parser e
 
   method lua_init()=

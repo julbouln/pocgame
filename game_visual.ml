@@ -27,7 +27,7 @@ open Core_event;;
 
 open Binding;;
 
-
+(** Visual *)
 
 class game_visual vx vy=
 object(self)

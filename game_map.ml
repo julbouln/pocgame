@@ -19,7 +19,7 @@ open Game_tile_layer;;
 
 open Game_loading;;
 
-
+(** Map *)
 
 (** game_object types *)
 class game_object_types=
