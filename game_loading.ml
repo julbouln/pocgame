@@ -30,6 +30,7 @@ object
   val mutable data=LNone
     
   method get_lock()=
+      print_string "GAME_LOADING: get_lock()";print_newline();
     Mutex.lock m;
 (*    if data=odata then (  *)
       print_string "GAME_LOADING: Attente de changement de valeur...";print_newline();
@@ -39,12 +40,15 @@ object
 (*    )    *)
 
   method get_unlock()=
+      print_string "GAME_LOADING: get_unlock()";print_newline();
     Mutex.unlock m;    
 
   method set_lock()=
+      print_string "GAME_LOADING: set_lock()";print_newline();
     Mutex.lock m;
 
   method set_unlock()=
+      print_string "GAME_LOADING: set_unlock()";print_newline();
     Mutex.unlock m;
 
     (* to avoid interblockade *)
