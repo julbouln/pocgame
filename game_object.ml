@@ -17,6 +17,40 @@ open Olua;;
 
 open Properties;;
 
+
+(*
+ <game_type name="wol_decor"/>
+  <args>
+   <arg_string name="filename"/>
+   <arg_size name="pixel_size"/>
+   <arg_size name="case_size"/>
+  </args>
+  <graphics>
+    <drawing fun="with_alpha">
+     <values>
+      <val_color r="255" g="255" b="255"/>
+      <val_string str="load_multiple"/>
+      <val_string str="!args.filename"/> 
+      <val_size w="!args.pixel_size.w" h="!args.pixel_size.h"/>
+     </values>
+    </drawing>
+  </graphics>
+  <script>
+  </script>
+ </game_type>
+
+<game_object name="montagne2" type="wol_decor"/>
+ <args>
+  <arg_string name="filename" str="medias/misc/montagne2.png"/>
+  <arg_size name="pixel_size" w="500" h="500"/> 
+  <arg_size name="case_size" w="15" h="5"/> 
+ </args>
+
+</game_object>
+
+*)
+
+
 (*
  
  h=30x60x60 f = 108000 f
@@ -310,7 +344,6 @@ object
   method graphics_unregister unreg=
     DynArray.iter (fun o->unreg o) graphs
  
-
 end;;
 
 
