@@ -35,7 +35,7 @@ object
 
   method foreach_in_visual (f:int->int->unit)=
     for i=(rect#get_x/32) to (rect#get_x/32) + (rect#get_w/32) do
-      for j=(rect#get_y/32) to (rect#get_y/32) + (rect#get_x/32) do
+      for j=(rect#get_y/32) to (rect#get_y/32) + (rect#get_h/32) do
 	f i j;
       done;
     done;

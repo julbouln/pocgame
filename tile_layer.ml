@@ -119,7 +119,16 @@ object(self)
 
 
   method put_map (vrect:game_visual)=
-    super#foreach_map_entry1 (
+    vrect#foreach_in_visual (
+      fun x y ->
+	if self#out_of_lay x y then
+	  self#put_black x y vrect
+	else (
+	  self#put x y vrect; 
+	  (*	  self#put_border x y vrect  *)
+	)
+    )
+(*    super#foreach_map_entry1 (
       fun x y ->
 	if self#out_of_lay x y then
 	  self#put_black x y vrect
@@ -128,7 +137,7 @@ object(self)
 (*	  self#put_border x y vrect  *)
 	)
     );
-    
+*)    
   method put x y vrect=
     tiles#move ((x*tw)-vrect#get_x) ((y*th)-vrect#get_y);      
     tiles#set_cur_tile (super#get_position x y);
