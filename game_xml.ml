@@ -2,6 +2,7 @@ open Core_graphic;;
 open Core_action;;
 open Core_type;;
 open Core_xml;;
+open Core_val;;
 
 open Oxml;;
 open Oval;;

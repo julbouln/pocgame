@@ -1,4 +1,4 @@
-open Dijkstra;;
+open Game_dijkstra;;
 
 (** Pathfinding class *)
 

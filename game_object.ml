@@ -1,9 +1,9 @@
 
+open Core_val;;
 open Core_rect;;
 open Core_video;;
 open Core_medias;;
 open Core_drawing;;
-open Core_generic;;
 open Core_graphic;;
 open Core_anim;;
 open Core_action;;

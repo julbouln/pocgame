@@ -1,5 +1,5 @@
+open Ocommon;;
 
-open Core_generic;;
 open Core_rect;;
 open Core_video;;
 open Core_medias;;
