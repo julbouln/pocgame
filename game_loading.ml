@@ -61,10 +61,11 @@ object
     data
 
   method set_data (d:loading_data)=
-    print_string "GAME_LOADING: Initialisation de valeur";print_newline();
+    print_string "GAME_LOADING: Initialisation de valeur...";print_newline();
     odata<-data;
     data<-d; 
     Condition.signal cond; 
+    print_string "GAME_LOADING: Initialisé!";print_newline();
 
 end;;
 
