@@ -184,20 +184,19 @@ object(self)
 	done;
       done;
 
-
+(*
   method position_blocking (x:int) (y:int)=    
     false 
-    
-(*
+*)  
+
   method position_blocking x y=
     if self#get_tile_layer#out_of_lay x y then true 
     else
-      if self#get_decor_layer#is_object x y then
-	let o=self#get_decor_layer#get_object_by_position x y in
+      if self#get_decor_map#is_object x y then
+	let o=self#get_decor_map#get_object_by_position x y in
 	  o#get_blocking
       else false
 
-*)
 
 (* update layer *)
 
@@ -329,9 +328,9 @@ object(self)
   method put_grille vx vy x y=
     grille#move ((x*32)-vx) ((y*32)-vy);
     grille#put();
-
+(*
   method put_decor_grille (vx:int) (vy:int)=
-(*    decor_layer#foreach_object (
+    decor_map#foreach_object (
       fun k obj->
 	obj#around_object decor_layer#out_of_lay (
 	  fun x y->
@@ -340,7 +339,6 @@ object(self)
 	)
     )
 *)
-()
 
   method resize nw nh=
 
