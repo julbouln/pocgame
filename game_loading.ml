@@ -81,7 +81,7 @@ object(self)
     if Sys.file_exists "medias/iface/sablier.png" then
       new graphic_anim_from_file 67 67 "medias/iface/sablier.png" [|0;1;2;3;4;5|] 4
     else
-      new graphic_anim "none" [|0;1;2;3;4;5|] 4
+      new graphic_anim [|0;1;2;3;4;5|] 4
 
 
   method loading()=

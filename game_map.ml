@@ -332,7 +332,7 @@ object(self)
   val mutable tile_layer=new game_tile_layer w h 32 32 "medias/tiles/terrains.png"
   method get_tile_layer=tile_layer
 
-  val mutable grille=new graphic_from_file "grille" "medias/misc/grille.png" 32 32
+  val mutable grille=new graphic_from_file "medias/misc/grille.png" 32 32
 
   method put_grille vx vy x y=
     grille#move ((x*32)-vx) ((y*32)-vy);

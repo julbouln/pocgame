@@ -274,7 +274,9 @@ class game_generic_object nm wi hi gwi ghi=
 object(self)
   inherit game_obj nm wi hi gwi ghi
 (*  inherit game_action_object as action *)
-  val mutable actions=new state_actions
+  val mutable states=new state_actions
+  method get_states=states
+
   inherit lua_object as lo
  
 (** time *)
@@ -290,7 +292,7 @@ object(self)
       }
 
   method act()=
-    actions#act();
+    states#act();
     time#step();
 
 (** properties *)
@@ -360,6 +362,12 @@ end;;
 class graphics_container=
 object(self)
   inherit [graphic_object] generic_object_handler
+  inherit lua_object as lo
+
+  method add_graphic n gr=
+    print_string ("GRAPHICS_CONTAINER : add graphic "^n);print_newline();
+    self#add_object (Some n) gr;
+    self#lua_parent_of n (gr:>lua_object)
 
   method graphics_update()=()
   
@@ -457,12 +465,94 @@ object(self)
   method lua_init()=
     lua#set_val (OLuaVal.String "get_pixel_x") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_pixel_x));
     lua#set_val (OLuaVal.String "get_pixel_y") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_pixel_y));
-    
+    lua#set_val (OLuaVal.String "properties") (OLuaVal.Table props#to_lua#to_table);
+
+    self#lua_parent_of "graphics" (graphics:>lua_object);
+    self#lua_parent_of "states" (states:>lua_object);
     super#lua_init();
 
 end;; 
 
+(** xml part *)
 
+class xml_game_object_mt_parser=
+object(self)
+  inherit xml_parser
+
+  val mutable args_parser=new xml_val_ext_list_parser "args"
+  val mutable props_parser=new xml_val_ext_list_parser "properties"
+  val mutable nm=""
+
+  val mutable graphics_a=Hashtbl.create 2
+  val mutable states_a=Hashtbl.create 2
+
+  method get_val=(nm,args_parser#get_val,props_parser#get_val, graphics_a,states_a)
+  
+  method parse_attr k v=
+    match k with
+      | "name" ->nm<-v
+      | _ -> ()
+
+
+  method parse_child k v=
+    args_parser#parse_child k v;
+    props_parser#parse_child k v;
+    match k with
+      | "graphics" ->
+	  print_string "graphics meta";print_newline();
+	  let p=new xml_graphics_mt_parser in
+	    p#parse v;
+	    graphics_a<-p#get_hash
+      | "state_actions" ->
+	  print_string "states meta";print_newline();
+	  let p=new xml_states_mt_parser in
+	    p#parse v;
+	    states_a<-p#get_hash
+      | _ -> ()
+end;;
+
+class xml_game_object_parser=
+object(self)
+  inherit [game_object] xml_object_parser (fun()->new game_object "" "" 0 0 0 0) as super
+  val mutable props_parser=new xml_val_ext_list_parser "properties"
+
+  val mutable graphics_parser=(Global.get xml_default_graphics_parser)()
+  val mutable states_parser=new xml_state_actions_parser    
+
+  val mutable mt=("",new val_ext_handler,new val_ext_handler, Hashtbl.create 2,Hashtbl.create 2)
+  method set_metatype m=mt<-m
+    
+
+  method parse_child k v=
+    let (nm,vha,vhp,grh,sth)=mt in
+    super#parse_child k v;
+    props_parser#parse_child k v;
+    match k with
+      | "graphics" ->
+	  graphics_parser#set_metatype ("",grh,"");
+	  graphics_parser#parse v;	  
+      | "state_actions" ->
+	  states_parser#set_metatype ("",sth,"");
+	  states_parser#parse v;
+      | _ -> ()
+
+  method get_val=
+    let ofun()=
+      let o=
+	let args=args_parser#get_val in
+	let (gw,gh)=size_of_val (args#get_val (`String "pixel_size")) and
+	    (w,h)=size_of_val (args#get_val (`String "case_size")) in
+	  new game_object id "" gw gh w h
+      in
+	graphics_parser#init (o#get_graphics#add_graphic);
+	states_parser#init (o#get_states#add_state);
+	o#set_props props_parser#get_val;
+	self#init_object o;
+	o	  
+    in      
+      (id,ofun)
+
+end;;
 
 (** game_object types *)
 class game_object_types=
