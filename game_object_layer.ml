@@ -190,6 +190,11 @@ class ['a] game_obj_layer_hash iv wi hi max=
 object(self)
   inherit ['a] game_obj_layer iv wi hi max as super
 
+  method update_obj num=
+    let obj=self#get_object num in
+      obj#update_prect();
+      super#update_obj num;
+
   method update_action()=
     self#foreach_object (fun k o->
 			   o#act 0 0;
@@ -240,33 +245,12 @@ end;;
 class game_object_layer_hash wi hi max=
 object(self)
   inherit [game_object] game_obj_layer_hash none_obj wi hi max as super
-
-  method update_obj num=
-    let obj=self#get_object num in
-      obj#update_prect();
-      
-      super#update_obj num;
-
-  method update_action()=
-    self#foreach_object (fun k o->
-			   o#act 0 0;
-			   o#anim();
-			)
 end;;
 
 
 class game_generic_object_layer_hash wi hi max=
 object(self)
   inherit [game_generic_object] game_obj_layer_hash none_generic_obj wi hi max as super
-  method update_obj num=
-    let obj=self#get_object num in
-      obj#update_prect();      
-      super#update_obj num;
-
-
-
-
-
 end;;
 
 class game_generic_object_types=

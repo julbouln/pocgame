@@ -31,15 +31,6 @@ object
 end;;
 
 
-class virtual game_map_actions=
-object
-  method virtual map_add_decor:string option->string->int->int->string
-  method virtual map_copy_decor : string option -> string -> string
-  method virtual map_move_decor:string->int->int->unit
-  method virtual map_del_decor:string->unit
-end;;
-
-
 class ['a] game_object_map (iv:'a) wi hi max =
 object(self)
   inherit ['a] game_obj_layer_hash iv wi hi max
@@ -51,7 +42,6 @@ object(self)
       let res=Array.of_list p#get_list in
 	Array.iteri (
 	  fun r v-> 
-(*	    let nm=("decor"^(string_of_int r)) in *)
 	    let nm=v.oname in
 	      d nm v;
 	) res;
@@ -163,7 +153,6 @@ object(self)
     ) a;
 end;;
 
-(*['tl,'dl,'dt] *)
 class virtual ['tl] game_virtual_map w h=
 object(self)
   val mutable map_actions=Hashtbl.create 2
@@ -178,12 +167,6 @@ object(self)
   method virtual get_rect : rectangle
 
   method virtual get_tile_layer : 'tl
-(*
-  method virtual get_decor_layer : 'dl
-  method virtual get_decor_type : 'dt
-*)
-  method virtual decor_types_from_xml : string -> unit
-
 
   method virtual resize : int -> int -> unit
 
@@ -200,11 +183,6 @@ object(self)
 	    self#get_tile_layer#set_position i j (t+mt); 
 	done;
       done;
-
-(*
-  method position_blocking (x:int) (y:int)=    
-    false 
-*)  
 
   method position_blocking x y=
     if self#get_tile_layer#out_of_lay x y then true 
@@ -245,34 +223,12 @@ object(self)
 	  act#map_from_load v
     ) a;
 
-  (* save *)
-(*
- method private decor_to_save=
-    let a=DynArray.create() in
-    self#get_decor_layer#foreach_object (
-      fun i o->
-	DynArray.add a (o#get_id,o#get_name,o#get_lua,o#get_rect#get_x,o#get_rect#get_y);
-    );
-      DynArray.to_array a
-*)
-    
   method private tile_to_save=
     (self#get_tile_layer#get_lay,self#get_tile_layer#get_border_layer_lay)
 
   method save f=
     map_file#save f (self#get_rect#get_w,self#get_rect#get_h,self#tile_to_save,self#objs_to_save)
       
-(*
-(* load *)
-  method private decor_from_load (a:(string*string*string*int*int) array) (add_decor:int->int->'a->string)=
-    Array.iter (
-      fun v->
-	let (id,nm,pel,x,y)=v in
-	let o=(self#get_decor_type#get_object_type nm) in 
-	let n=add_decor x y o in self#get_decor_layer#replace_hash n id;
-								 
-    ) a;
-*)
   method private tile_from_load al=
     let (a,b)=al in
       self#get_tile_layer#set_lay a;
@@ -285,7 +241,7 @@ object(self)
       self#tile_from_load tile_ar;
       self#objs_from_load obj_ar;
       ()
-(*      self#decor_from_load decor_ar add_decor; *)
+
 
 end;;
 
@@ -296,11 +252,6 @@ object(self)
   val mutable rect=new rectangle 0 0 w h
   method get_rect=rect
 
-(*
-  val mutable decor_type=new game_generic_object_types
-  method get_decor_type=decor_type
-*)
-
   val mutable tile_layer=new game_generic_tile_layer w h 32 32
   method get_tile_layer=tile_layer
 
@@ -308,22 +259,7 @@ object(self)
   method resize nw nh=
     rect<-new rectangle 0 0 nw nh;
     tile_layer<-new game_generic_tile_layer nw nh 32 32;
-(*    decor_layer<-new game_generic_object_layer_hash nw nh 500; *)
 
-(*
-  method decor_types_from_xml f=
-    let decor_xml=new xml_node (Xml.parse_file f) in
-    let p=new xml_decors_parser in p#parse decor_xml;
-      let res=Array.of_list p#get_list in
-	Array.iteri (
-	  fun r v-> 
-(*	    let nm=("decor"^(string_of_int r)) in *)
-	    let nm=res.(r).oname in
-
-	      self#get_decor_type#add_object_type nm (fun()->new game_generic_object nm res.(r).ocw res.(r).och res.(r).ow res.(r).oh )
-
-	) res;
-*)
 end;;
 
 
@@ -333,9 +269,6 @@ object(self)
   val mutable rect=new rectangle 0 0 w h
   method get_rect=rect
 
-(*  val mutable decor_type=new game_object_types
-  method get_decor_type=decor_type
-*)
   val mutable tile_layer=new game_tile_layer w h 32 32 "medias/tiles/terrains.png"
   method get_tile_layer=tile_layer
 
@@ -365,7 +298,5 @@ object(self)
   method resize nw nh=
     rect<-new rectangle 0 0 nw nh;
     tile_layer<-new game_tile_layer nw nh 32 32 "medias/tiles/terrains.png";
-
-(*    decor_layer<-new game_object_layer_hash nw nh 500; *)
 
 end;;
