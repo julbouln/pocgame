@@ -47,11 +47,15 @@ new graphic_object gwi ghi tilesfile mirror is_shaded
 
     method graphic=graphic
 
+    method get_graphic=graphic
+
     method set_graphic()=graphic<-new graphic_object gwi ghi tilesfile mirror is_shaded
 
     val mutable need_put=true
 
+(* go in obj ? *)
     val mutable prect=new rectangle 0 0 gwi ghi
+    method get_prect=prect
 
     val mutable direction=0
     method get_direction=direction
@@ -132,12 +136,13 @@ new graphic_object gwi ghi tilesfile mirror is_shaded
 end;; 
 
 
+
 class game_object nm gwi ghi tilesfile mirror is_shaded wi hi=
 object (self)
-  inherit game_graphic_object nm gwi ghi tilesfile mirror is_shaded wi hi
 
-    initializer
-      self#init_bcentre()
+  inherit game_graphic_object nm gwi ghi tilesfile mirror is_shaded wi hi
+  initializer
+    self#init_bcentre()
 
     val mutable sw=0
     val mutable sh=0
@@ -164,14 +169,13 @@ object (self)
     method get_blocking=blocking
     method get_can_mulsel=false
 
-    method get_graphic=graphic
 
     val mutable will_dead=false
     method i_will_dead=will_dead<-true;
     method will_i_dead=will_dead;
 
 
-    method get_prect=prect
+
 
 
     method print_name=print_string name
@@ -239,6 +243,18 @@ object (self)
 
 
   end;;
+
+(*
+class game_object nm gwi ghi tilesfile mirror is_shaded wi hi=
+object(self)
+  inherit game_graphic_object nm gwi ghi tilesfile mirror is_shaded wi hi
+  inherit game_object_NEW nm wi hi
+
+  initializer
+    self#init_bcentre()
+
+end;;
+*)
 
 (** FROM POCENGINE *)
 (** graphical canvas *)
