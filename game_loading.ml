@@ -93,7 +93,7 @@ object(self)
 	li#get_unlock();
 	Thread.delay (Random.float (0.2));
       done;
-      li#get_unlock();
+
       print_loading_data_t !d;
     print_string "GAME_LOADING: Fin ...";print_newline();
 
