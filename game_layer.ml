@@ -29,6 +29,18 @@ object (self)
 	  ) slay
       ) lay;
       DynArray.to_list a
+
+(* must have w,h set to work *)
+  method from_list l=
+    let c=ref 0 in
+      List.iter(
+	fun v->
+	  let y= !c / rect#get_w in
+	  let x= !c - (rect#get_w * y) in
+	    self#set_position x y v;
+	    c:= !c+1;
+      ) l;
+      
     
   method out_of_lay x y=
     if x>=0 && y>=0 && x<rect#get_w && y<rect#get_h then false else true 

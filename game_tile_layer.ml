@@ -37,6 +37,26 @@ object(self)
        ]
       )
 
+  method from_xml x=
+    match x with
+      | Xml.Element (id,attr,childs)->
+	  List.iter (
+	    fun c ->
+	    match c with
+	      | Xml.PCData d->
+		  let tl=Str.split_delim (Str.regexp "|") d in
+		    self#from_list (
+		      List.map (
+			fun t->
+			  match t with 
+			    | x when x<>"" -> Some (int_of_string t)
+			    | _ -> None
+		      ) tl);
+	      | _ ->()
+	  ) childs;
+      | _ ->()
+
+
   method put_map (vrect:game_visual)=()
 end;;
 
