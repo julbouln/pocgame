@@ -54,38 +54,36 @@ object(self)
     obj_type#get_object_type nm
 
 
-
+  method add_object_to_canvas o=
+    (match canvas with 
+       | Some cvas->o#graphics_register cvas#add_obj;
+       | None -> ());
+  method del_object_from_canvas o=
+    (match canvas with 
+       | Some cvas->o#graphics_unregister cvas#del_obj;
+       | None -> ());
 
   (** general *)
   method add_object_at (id:string option) (o:'a) (x:int) (y:int)=    
-
-    o#move x y;
+    self#add_object_to_canvas o;
     let n=self#add_object id o in
-(*      print_string ("GAME_OBJECT_MAP: add object "^n);print_newline(); *)
-(*      o#lua_init();*)
+      ignore(o#lua_init());
       self#lua_parent_of n (o:>lua_object);
+      o#move x y;
       n
 	  
   method update()=
-    self#clear();
     self#update_obj_all();
     self#update_action(); 
 
 
   method add_object_from_type id t x y=
     let o=self#get_object_from_type t in
-      o#set_name t;
-      (match canvas with 
-	 | Some cvas->o#graphics_register cvas#add_obj;
-	 | None -> ());
       self#add_object_at id o x y 
 
   method delete_object id=
     let o=self#get_object id in
-      (match canvas with 
-	 | Some cvas->o#graphics_unregister cvas#del_obj;
-	 | None -> ());
-
+      self#del_object_from_canvas o;
       lo#get_lua#del_val (OLuaVal.String id) ;
       super#delete_object id;
 
@@ -177,9 +175,7 @@ object(self)
 
     self#lua_parent_of "types" (obj_type:>lua_object); 
 
-
-
-   lo#lua_init();
+    lo#lua_init();
 
 end;;
 
@@ -253,10 +249,10 @@ object(self)
     
   method add_object_map (s:string) (o:game_object_map)=
 (*    print_string "add object map";print_newline(); *)
-(*    ignore(o#lua_init()); *)
-    self#lua_parent_of s (o:>lua_object);
     o#set_canvas canvas;
     ignore(object_maps#add_object (Some s) o);
+    ignore(o#lua_init()); 
+    self#lua_parent_of s (o:>lua_object);
     
   method get_object_map (s:string)=
     object_maps#get_object s
@@ -432,7 +428,8 @@ object(self)
     lua#set_val (OLuaVal.String "save_to_file") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) self#save_to_file);
 
 
-    actions#lua_init();
+    actions#set_id "actions";
+    ignore(actions#lua_init());
     self#lua_parent_of "actions" (actions:>lua_object);
 
     lo#lua_init();

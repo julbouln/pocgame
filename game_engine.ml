@@ -62,7 +62,9 @@ object(self)
   initializer
     map#set_canvas (Some canvas);
 
-
+  method on_load()=
+    super#on_load();
+    ignore(self#lua_init());
 
   method on_loop()=
     super#on_loop();
@@ -79,7 +81,6 @@ object(self)
     interaction#ev_parser e
 
   method lua_init()=
-
     lua#set_val (OLuaVal.String "put_object_map_grille") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) (self#put_object_map_grille));
 
     ignore(interaction#lua_init());
@@ -95,75 +96,3 @@ object(self)
   
 end;;
 
-
-open Interface;;
-open Iface_object;;
-
-
-
-(*let rec usleep sec = ignore (Unix.select [] [] [] sec);;*)
-let usleep sec=Thread.delay sec;;
-
-
-(*
-class game_engine_with_iface curs iface_file=
-object(self)
-  val mutable engine=new game_engine curs
-  inherit iface_stage curs iface_file as iface
-
-  method get_map=engine#get_map
-
-  val mutable engine_iobj=new iface_object video#get_w video#get_h 
-  method get_iobj=engine_iobj
-
-  method on_load()=
-
-    engine#on_load();
-    iface#on_load();
-
-    ignore(self#lua_init());
-
-
-    engine_iobj#set_layer (-1);
-    engine_iobj#move 0 0;
-    engine_iobj#show();
-    engine_iobj#set_grab_focus true;
-(*    engine_iobj#set_lua_script engine#get_lua_script; *)
-    engine_iobj#lua_parent_of "engine" (engine:>lua_object);
-    ignore(engine_iobj#lua_init());
-    
-    iface#get_iface#iface_add_object "engine" engine_iobj;
-    ignore(engine_iobj#get_lua#exec_val_fun (OLuaVal.String "on_load") [OLuaVal.Nil]);
-
-
-  val mutable fpsgr=new graphic_text "fpsinfo" (FontEmbed) (200,200,200) 
-					 
-  method on_loop()=
-
-    engine#on_loop();
-
-      ignore(engine_iobj#get_lua#exec_val_fun (OLuaVal.String "on_loop") [OLuaVal.Nil]);
-    iface#on_loop();
-    curs#put();  
-    fpsgr#move 8 (video#get_h - 16);
-    fpsgr#put();
- 
-    video#flip();
-
-(*    print_string "fps:";print_int (fcount/lcount);print_newline(); *)
-    fpsgr#set_text ("fps: "^string_of_int(fcount/lcount)); 
-
-    
-
-  method ev_parser e=
-    iface#ev_parser e;
-    
-  method lua_init()=
-    ignore(engine#lua_init());
-    self#lua_parent_of "engine" (engine:>lua_object);
-
-    iface#lua_init();
-
-
-end;;
-*)

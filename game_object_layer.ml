@@ -20,7 +20,11 @@ exception No_obj_at_position of (int*int);;
 class ['a] game_obj_layer wi hi=
   object (self)
     inherit [string] game_generic_layer wi hi as super
-    inherit ['a] generic_object_handler
+    inherit ['a] generic_object_handler as oh
+
+
+    method clear()=
+      oh#clear()
 
 
     method get_object_at_position x y=            
@@ -35,6 +39,7 @@ class ['a] game_obj_layer wi hi=
 	| None ->false
 	  
     method update_obj_all()=
+      super#clear();
       self#foreach_object(
 	fun k ob->self#update_obj k;
       );
@@ -58,7 +63,7 @@ class ['a] game_obj_layer wi hi=
 
     method update_action()=
       self#foreach_object (fun k o->
-			   o#act();
+		     	     o#act();
 			)
 
   end;;

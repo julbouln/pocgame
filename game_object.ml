@@ -32,61 +32,6 @@ object(self)
       let px=prect#get_x and
 	  py=prect#get_y in
 	rect#set_position (px/32) (py/32)
-(*      let px=prect#get_x and
-	  py=prect#get_y and
-	  cx=rect#get_x and
-	  cy=rect#get_y in
-
-      let xdif= 32-px and
-	  ydif= 32-py in
-
-	
-	if px<0 then (
-	  if py>=0 && py<32 then (
-	    rect#set_position (cx-1) (cy);
-	    prect#set_position (32+px) (py);
-	  );
-	  if py<0 then (
-	    rect#set_position (cx-1) (cy-1);
-	    prect#set_position (32+px) (32+py);
-	  );
-	  if py>=32 then (
-	    rect#set_position (cx-1) (cy+1);
-	    prect#set_position (32+px) (py-32);
-	  )
-	);
-
-
-	if px>=0 && px<32 then (
-	  if py>=0 && py<32 then (
-	    rect#set_position cx (cy);
-	    prect#set_position px (py);
-	  );
-	  if py<0 then (
-	    rect#set_position (cx) (cy-1);
-	    prect#set_position (px) (32+py);
-	  );
-	  if py>=32 then (
-	    rect#set_position (cx) (cy+1);
-	    prect#set_position (px) (py-32);
-	  )
-	);
-
-	if px>=32 then (
-	  if py>=0 && py<32 then (
-	    rect#set_position (cx+1) (cy);
-	    prect#set_position (px-32) (py);
-	  );
-	  if py<0 then (
-	    rect#set_position (cx+1) (cy-1);
-	    prect#set_position (px-32) (32+py);
-	  );
-	  if py>=32 then (
-	    rect#set_position (cx+1) (cy+1);
-	    prect#set_position (px-32) (py-32);
-	  )
-	);
-*)
 
     (** direction *)
     val mutable direction=0
@@ -222,8 +167,6 @@ object(self)
 
       lua#set_val (OLuaVal.String "get_bcentre_x") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_bcentre_x));
       lua#set_val (OLuaVal.String "get_bcentre_y") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_bcentre_y));
-
-
 
 
       lua#set_val (OLuaVal.String "scroll") (OLuaVal.efunc (OLuaVal.int **->> OLuaVal.unit) self#scroll);
