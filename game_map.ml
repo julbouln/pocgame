@@ -185,13 +185,14 @@ object(self)
       done;
 
   method position_blocking x y=
-    if self#get_tile_layer#out_of_lay x y then true 
+    if self#get_tile_layer#out_of_lay x y then true else false
+(*
     else
       if self#get_decor_map#is_object x y then
 	let o=self#get_decor_map#get_object_by_position x y in
 	  o#get_blocking
       else false
-
+*)
 
 (* update layer *)
 

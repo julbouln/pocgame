@@ -478,8 +478,8 @@ object(self)
 	  (y1+y2)/2
 	)
 
-    method get_pixel_x=(rect#get_x*32) + prect#get_x - (fst bcentre) +16
-    method get_pixel_y=(rect#get_y*32) + prect#get_y - (snd bcentre) +16
+    method get_pixel_x=(rect#get_x*32) + prect#get_x - (fst bcentre) + 16
+    method get_pixel_y=(rect#get_y*32) + prect#get_y - (snd bcentre) + 16
 
 end;; 
 
