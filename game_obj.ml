@@ -41,8 +41,8 @@ object(self)
   inherit obj nm wi hi
   inherit game_action_object
 
-    val mutable graphic=new g_object "none"
-(*new graphic_object gwi ghi tilesfile mirror is_shaded *)
+    val mutable graphic=(*new g_object "none"*)
+new graphic_object gwi ghi tilesfile mirror is_shaded 
 
 
     method graphic=graphic
@@ -266,7 +266,7 @@ object(self)
 
 
   method add_obj (o:game_object)=    
-    o#set_graphic();
+(*    o#set_graphic(); *)
     RefList.add objs_list o;
 
   method del_obj (od:game_object)=
