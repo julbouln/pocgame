@@ -410,6 +410,8 @@ object(self)
 
     method graphics_register (reg:graphic_generic_object->unit)=
       reg graphic
+    method graphics_unregister (unreg:graphic_generic_object->unit)=
+      unreg graphic
     method graphics_update ()=
       self#graphic#move (self#get_pixel_x) (self#get_pixel_y);
 
@@ -480,7 +482,7 @@ object (self)
 
   method lua_register (interp:lua_interp)=
     interp#parse (id^"={}");
-props#lua_register id interp
+    props#lua_register id interp
 
 end;;
 
