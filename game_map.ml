@@ -63,9 +63,10 @@ object(self)
       print_string ("GAME_MAP:xml loaded");print_newline();
 	Array.iter (
 	  fun v-> 
+	    print_string "GAME_MAP: new type";print_newline();
 	    let o=v() in
 	    let nm=o#get_name in
-	    print_string ("ADD TYPE:"^nm);print_newline(); 
+	    print_string ("GAME_MAP: add type "^nm);print_newline(); 
 	      self#add_object_type nm v
 (*
 (fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
