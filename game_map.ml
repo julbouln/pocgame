@@ -65,7 +65,7 @@ object(self)
 	  fun v-> 
 	    let o=v() in
 	    let nm=o#get_name in
-(*	      print_string ("ADD TYPE:"^nm);print_newline(); *)
+	      print_string ("ADD TYPE:"^nm);print_newline(); 
 	      self#add_object_type nm v
 (*
 (fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
