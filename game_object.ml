@@ -333,7 +333,7 @@ object(self)
   method set_lua l=lua_code<-l
   method get_lua=lua_code
        
-  val mutable blocking=true;
+  val mutable blocking=false;
   method set_blocking b=blocking<-b
   method get_blocking=blocking
 
