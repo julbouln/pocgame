@@ -20,13 +20,28 @@
 open Rect;;
 open Video;;
 
+open Low;;
+open Object;;
+
 class game_visual vx vy=
 object
   val mutable rect=new rectangle vx vy (video#get_w) (video#get_h)
   val mutable change=false
 
+  val mutable black=new graphic_real_object "outofmap" (tile_box 32 32 (0,0,0));
+
   method is_in x y=
      x>=rect#get_x && y>=rect#get_y && x<rect#get_x+rect#get_w && y<rect#get_y+rect#get_h
+
+  method foreach_in_visual (f:int->int->unit)=
+    for i=(rect#get_x/32) to (rect#get_x/32) + (rect#get_w/32) do
+      for j=(rect#get_y/32) to (rect#get_y/32) + (rect#get_x/32) do
+	f i j;
+      done;
+    done;
+
+
+
 
   method reinit()=change<-false
   method set_position x y=rect#set_position x y;change<-true

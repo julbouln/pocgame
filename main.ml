@@ -64,7 +64,7 @@ object(self)
 
   val mutable screen_tile=(tile_empty())
   val mutable scr_w=800
-  val mutable scr_h= 600
+  val mutable scr_h=600
 
   method scr_w=scr_w
   method scr_h=scr_h
@@ -122,7 +122,7 @@ method medias_init()=
   if !windowed=true then fullscreen:=false;
 
   screen_tile<-video#init (scr_w) (scr_h) 16 (!fullscreen);
-  video#set_def_size 800 600;
+  video#set_def_size 1024 768;
 
   audio#init 44100 2 ;
   

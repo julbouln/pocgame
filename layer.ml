@@ -10,7 +10,7 @@ class layer wi hi=
     val mutable rect=new rectangle 0 0 wi hi
 
     val mutable lay=
-      Array.make_matrix wi hi 0 
+      Array.make_matrix wi hi (-1)
 
     method out_of_lay x y=
       if x>=0 && y>=0 && x<wi && y<hi then false else true 
@@ -23,6 +23,13 @@ class layer wi hi=
     (* NOTE : only used by minimap *)
     method foreach_map_entry d=
       Array.iteri (fun i v->(Array.iteri (fun j w->(d i j w)) v))  lay
+
+    method foreach_map_entry1 (d:int->int->unit)=
+      for i= -1 to Array.length lay +1 do
+	for j= -1 to Array.length (lay.(0)) +1 do
+	  d j i 
+	done;
+      done;
 
     method clean()=
       self#foreach_map_entry (fun i j v->self#set_position i j 0)

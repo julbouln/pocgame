@@ -12,9 +12,80 @@ open Obj_type;;
 open Layer;;
 open Obj_layer;;
 
-class game_object nm gwi ghi tilesfile mirror is_shaded wi hi=
-object (self)
+class game_action_object=
+object(self)
+
+(* ACTION NEW *)
+    val mutable state_manager=new state_object_manager 
+    method set_state nm=
+      state_manager#set_state nm 0
+
+    method set_act a=state_manager#current_state#set_action a
+    method get_current_state=state_manager#current_state
+    method get_state=state_manager#get_cur_state
+
+    method anim()=state_manager#current_state#anim();
+    method act (vx:int) (vy:int)=
+      state_manager#act();
+
+    method act_start()=state_manager#current_state#start()
+    method act_stop()=state_manager#current_state#stop()
+
+(* /ACTION NEW *)
+
+end;;
+
+
+class game_graphic_object nm gwi ghi tilesfile mirror  is_shaded wi hi=
+object(self)
   inherit obj nm wi hi
+  inherit game_action_object
+
+    val mutable graphic=new g_object "none"
+(*new graphic_object gwi ghi tilesfile mirror is_shaded *)
+
+
+    method graphic=graphic
+
+    method set_graphic()=graphic<-new graphic_object gwi ghi tilesfile mirror is_shaded
+
+    val mutable need_put=true
+
+    val mutable prect=new rectangle 0 0 gwi ghi
+
+    val mutable direction=0
+    method get_direction=direction
+    method turn dir=direction<-dir;
+
+    method update_prect()=
+      let px=prect#get_x and
+	py=prect#get_y and
+	cx=rect#get_x and
+	cy=rect#get_y in
+      let xdif= 32-px and
+	ydif= 32-py in
+
+	if px<0 then (rect#set_position (cx-1) cy;prect#set_position (32+px) py);
+	if px>32 then (rect#set_position (cx+1) cy;prect#set_position (px-32) py);
+      	if py<0 then (rect#set_position cx (cy-1);prect#set_position px (32+py));
+	if py>32 then (rect#set_position cx (cy+1);prect#set_position px (py-32));
+
+
+(* GRAPH *)
+    method init_put()=need_put<-true;
+
+(* GRAPH *)
+    method put vx vy (tw:int) (th:int)=
+      if need_put==true then (
+	let cur=self#graphic#get_cur_tile in
+	self#graphic#set_cur_tile (((self#graphic#get_tiles_size)/8)*direction + 
+				   self#get_current_state#get_frame);
+	  (*	  self#graphic#set_cur_tile ( self#get_current_state#get_frame); *)
+	  self#graphic#move (self#get_pixel_x - vx) (self#get_pixel_y - vy);
+	  self#graphic#put();
+	  need_put<-false;
+      )
+
 
     val mutable bcentre=(0,0)
     method get_bcentre_x=(fst bcentre)
@@ -43,8 +114,27 @@ object (self)
 	bcentre<-
 	(
 	  (x1+x2)/2,
-  (y1+y2)/2
+	  (y1+y2)/2
 	)
+
+    method get_pixel_x=rect#get_x *32 + 16 + prect#get_x - (fst bcentre) 
+    method get_pixel_y=rect#get_y *32 + 16 + prect#get_y - (snd bcentre) 
+
+(* shadow *)    
+    val mutable shadow=new graphic_object 34 11 "medias/misc/shadow.png" false false
+    method put_shadow (vx:int) (vy:int) (tw:int) (th:int)=
+      shadow#move (self#get_pixel_x - vx + self#graphic#get_rect#get_w/8) (self#get_pixel_y - vy + (4*self#graphic#get_rect#get_h)/5 + 4);
+      shadow#put();
+
+    method put_shaded (vx:int) (vy:int) (tw:int) (th:int)=()
+
+
+end;; 
+
+
+class game_object nm gwi ghi tilesfile mirror is_shaded wi hi=
+object (self)
+  inherit game_graphic_object nm gwi ghi tilesfile mirror is_shaded wi hi
 
     initializer
       self#init_bcentre()
@@ -58,32 +148,6 @@ object (self)
     method set_layer l=layer<-l
     method get_layer=layer
 
-    val mutable prect=new rectangle 0 0 gwi ghi
-
-    method update_prect()=
-      let px=prect#get_x and
-	py=prect#get_y and
-	cx=rect#get_x and
-	cy=rect#get_y in
-      let xdif= 32-px and
-	ydif= 32-py in
-
-	if px<0 then (rect#set_position (cx-1) cy;prect#set_position (32+px) py);
-	if px>32 then (rect#set_position (cx+1) cy;prect#set_position (px-32) py);
-      	if py<0 then (rect#set_position cx (cy-1);prect#set_position px (32+py));
-	if py>32 then (rect#set_position cx (cy+1);prect#set_position px (py-32));
-
-
-
-    val mutable direction=0
-    method get_direction=direction
-    method turn dir=direction<-dir;
-
-
-    val mutable graphic=new graphic_object gwi ghi tilesfile mirror is_shaded 
-    method graphic=graphic
-
-    val mutable need_put=true
 
     val mutable act_freq_cur=0;
     val mutable act_freq=4;
@@ -117,8 +181,6 @@ object (self)
     method resize w h=rect#set_size w h
     method move x y=self#set_case_position x y
 
-
-
     method dump()=      
       if name<>"none" then (
 	print_string "UNIT DUMP : ";
@@ -129,44 +191,8 @@ object (self)
        );
 
 
-(* ACTION NEW *)
-    val mutable state_manager=new state_object_manager 
-    method set_state nm=
-      state_manager#set_state nm 0
-
-    method set_act a=state_manager#current_state#set_action a
-    method get_current_state=state_manager#current_state
-    method get_state=state_manager#get_cur_state
-
-    method anim()=state_manager#current_state#anim();
-    method act (vx:int) (vy:int)=
-      state_manager#act();
-
-    method act_start()=state_manager#current_state#start()
-    method act_stop()=state_manager#current_state#stop()
-
-(* /ACTION NEW *)
-
-(* GRAPH *)
-    method init_put()=need_put<-true;
-
-(* GRAPH *)
-    method put vx vy (tw:int) (th:int)=
-      if need_put==true then (
-	let cur=self#graphic#get_cur_tile in
-	self#graphic#set_cur_tile (((self#graphic#get_tiles_size)/8)*direction + self#get_current_state#get_frame);
-(*	  self#graphic#set_cur_tile ( self#get_current_state#get_frame); *)
-	self#graphic#move (self#get_pixel_x - vx) (self#get_pixel_y - vy);
-	self#graphic#put();
-	need_put<-false;
-       )
-
-
     method set_case_position x y=
       rect#set_position x y
-
-    method get_pixel_x=rect#get_x *32 + 16 + prect#get_x - (fst bcentre) 
-    method get_pixel_y=rect#get_y *32 + 16 + prect#get_y - (snd bcentre) 
 
     method get_case_x=rect#get_x
     method get_case_y=rect#get_y
@@ -181,14 +207,13 @@ object (self)
 	done;
       done;
 
-
     method around_object1 out_of_map (f:int->int->unit)=
       let left=(self#get_case_x - self#get_case_w/2 -1)  
       and right=(self#get_case_x + self#get_case_w/2 +1)
       and top=(self#get_case_y - self#get_case_h/2 -1)
       and bottom=(self#get_case_y + self#get_case_h/2 +1) 
       in
-
+	
 	for x=(self#get_case_x - self#get_case_w/2 -1) to (self#get_case_x + self#get_case_w/2 +1) do
 	  for y=(self#get_case_y - self#get_case_h/2 -1) to (self#get_case_y + self#get_case_h/2 +1) do
 	    if out_of_map x y=false	     
@@ -197,16 +222,11 @@ object (self)
 		&& (x<>left || y<>bottom)
 		&& (x<>right || y<>top)
 		&& (x<>right || y<>bottom) then
-	      f x y	    
+		  f x y	    
+	  done;
 	done;
-      done;
+	
 
-
-
-
-
-    method put_shadow (vx:int) (vy:int) (tw:int) (th:int)=()
-    method put_shaded (vx:int) (vy:int) (tw:int) (th:int)=()
 
     method set_life (l:int)=()
     method get_life=0
@@ -246,7 +266,8 @@ object(self)
 
 
   method add_obj (o:game_object)=    
-	RefList.add objs_list o;
+    o#set_graphic();
+    RefList.add objs_list o;
 
   method del_obj (od:game_object)=
   RefList.filter
@@ -328,14 +349,14 @@ object(self)
    self#foreach_obj (
       fun o->
 	if o#get_rect#get_x*32>vx & o#get_rect#get_y*32>vy & vx<(o#get_rect#get_x*32+800) & vy<(o#get_rect#get_y*32+600) then 
-	if (check_fow o#get_case_x o#get_case_y)==2 then
-(*	  o#init_put(); *)
-	  (
-
-	    o#put_shadow vx vy tw th; 
-	    o#put vx vy tw th;	
-	  )
-    )
+	  if (check_fow o#get_case_x o#get_case_y)==2 then
+	    o#init_put(); 
+	(
+	  
+	  o#put_shadow vx vy tw th; 
+	  o#put vx vy tw th;	
+	)
+   )
 
 
 end;;
@@ -367,3 +388,48 @@ object(self)
 			   o#anim();
 			)
 end;;
+
+
+
+class ['a] obj_layer_hash iv wi hi max=
+object(self)
+  inherit ['a] obj_layer iv wi hi max as super
+
+
+  val mutable hash=Hashtbl.create 2
+  val mutable hash_rev=Hashtbl.create 2
+
+  method add_hash (k:string) (n:int)=Hashtbl.add hash k n;Hashtbl.add hash_rev n k
+  method get_hash k=Hashtbl.find hash k
+  method del_hash k=Hashtbl.remove hash k
+  method get_hash_rev n=Hashtbl.find hash_rev n
+
+  method is_hash k=Hashtbl.mem hash k
+
+  method get_hash_object (k:string)=
+    self#get_object (self#get_hash k)
+end;;
+
+class game_object_layer_hash wi hi max=
+object(self)
+  inherit [game_object] obj_layer_hash none_obj wi hi max as super
+
+  method init_put()=
+    self#foreach_object (fun k o->
+			o#init_put();
+		     );
+
+  method update_obj num=
+    let obj=self#get_object num in
+      obj#update_prect();
+      
+      super#update_obj num;
+
+  method update_action()=
+    self#foreach_object (fun k o->
+			   o#act 0 0;
+			   o#anim();
+			)
+end;;
+
+
