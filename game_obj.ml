@@ -147,9 +147,10 @@ object (self)
 
 (* /ACTION NEW *)
 
-
+(* GRAPH *)
     method init_put()=need_put<-true;
 
+(* GRAPH *)
     method put vx vy (tw:int) (th:int)=
       if need_put==true then (
 	let cur=self#graphic#get_cur_tile in
@@ -246,6 +247,14 @@ object(self)
 
   method add_obj (o:game_object)=    
 	RefList.add objs_list o;
+
+  method del_obj (od:game_object)=
+  RefList.filter
+    ( fun o->
+	if o#get_name=od#get_name then false else true
+)
+    objs_list
+
 
   method del_dead ()=
     RefList.filter 
