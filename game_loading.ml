@@ -21,7 +21,10 @@ object
   val mutable data=LNone
 
   method get_lock()=
-    Mutex.lock m;
+    while (Mutex.try_lock m=false) do
+      Thread.delay (Random.float (0.15))
+    done;
+
     Condition.wait cond m;
  
   method get_unlock()=
@@ -32,7 +35,9 @@ object
       d
 
   method set_lock()=
-    Mutex.lock m;
+    while (Mutex.try_lock m=false) do
+      Thread.delay (Random.float (0.15))
+    done;
 
   method set_unlock()=
     Condition.signal cond;
