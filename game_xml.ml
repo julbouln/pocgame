@@ -74,19 +74,3 @@ class xml_game_object_types_parser=
 object(self)
   inherit [(unit->game_object)] xml_stringhash_parser "game_object_type" (fun()->new xml_game_object_type_parser)
 end;;
-
-
-(* DEPRECATED *)
-let init_game_object_types_from_xml f add_obj=
-(*  let xinc=xinclude_process_file f in
-  let obj_xml=new xml_node (Xml.parse_string xinc) in *)
-  let obj_xml=xml_node_from_file f in
-  let pmt=new xml_game_object_types_parser in
-    pmt#parse obj_xml;
-    let h=pmt#get_hash in
-      Hashtbl.iter (
-	fun k v ->
-	  add_obj k v
-      ) h;
-
-

@@ -34,6 +34,7 @@ class game_object_map wi hi=
 object(self)
   inherit generic_object
   inherit lua_object as lo
+  inherit xml_object
   inherit [game_object] game_obj_layer wi hi as super
 
   val mutable canvas=None
@@ -96,76 +97,55 @@ object(self)
     let no=(self#get_object_from_type o#get_name) in
     self#add_object_at cid no o#get_rect#get_x o#get_rect#get_y
 
+  method xml_to_init()=
+    xml#set_tag "game_object_map";
 
-  method to_xml_string=
-    let x=self#to_xml in
-      Xml.to_string x
-
-  method to_xml=
-    Xml.Element 
-      ("game_object_map",[("id",self#get_id)],
-	 let a=DynArray.create() in
-	   self#foreach_object (
+    let a=DynArray.create() in
+      self#foreach_object (
 	     fun k o->
-	       let e=
-		 Xml.Element 
-		   ("game_object",[("id",k);("type",o#get_name)],[
-		      (* args *)
-		      (
-			let vh=new val_ext_handler in
-			 vh#set_val (`String "position") (`Position (o#get_rect#get_x,o#get_rect#get_y));
-			 vh#set_id "args";
-			 let n=vh#to_xml in
-			   n#to_xml_t
-		      );
-		      (* properties *)
-		      (
-			let pr=(o#get_props) in
-			 let n=pr#to_xml in
-			   n#to_xml_t
-				   
+	       let e=new xml_node in
+		 e#of_list [
+		   Tag "game_object";
+		   Attribute ("id",k);
+		   Attribute ("type",o#get_name);
+		 ];
+		 (* args *)
+		 let vh=new val_ext_handler in
+		   vh#set_val (`String "position") (`Position (o#get_rect#get_x,o#get_rect#get_y));
+		   vh#set_id "args";
+		   
+		   e#add_child vh#to_xml;
+		   (* properties *)
+		   let pr=(o#get_props) in
+		     e#add_child pr#to_xml;
 
-		      )		      
-		    ]) in
-		 DynArray.add a e;
-	   );
-	   DynArray.to_list a
-       );
+		     DynArray.add a e#to_node;
+      );
+      
+      xml#of_list (DynArray.to_list a)
 
 
-  method from_xml x=
-    match x with
-      | Xml.Element(t,attr,childs)->
-	 List.iter (
-	   fun c->
-	     match c with
-	       | Xml.Element(ct,cattr,cchilds)->
-		   let args=new val_ext_handler and
-		       props=new val_ext_handler in
-		     List.iter (
-		       fun cc->
-			 match (Xml.tag cc) with
-			 | "args" -> 
-			     let n=new xml_node in
-			       n#of_xml_t cc;
-			       args#from_xml n
-			 | "properties" -> 
-			     let n=new xml_node in
-			       n#of_xml_t cc;
-			       props#from_xml n
-			 | _ ->()
-		     ) cchilds;
-		     let (x,y)=position_of_val (args#get_val (`String "position")) in
-		     let oid=self#add_object_from_type (Some (Xml.attrib c "id")) (Xml.attrib c "type") x y in
-		     let o=self#get_object oid in
-		       o#get_props#flatten props;
-	       | _ ->()
-
-	 ) childs;
-	    
-      | _ ->()
-
+  method xml_of_init()=
+    List.iter (
+      fun c->	
+	let args=new val_ext_handler and
+	    props=new val_ext_handler in
+	  List.iter (
+	    fun cc->
+	      match (cc#tag) with
+		| "args" -> 
+		    args#from_xml cc
+		| "properties" -> 
+		    props#from_xml cc
+		| _ ->()
+	  ) c#children;
+		let (x,y)=position_of_val (args#get_val (`String "position")) in
+		let oid=self#add_object_from_type (Some (c#attrib "id")) (c#attrib "type") x y in
+		let o=self#get_object oid in
+		  o#get_props#flatten props;
+    ) xml#children;
     
+
 
  method lua_init()=
    lua#set_val (OLuaVal.String "add_object_from_type") 
@@ -323,19 +303,13 @@ object(self)
 
 end;;
 
-let init_game_map_type_from_xml f add_map add_lay=
-(*  let obj_xml=new xml_node (Xml.parse_file f) in *)
-  let obj_xml=xml_node_from_file f in
-  let pmt=new xml_game_map_type_parser in
-    pmt#parse obj_xml;
-    pmt#init add_map add_lay;;
-
 
 (* game map *)
 
 class game_map w h=
 object(self)
   inherit lua_object as lo
+  inherit xml_object
   
   val mutable actions=new state_object
 
@@ -467,80 +441,73 @@ object(self)
     self#foreach_object_map (fun i m->m#update());
     actions#loop();
 
+  method xml_to_init()=
+    xml#set_tag "game_map";
+    xml#add_attrib ("w",string_of_int self#get_rect#get_w);
+    xml#add_attrib ("h",string_of_int self#get_rect#get_h);
+
+(* object maps *)    
+    let mapn=new xml_node in
+      mapn#set_tag "game_object_maps";
+      
+      self#foreach_object_map(
+	fun k m->
+	  m#xml_to_init();
+	  mapn#add_child m#get_xml
+      );
+      xml#add_child mapn;
+
+(* tile layers *)
+    let mapt=new xml_node in
+      mapt#set_tag "game_tile_layers";
+      
+      self#foreach_tile_layer(
+	fun k m->
+	  m#xml_to_init();
+	  mapt#add_child m#get_xml
+      );
+      xml#add_child mapt;
+
+  method xml_of_init()=
+    let w=int_of_string(xml#attrib "w") and
+	h=int_of_string(xml#attrib "h") in
+      self#resize w h;
+      
+      List.iter(
+	fun c->
+	  match (c#tag) with
+	    | "game_object_maps" ->
+		List.iter (
+		  fun oc->
+		    let om=self#get_object_map (oc#attrib "id") in
+		      om#set_xml oc;
+		      om#xml_of_init();
+		) (c#children);
+	    | "game_tile_layers" ->
+		List.iter (
+		  fun oc->
+		    let ot=self#get_tile_layer (oc#attrib "id") in
+		      ot#set_xml oc;
+		      ot#xml_of_init();
+		) (c#children);
+		
+	    | "actions" ->
+		let p=(Global.get xml_default_actions_parser)() in
+		  p#parse c;
+		  p#init_simple (actions#add_action);
+	    | _ -> ()
+      ) xml#children;
+
   method save_to_file f=
     let fo=open_out f in
-      output_string fo (self#to_xml_string);
+      self#xml_to_init();
+      output_string fo (xml#to_string); 
       close_out fo;
- 
-  method to_xml_string=
-    let x=self#to_xml in
-      Xml.to_string x
-
-  method to_xml=
-    Xml.Element("game_map",[("w",string_of_int self#get_rect#get_w);
-			    ("h",string_of_int self#get_rect#get_h)],
-		[
-		  Xml.Element("game_object_maps",[],
-			      let a=DynArray.create() in
-				self#foreach_object_map(
-				  fun k m->
-				    DynArray.add a m#to_xml
-				);
-				DynArray.to_list a
-			     );
-		  Xml.Element("game_tile_layers",[],
-			      let a=DynArray.create() in
-				self#foreach_tile_layer (
-				  fun k m->
-				    DynArray.add a m#to_xml
-				);
-				DynArray.to_list a
-			     )
-		]
-	       );
 
   method load_from_file f=
-    let xinc=xinclude_process_file f in
-    let x=Xml.parse_string xinc in
-      self#from_xml x
-		
-  method from_xml_string s=
-    let x=Xml.parse_string s in
-      self#from_xml x
-
-  method from_xml x=
-    match x with
-      | Xml.Element(t,attr,childs)->
-	  let w=int_of_string(Xml.attrib x "w") and
-	      h=int_of_string(Xml.attrib x "h") in
-	    self#resize w h;
-	    List.iter(
-	      fun c->
-		match (Xml.tag c) with
-		  | "game_object_maps" ->
-		      List.iter (
-			fun oc->
-			  let om=self#get_object_map (Xml.attrib oc "id") in
-			    om#from_xml oc;
-		      ) (Xml.children c);
-		  | "game_tile_layers" ->
-		      List.iter (
-			fun oc->
-			  let ot=self#get_tile_layer (Xml.attrib oc "id") in
-			    ot#from_xml oc;
-		      ) (Xml.children c);
-		      
-		  | "actions" ->
-		      let n=new xml_node in
-			n#of_xml_t c;
-		      let p=(Global.get xml_default_actions_parser)() in
-			p#parse n;
-			p#init_simple (actions#add_action);
-		  | _ -> ()
-	    ) childs;
-      | _ -> ()
-
-
+    xml#of_file f;
+    self#xml_of_init();
+      
 
   method lua_init()=
 (* DEPRECATED use mapname.func instead *)
@@ -565,9 +532,7 @@ object(self)
 	 self#is_position_blocking
       );
 
-
     lua#set_val (OLuaVal.String "init_tile_layer") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.int **->> OLuaVal.unit) self#tile_layer_init);
-
     lua#set_val (OLuaVal.String "resize") (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#resize);
 
     lua#set_val (OLuaVal.String "load_from_file") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) self#load_from_file);

@@ -23,44 +23,29 @@ object(self)
   inherit generic_object
   inherit [int] game_generic_layer w h as super    
   inherit lua_object
+  inherit xml_object  
 
-  method to_xml_string=
-    let x=self#to_xml in
-      Xml.to_string x
+  method xml_to_init()=
+    xml#set_tag "game_tile_layer";
+    xml#set_pcdata 
+      (String.concat "|" 
+       (List.map (fun p->
+		    match p with
+		      | Some i->string_of_int i
+		      | None -> ""
+		 ) self#to_list))
 
-  method to_xml=
-    Xml.Element
-      ("game_tile_layer",[("id",self#get_id)],
-       [Xml.PCData
-	  (String.concat "|" 
-	     (List.map (fun p->
-			  match p with
-			    | Some i->string_of_int i
-			    | None -> ""
-		       ) self#to_list))
-       ]
-      )
+  method xml_of_init()=
+    let tl=Str.split_delim (Str.regexp "|") xml#pcdata in
+      self#from_list (
+	List.map (
+	  fun t->
+	    match t with 
+	      | x when x<>"" -> Some (int_of_string t)
+	      | _ -> None
+	) tl);
 
-  method from_xml x=
-    match x with
-      | Xml.Element (id,attr,childs)->
-	  List.iter (
-	    fun c ->
-	    match c with
-	      | Xml.PCData d->
-		  let tl=Str.split_delim (Str.regexp "|") d in
-		    self#from_list (
-		      List.map (
-			fun t->
-			  match t with 
-			    | x when x<>"" -> Some (int_of_string t)
-			    | _ -> None
-		      ) tl);
-	      | _ ->()
-	  ) childs;
-      | _ ->()
-
-
+      
   method put_map (vrect:game_visual)=()
 end;;
 
