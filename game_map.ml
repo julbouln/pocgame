@@ -64,6 +64,17 @@ object(self)
   method get_object_from_type nm=
     obj_type#get_object_type nm
 
+(* loading part *)
+  val mutable m=Mutex.create();
+  val mutable cond=Condition.create();
+
+  val mutable current_load_type="none"
+  method get_current_load_type=
+    Mutex.lock m;
+    Condition.wait cond m;
+    let c=current_load_type in
+      Mutex.unlock m;
+      c
 
   method object_types_from_xml_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=
     print_string ("GAME_MAP:object types from xml "^f);print_newline();
@@ -72,14 +83,28 @@ object(self)
       print_string ("GAME_MAP:xml loaded");print_newline();
 	Array.iter (
 	  fun v-> 
+	    Mutex.lock m;
+	    current_load_type<-(fst v);
+
 	    print_string "GAME_MAP: new type";print_newline();
 	    print_string ("GAME_MAP: add type "^(fst v));print_newline(); 
 	    self#add_object_type (fst v) (snd v);
 	    print_string "GAME_MAP: type added";print_newline();
+
+	    Condition.signal cond;
+	    Mutex.unlock m;
+	    (* to avoid interblockade *)
+	    Thread.delay (Random.float (1./. 25.));
+
 (*
 (fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
 *)
 	) p#get_objs;
+
+	Mutex.lock m;
+	current_load_type<-"end";
+	Condition.signal cond;
+	Mutex.unlock m;
 
 
   method add_object_at (o:'a) (x:int) (y:int)=

@@ -16,7 +16,7 @@ OCAMLOPT=ocamlopt.opt
 
 RESULT  = pocgame
 
-#THREADS=yes
+THREADS=yes
 
 # PREDS="str unix xml-light extLib"
  
