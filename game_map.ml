@@ -148,12 +148,14 @@ object(self)
 			let vh=new val_ext_handler in
 			 vh#set_val (`String "position") (`Position (o#get_rect#get_x,o#get_rect#get_y));
 			 vh#set_id "args";
-			 vh#to_xml
+			 let n=vh#to_xml in
+			   n#to_xml_t
 		      );
 		      (* properties *)
 		      (
 			let pr=(o#get_props) in
-			  pr#to_xml
+			 let n=pr#to_xml in
+			   n#to_xml_t
 				   
 
 		      )		      
@@ -176,8 +178,14 @@ object(self)
 		     List.iter (
 		       fun cc->
 			 match (Xml.tag cc) with
-			 | "args" -> args#from_xml cc
-			 | "properties" -> props#from_xml cc
+			 | "args" -> 
+			     let n=new xml_node_NEW in
+			       n#of_xml_t cc;
+			       args#from_xml n
+			 | "properties" -> 
+			     let n=new xml_node_NEW in
+			       n#of_xml_t cc;
+			       props#from_xml n
 			 | _ ->()
 		     ) cchilds;
 		     let (x,y)=position_of_val (args#get_val (`String "position")) in
