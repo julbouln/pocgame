@@ -46,12 +46,12 @@ class layer wi hi=
     method get_position x y=
       try
 	lay.(x).(y)
-      with Invalid_argument v -> raise (Out_of_array (x,y))
+      with Invalid_argument v -> 0(*raise (Out_of_array (x,y))*)
       
     method set_position x y v=
       try
 	lay.(x).(y)<-v
-      with Invalid_argument v -> raise (Out_of_array (x,y))
+      with Invalid_argument v -> () (*raise (Out_of_array (x,y)) *)
 
 
    end;;
