@@ -45,7 +45,7 @@ object(self)
       !r
 
   method get_objs_xml_string f=
-    let n=xml_reduce (Xml.parse_string f) (fun n->
+    let n=xml_reduce (Xml.parse_file f) (fun n->
 					     self#is_obj_with_type (Xml.attrib n "name")
 					  ) in
     let s=Xml.to_string n in
