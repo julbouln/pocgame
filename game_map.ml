@@ -11,10 +11,6 @@ open Game_object_layer;;
 open Game_tile_layer;;
 open Game_decor;;
 
-(* FIXME: must be in pocgame *)
-(* FIXME: must contain generic obj *)
-
-
 
 class virtual game_object_map_actions=
 object
@@ -67,7 +63,7 @@ object(self)
 	  fun v-> 
 	    let o=v() in
 	    let nm=o#get_name in
-	      print_string ("ADD TYPE:"^nm);print_newline();
+(*	      print_string ("ADD TYPE:"^nm);print_newline(); *)
 	      self#add_object_type nm v
 (*
 (fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
@@ -85,9 +81,9 @@ object(self)
   method add_object_at (o:'a) (x:int) (y:int)=
     o#move x y;
     let n=self#add_object_with_num o in
-      let id=("decor"^string_of_int n) in
-	o#set_id id;
-	self#add_hash id n;id
+    let id=("decor"^string_of_int n) in
+      o#set_id id;
+      self#add_hash id n;id
 	  
   method add_object_from_type (t:string) (x:int) (y:int)=
     let o=self#get_object_from_type t in
@@ -102,23 +98,28 @@ object(self)
     self#update_action(); 
 
   method map_add_object id t x y=
+
     let n=self#add_object_from_type t x y in
+      print_string ("MAP: add object "^n);print_newline();
       match id with
 	| Some nid ->self#replace_hash n nid;nid
 	| None -> n    
 
   method map_move_object id x y=
+    print_string ("MAP: move object"^id);print_newline();
     let o=self#get_hash_object id in
       o#move x y
 
   method map_copy_object cid id=
     let o=self#get_hash_object id in
-    let n=self#add_object_at o o#get_rect#get_x o#get_rect#get_y in
+    let no=(self#get_object_from_type o#get_name) in
+    let n=self#add_object_at no o#get_rect#get_x o#get_rect#get_y in
       match cid with
 	| Some nid ->self#replace_hash n nid;nid
 	| None -> n
 
   method map_del_object id=
+    print_string ("MAP: del object"^id);print_newline();
     self#del_hash_object id
 
   method map_is_object id=
@@ -130,7 +131,10 @@ object(self)
     let a=DynArray.create() in
     self#foreach_object (
       fun i o->
+	if o#get_name<>"none" then (
+	  print_string ("SAVE: "^o#get_id^" of type "^o#get_name);print_newline();
 	DynArray.add a (o#get_id,o#get_name,o#get_lua,o#get_rect#get_x,o#get_rect#get_y);
+	)    
     );
       DynArray.to_array a
 
@@ -185,10 +189,6 @@ object(self)
     false 
     
 (*
-  method foreach_decor f=
-    self#get_decor_layer#foreach_object f
-
-
   method position_blocking x y=
     if self#get_tile_layer#out_of_lay x y then true 
     else
@@ -197,60 +197,13 @@ object(self)
 	  o#get_blocking
       else false
 
-
-
-  method foreach_decor_xml f d=
-    let decor_xml=new xml_node (Xml.parse_file f) in
-    let p=new xml_decors_parser in p#parse decor_xml;
-      let res=Array.of_list p#get_list in
-	Array.iteri (
-	  fun r v-> 
-(*	    let nm=("decor"^(string_of_int r)) in *)
-	    let nm=v.oname in
-	      d nm v;
-	) res;
-
-  method get_decor id=
-    self#get_decor_layer#get_hash_object id
-
-  method del_decor id=
-    self#get_decor_layer#del_hash_object id
-      
-
-  method add_decor x y obj=
-    obj#move x y;
-    let n=self#get_decor_layer#add_object_with_num obj in
-    let id=("decor"^string_of_int n) in
-      obj#set_id id;
-      self#get_decor_layer#add_hash id n;
-      id
-	
-  method add_decor_from_type x y t=
-    self#add_decor x y (self#get_decor_type#get_object_type t);
-    
-  (* INIT random *)
-  method decor_init_random n=
-    for i=0 to n do
-      let x=randomize w and
-	  y=randomize h in
-	let r=randomize (self#get_decor_type#count_objects_type-1) in
-	let nm=("decor"^(string_of_int r)) in
-	  self#add_decor x y (self#get_decor_type#get_object_type nm);	  
-    done;	
-*)  
-
+*)
 
 (* update layer *)
 
   method update()=
     self#get_tile_layer#update();
-
     self#foreach_map_action (fun i m->m#map_update());
-(*
-    self#get_decor_layer#clean();
-    self#get_decor_layer#update_obj_all();
-    self#get_decor_layer#update_action();
-*)
 
 
 (* persistance *)
@@ -268,8 +221,8 @@ object(self)
   method objs_from_load a=
     Hashtbl.iter (
       fun n v->
-	let o=self#get_map_action n in
-	  o#map_from_load v
+	let act=self#get_map_action n in
+	  act#map_from_load v
     ) a;
 
   (* save *)
@@ -395,22 +348,5 @@ object(self)
     tile_layer<-new game_tile_layer nw nh 32 32 "medias/tiles/terrains.png";
 
 (*    decor_layer<-new game_object_layer_hash nw nh 500; *)
-(*
-  method decor_types_from_xml f=
-    let decor_xml=new xml_node (Xml.parse_file f) in
-    let p=new xml_decors_parser in p#parse decor_xml;
-      let res=Array.of_list p#get_list in
-	Array.iteri (
-	  fun r v-> 
-(*	    let nm=("decor"^(string_of_int r)) in *)
-	    let nm=res.(r).oname in
-	    let f()=
-	      let d=(new game_decor nm res.(r).ow res.(r).oh res.(r).ofile res.(r).ocw res.(r).och (Array.of_list res.(r).oframes) res.(r).orefresh) in
 
-		(d:>game_object)
-	    in
- decor_type#add_object_type nm f
-	    
-	) res;
-*)
 end;;
