@@ -149,7 +149,7 @@ object(self)
   val mutable fcount=0				
 
 
-  val mutable fpsgr=new graphic_text "fpsinfo" FontEmbed (200,200,200)
+  val mutable fpsgr=new graphic_text "fpsinfo" (FontTTF ("medias/fonts/Vera.ttf",14)) (200,200,200) 
 					 
   method on_loop()=
 
@@ -162,7 +162,7 @@ object(self)
     curs#put();  
     fpsgr#move 8 (video#get_h - 16);
     fpsgr#put();
-  
+ 
     video#flip();
 
     t2<-Unix.gettimeofday();
@@ -170,7 +170,7 @@ object(self)
     lcount<-lcount+1;
     fcount<-fcount+(int_of_float (1./.(t2 -. t1)));
 (*    print_string "fps:";print_int (fcount/lcount);print_newline(); *)
-    fpsgr#set_text ("fps: "^string_of_int(fcount/lcount));
+    fpsgr#set_text ("fps: "^string_of_int(fcount/lcount)); 
 
     
     if (t2 -. t1)<(1./. ffps) then
