@@ -17,7 +17,6 @@ open Game_object;;
 open Game_object_layer;;
 open Game_tile_layer;;
 
-open Game_loading;;
 
 (** Map *)
 
@@ -152,6 +151,16 @@ object(self)
    
    lua#set_val (OLuaVal.String "delete_object") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) self#delete_object);
 
+   lua#set_val (OLuaVal.String "foreach_object") 
+     (OLuaVal.efunc (OLuaVal.value **->> OLuaVal.unit) 
+	(fun f->
+	   let g k v=
+	     match f with
+	       | OLuaVal.Function (s,f)->
+		   f [OLuaVal.String k;OLuaVal.Table v#get_lua#to_table];()
+	       | _ -> () in
+	     self#foreach_object g
+	));
 
     lua#set_val (OLuaVal.String "get_object_id_at_position") 
       (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.value) 

@@ -44,7 +44,6 @@ object(self)
   val mutable map=new game_map 0 0
   method get_map=map
 
-
   val mutable vrect=new game_visual 0 0
   method get_vrect=vrect
 
