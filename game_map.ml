@@ -65,7 +65,8 @@ object(self)
 	  fun v-> 
 	    print_string "GAME_MAP: new type";print_newline();
 	    print_string ("GAME_MAP: add type "^(snd v));print_newline(); 
-	      self#add_object_type (snd v) (fst v)
+	    self#add_object_type (snd v) (fst v);
+	    print_string "GAME_MAP: type added";print_newline();
 (*
 (fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
 *)
