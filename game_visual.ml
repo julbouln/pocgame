@@ -23,6 +23,8 @@ open Video;;
 open Low;;
 open Medias;;
 
+open Game_main;;
+
 class game_visual vx vy=
 object
   val mutable rect=new rectangle vx vy (video#get_w) (video#get_h)
@@ -52,4 +54,39 @@ object
   method get_w=rect#get_w
   method get_y=rect#get_y		      
   method get_h=rect#get_h
+end;;
+
+(* FIXME : go in game_visual.ml *)
+type scroll_dir=
+| ScrollLeft
+| ScrollRight
+| ScrollUp
+| ScrollDown
+| NoScroll;;
+
+
+class mouse_scroll s b=
+object
+  val mutable border=b
+  val mutable scroll=s  
+
+  val mutable dir=NoScroll
+
+  method scroll (vrect:game_visual)=
+    match dir with
+      | ScrollLeft -> vrect#scroll (-scroll) 0
+      | ScrollRight ->vrect#scroll (scroll) 0
+      | ScrollUp ->vrect#scroll 0 (-scroll)
+      | ScrollDown ->vrect#scroll 0 (scroll)
+      | NoScroll -> ();
+    
+
+  method parse e=
+    dir<-NoScroll;
+    if e.ex<border then dir<-ScrollLeft;
+    if e.ex>(main#scr_w-border) then dir<-ScrollRight;
+    if e.ey<border then dir<-ScrollUp;
+    if e.ey>(main#scr_h-border) then dir<-ScrollDown;
+    
+     
 end;;
