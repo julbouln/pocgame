@@ -20,32 +20,31 @@ open Properties;;
 
 (*
  <game_type name="wol_decor"/>
-  <args>
-   <arg_string name="filename"/>
-   <arg_size name="pixel_size"/>
-   <arg_size name="case_size"/>
-  </args>
+  <!-- graphics definitions -->
   <graphics>
-    <drawing fun="with_alpha">
-     <values>
+   <graphic_from_drawing_fun id="!self.args.name">
+     <!-- relative position -->
+     <position x="0" y="0"/>
+     <drawing_values>
+      <val_string str="with_alpha"/>
       <val_color r="255" g="255" b="255"/>
       <val_string str="load_multiple"/>
-      <val_string str="!args.filename"/> 
-      <val_size w="!args.pixel_size.w" h="!args.pixel_size.h"/>
-     </values>
-    </drawing>
+      <val_string str="!self.args.filename"/> 
+      <val_size w="!self.args.pixel_size.w" h="!self.args.pixel_size.h"/>
+     </drawing_values>
+    </graphic_from_drawing_fun>
   </graphics>
   <script>
   </script>
  </game_type>
 
-<game_object name="montagne2" type="wol_decor"/>
+<game_object type="wol_decor"/>
  <args>
-  <arg_string name="filename" str="medias/misc/montagne2.png"/>
-  <arg_size name="pixel_size" w="500" h="500"/> 
-  <arg_size name="case_size" w="15" h="5"/> 
+  <val_string name="name" str="montagne2"/>
+  <val_string name="filename" str="medias/misc/montagne2.png"/>
+  <val_size name="pixel_size" w="500" h="500"/> 
+  <val_size name="case_size" w="15" h="5"/> 
  </args>
-
 </game_object>
 
 *)
