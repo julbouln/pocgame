@@ -122,7 +122,7 @@ method medias_init()=
   if !windowed=true then fullscreen:=false;
 
   screen_tile<-video#init (scr_w) (scr_h) 16 (!fullscreen);
-  video#set_def_size 1024 768;
+  video#set_def_size 800 600;
 
   audio#init 44100 2 ;
   
