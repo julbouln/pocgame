@@ -36,114 +36,11 @@ object(self)
 end;;
 
 
-class game_graphic_object nm gwi ghi tilesfile mirror  is_shaded wi hi=
+class game_generic_object nm wi hi gwi ghi=
 object(self)
-  inherit obj nm wi hi
+  inherit obj nm wi hi gwi ghi
   inherit game_action_object
-
-    val mutable graphic=(*new g_object "none"*)
-new graphic_object gwi ghi tilesfile mirror is_shaded 
-
-
-    method graphic=graphic
-
-    method get_graphic=graphic
-
-    method set_graphic()=graphic<-new graphic_object gwi ghi tilesfile mirror is_shaded
-
-    val mutable need_put=true
-
-(* go in obj ? *)
-    val mutable prect=new rectangle 0 0 gwi ghi
-    method get_prect=prect
-
-    val mutable direction=0
-    method get_direction=direction
-    method turn dir=direction<-dir;
-
-    method update_prect()=
-      let px=prect#get_x and
-	py=prect#get_y and
-	cx=rect#get_x and
-	cy=rect#get_y in
-      let xdif= 32-px and
-	ydif= 32-py in
-
-	if px<0 then (rect#set_position (cx-1) cy;prect#set_position (32+px) py);
-	if px>32 then (rect#set_position (cx+1) cy;prect#set_position (px-32) py);
-      	if py<0 then (rect#set_position cx (cy-1);prect#set_position px (32+py));
-	if py>32 then (rect#set_position cx (cy+1);prect#set_position px (py-32));
-
-
-(* GRAPH *)
-    method init_put()=need_put<-true;
-
-(* GRAPH *)
-    method put vx vy (tw:int) (th:int)=
-      if need_put==true then (
-	let cur=self#graphic#get_cur_tile in
-	self#graphic#set_cur_tile (((self#graphic#get_tiles_size)/8)*direction + 
-				   self#get_current_state#get_frame);
-	  (*	  self#graphic#set_cur_tile ( self#get_current_state#get_frame); *)
-	  self#graphic#move (self#get_pixel_x - vx) (self#get_pixel_y - vy);
-	  self#graphic#put();
-	  need_put<-false;
-      )
-
-
-    val mutable bcentre=(0,0)
-    method get_bcentre_x=(fst bcentre)
-    method get_bcentre_y=(snd bcentre)
-
-    method init_bcentre()=
-      let rpos=self#graphic#get_rpos in
-      let x1=rpos#get_x and
-	y1=rpos#get_y and
-	x2=rpos#get_w and
-	y2=rpos#get_h in
-
-	bcentre<-
-	(
-	  (x1+x2)/2,
-	  (y1+y2)/2
-	)
-
-    method init_bcentre_with (graph:graphic_object)=
-      let rpos=graph#get_rpos in
-      let x1=rpos#get_x and
-	y1=rpos#get_y and
-	x2=rpos#get_w and
-	y2=rpos#get_h in
-
-	bcentre<-
-	(
-	  (x1+x2)/2,
-	  (y1+y2)/2
-	)
-
-    method get_pixel_x=rect#get_x *32 + 16 + prect#get_x - (fst bcentre) 
-    method get_pixel_y=rect#get_y *32 + 16 + prect#get_y - (snd bcentre) 
-
-(* shadow *)    
-    val mutable shadow=new graphic_object 34 11 "medias/misc/shadow.png" false false
-    method put_shadow (vx:int) (vy:int) (tw:int) (th:int)=
-      shadow#move (self#get_pixel_x - vx + self#graphic#get_rect#get_w/8) (self#get_pixel_y - vy + (4*self#graphic#get_rect#get_h)/5 + 4);
-      shadow#put();
-
-    method put_shaded (vx:int) (vy:int) (tw:int) (th:int)=()
-
-
-end;; 
-
-
-
-class game_object nm gwi ghi tilesfile mirror is_shaded wi hi=
-object (self)
-
-  inherit game_graphic_object nm gwi ghi tilesfile mirror is_shaded wi hi
-  initializer
-    self#init_bcentre()
-
+  
     val mutable sw=0
     val mutable sh=0
     method get_sw=sw
@@ -239,10 +136,94 @@ object (self)
     method get_cons_speed=0
     method get_c_cons_s=0
     method set_c_cons_s (v:int)=()
+end;;
+
+class game_graphic_object nm gwi ghi tilesfile mirror  is_shaded wi hi=
+object(self)
+  inherit game_generic_object nm wi hi gwi ghi
+
+    val mutable graphic=(*new g_object "none"*)
+new graphic_object gwi ghi tilesfile mirror is_shaded 
+
+
+    method graphic=graphic
+
+    method get_graphic=graphic
+
+    method set_graphic()=graphic<-new graphic_object gwi ghi tilesfile mirror is_shaded
+
+    val mutable need_put=true
 
 
 
-  end;;
+(* GRAPH *)
+    method init_put()=need_put<-true;
+
+(* GRAPH *)
+    method put vx vy (tw:int) (th:int)=
+      if need_put==true then (
+	let cur=self#graphic#get_cur_tile in
+	self#graphic#set_cur_tile (((self#graphic#get_tiles_size)/8)*direction + 
+				   self#get_current_state#get_frame);
+	  (*	  self#graphic#set_cur_tile ( self#get_current_state#get_frame); *)
+	  self#graphic#move (self#get_pixel_x - vx) (self#get_pixel_y - vy);
+	  self#graphic#put();
+	  need_put<-false;
+      )
+
+
+    val mutable bcentre=(0,0)
+    method get_bcentre_x=(fst bcentre)
+    method get_bcentre_y=(snd bcentre)
+
+    method init_bcentre()=
+      let rpos=self#graphic#get_rpos in
+      let x1=rpos#get_x and
+	y1=rpos#get_y and
+	x2=rpos#get_w and
+	y2=rpos#get_h in
+
+	bcentre<-
+	(
+	  (x1+x2)/2,
+	  (y1+y2)/2
+	)
+
+    method init_bcentre_with (graph:graphic_object)=
+      let rpos=graph#get_rpos in
+      let x1=rpos#get_x and
+	y1=rpos#get_y and
+	x2=rpos#get_w and
+	y2=rpos#get_h in
+
+	bcentre<-
+	(
+	  (x1+x2)/2,
+	  (y1+y2)/2
+	)
+
+    method get_pixel_x=rect#get_x *32 + 16 + prect#get_x - (fst bcentre) 
+    method get_pixel_y=rect#get_y *32 + 16 + prect#get_y - (snd bcentre) 
+
+(* shadow *)    
+    val mutable shadow=new graphic_object 34 11 "medias/misc/shadow.png" false false
+    method put_shadow (vx:int) (vy:int) (tw:int) (th:int)=
+      shadow#move (self#get_pixel_x - vx + self#graphic#get_rect#get_w/8) (self#get_pixel_y - vy + (4*self#graphic#get_rect#get_h)/5 + 4);
+      shadow#put();
+    method put_shaded (vx:int) (vy:int) (tw:int) (th:int)=()
+
+
+end;; 
+
+
+class game_object nm gwi ghi tilesfile mirror is_shaded wi hi=
+object (self)
+
+  inherit game_graphic_object nm gwi ghi tilesfile mirror is_shaded wi hi
+  initializer
+    self#init_bcentre()
+
+   end;;
 
 (*
 class game_object nm gwi ghi tilesfile mirror is_shaded wi hi=
@@ -429,12 +410,12 @@ end;;
 class game_object_layer_hash wi hi max=
 object(self)
   inherit [game_object] obj_layer_hash none_obj wi hi max as super
-
+(*
   method init_put()=
     self#foreach_object (fun k o->
 			o#init_put();
 		     );
-
+*)
   method update_obj num=
     let obj=self#get_object num in
       obj#update_prect();

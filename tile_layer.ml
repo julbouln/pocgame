@@ -9,42 +9,11 @@ open Game_visual;;
 (** Game tile layer class definition *)
 
 
-
-class game_tile_layer w h tw th file =
+class game_generic_tile_layer w h tw th=
 object(self)
-inherit layer w h as super
-
-val mutable border_layer=new layer w h
-val mutable tiles=new graphic_object_alpha tw th file false false false
-  val mutable black=new graphic_real_object ("black_"^string_of_int tw^"x"^string_of_int th) (tile_box tw th (0,0,0));
-  val mutable borders=new graphic_object tw th "medias/tiles/bordures.png" false false
-
-
-  method put_map (vrect:game_visual)=
-    super#foreach_map_entry1 (
-      fun x y ->
-	if self#out_of_lay x y then
-	  self#put_black x y vrect
-	else (
-	  self#put x y vrect; 
-(*	  self#put_border x y vrect  *)
-	)
-    );
+  inherit layer w h as super
     
-  method put x y vrect=
-    tiles#move ((x*tw)-vrect#get_x) ((y*th)-vrect#get_y);      
-    tiles#set_cur_tile (super#get_position x y);
-    tiles#put();
-
-  method put_border x y (vrect:game_visual)=
-      borders#move ((x*tw)-vrect#get_x) ((y*th)-vrect#get_y);      
-      borders#set_cur_tile (super#get_position x y);
-      borders#put();
-
-  method put_black x y (vrect:game_visual)=
-    black#move ((x*tw)-vrect#get_x) ((y*th)-vrect#get_y);      
-    black#set_cur_tile (0);
-    black#put();
+  val mutable border_layer=new layer w h
 
   method set_border_position  px py v=
     border_layer#set_position px py v
@@ -137,6 +106,43 @@ val mutable tiles=new graphic_object_alpha tw th file false false false
 		[|z;-2;w|];
 	      |] -> (self#set_border_position px py (2+(t/3*20)))
 	    | _-> (self#set_border_position px py (-1)) ;
+
+end;;
+
+class game_tile_layer w h tw th file =
+object(self)
+  inherit game_generic_tile_layer w h tw th as super
+val mutable tiles=new graphic_object_alpha tw th file false false false
+  val mutable black=new graphic_real_object ("black_"^string_of_int tw^"x"^string_of_int th) (tile_box tw th (0,0,0));
+  val mutable borders=new graphic_object tw th "medias/tiles/bordures.png" false false
+
+
+  method put_map (vrect:game_visual)=
+    super#foreach_map_entry1 (
+      fun x y ->
+	if self#out_of_lay x y then
+	  self#put_black x y vrect
+	else (
+	  self#put x y vrect; 
+(*	  self#put_border x y vrect  *)
+	)
+    );
+    
+  method put x y vrect=
+    tiles#move ((x*tw)-vrect#get_x) ((y*th)-vrect#get_y);      
+    tiles#set_cur_tile (super#get_position x y);
+    tiles#put();
+
+  method put_border x y (vrect:game_visual)=
+      borders#move ((x*tw)-vrect#get_x) ((y*th)-vrect#get_y);      
+      borders#set_cur_tile (super#get_position x y);
+      borders#put();
+
+  method put_black x y (vrect:game_visual)=
+    black#move ((x*tw)-vrect#get_x) ((y*th)-vrect#get_y);      
+    black#set_cur_tile (0);
+    black#put();
+
 
 	
 end;;

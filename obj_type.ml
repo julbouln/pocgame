@@ -8,7 +8,7 @@ open Object;;
 
 open Rect;;
 (* more generic parent - without graphic *)
-class obj (nm:string) (wi:int) (hi:int)=
+class obj (nm:string) (wi:int) (hi:int) (gwi:int) (ghi:int)=
 object
     val mutable name=nm
     method get_name=name
@@ -16,6 +16,34 @@ object
 
     val mutable rect=new rectangle 0 0 wi hi
     method get_rect=rect
+
+(* go in obj ? *)
+    val mutable prect=new rectangle 0 0 gwi ghi
+    method get_prect=prect
+
+
+
+
+    method update_prect()=
+      let px=prect#get_x and
+	py=prect#get_y and
+	cx=rect#get_x and
+	cy=rect#get_y in
+      let xdif= 32-px and
+	ydif= 32-py in
+
+	if px<0 then (rect#set_position (cx-1) cy;prect#set_position (32+px) py);
+	if px>32 then (rect#set_position (cx+1) cy;prect#set_position (px-32) py);
+      	if py<0 then (rect#set_position cx (cy-1);prect#set_position px (32+py));
+	if py>32 then (rect#set_position cx (cy+1);prect#set_position px (py-32));
+
+
+    val mutable direction=0
+    method get_direction=direction
+    method turn dir=direction<-dir;
+
+
+
 end;;
 
 
@@ -42,4 +70,6 @@ none_obj
     method get_object_type nm=(Hashtbl.find object_types nm)()
     method get_object nm=(Hashtbl.find objects nm)
     method is_object_type nm=(Hashtbl.mem objects nm)
+
+    method count_objects_type=Hashtbl.length objects			       
 end;;
