@@ -36,6 +36,31 @@ object(self)
   inherit ['a] game_obj_layer_hash iv wi hi max
   inherit game_object_map_actions
 
+  method is_obj_with_type t=
+    let r=ref false in
+    self#foreach_object
+      ( fun i o->
+	  if o#get_name=t then r:=true
+      );
+      !r
+
+  method get_objs_xml_string f=
+    let n=xml_reduce (Xml.parse_string f) (fun n->
+					     self#is_obj_with_type (Xml.attrib n "name")
+					  ) in
+      Xml.to_string n;
+
+
+  method foreach_objs_xml_from_string f d=
+    let decor_xml=new xml_node (Xml.parse_string f) in
+    let p=new xml_decors_parser in p#parse decor_xml;
+      let res=Array.of_list p#get_list in
+	Array.iteri (
+	  fun r v-> 
+	    let nm=v.oname in
+	      d nm v;
+	) res;
+
   method foreach_objs_xml f d=
     let decor_xml=new xml_node (Xml.parse_file f) in
     let p=new xml_decors_parser in p#parse decor_xml;
@@ -62,6 +87,21 @@ object(self)
   val mutable load_obj_type=new game_loading_info
   method get_load_obj_type=load_obj_type
 
+
+
+  method object_types_from_xml_string_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=
+    let obj_xml=new xml_node (Xml.parse_string f) in
+    let p=new xml_game_objs_parser n iv fu in p#parse obj_xml;
+	Array.iter (
+	  fun v-> 
+	    self#add_object_type (fst v) (snd v);
+	    load_obj_type#set_data (LData (fst v));
+(*
+(fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
+*)
+	) p#get_objs;
+
+	load_obj_type#set_data (LEnd);
 
   method object_types_from_xml_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=
     let obj_xml=new xml_node (Xml.parse_file f) in
