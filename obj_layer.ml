@@ -92,6 +92,20 @@ class ['a] obj_layer (none_obj:'a) wi hi max=
          )
        )
 
+    method add_object_with_num obj=
+	let k=ref 1 in
+      if  obj#get_name<>"none" then (
+
+
+	while self#is_object_num_with_check (!k)==true do k:=!k+1 done;
+        if self#out_of_a (!k)==false then (
+	  objs.(!k)<-obj;
+	  is_objs.(!k)<-true;
+	  self#set_position (obj#get_case_x) (obj#get_case_y) !k;
+         )
+       );
+      !k
+
     method add_del_stack k=stack#add_del_stack k
     method empty_del_stack()=stack#empty_del_stack self#del_object;
 

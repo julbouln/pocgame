@@ -61,12 +61,16 @@ object(self)
     if Sys.os_type="Unix" then (Sys.getenv("HOME")^"/."^info#get_cmd^".conf")
     else (info#get_cmd^".conf")
 
+
   val mutable screen_tile=(tile_empty())
   val mutable scr_w=800
   val mutable scr_h= 600
 
   method scr_w=scr_w
   method scr_h=scr_h
+
+  val mutable server=ref false
+  method server_mode= !server
 
   val mutable fullscreen=ref false
   val mutable windowed=ref false
@@ -99,7 +103,7 @@ method parse_args()=
   let args=[
     ("-fs",Arg.Set (fullscreen),(n("fullscreen mode")));
     ("-ws",Arg.Set (windowed),(n("windowed mode")));
-(*    ("-server",Arg.Set (self#server_mode),(n("server mode"))); *)
+    ("-server",Arg.Set (server),(n("server mode"))); 
     ("-w",Arg.Int (self#set_scr_w),(n("screen width")));
     ("-h",Arg.Int (self#set_scr_h),(n("screen height")));
     ("-fps",Arg.Int (self#set_fps),(n("frame per second")));
@@ -129,8 +133,8 @@ method medias_init()=
   audio#set_music_vol ((self#this_config.music_vol*128)/16);
 
   frame_init();
-frame_set(fps);
-
+  frame_set(fps);
+ 
 
 end;;
 
