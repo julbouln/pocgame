@@ -25,7 +25,15 @@ object (self)
   (* FIXME : unsafe *)
   (* NOTE : only used by minimap *)
   method foreach_map_entry d=
-    Array.iteri (fun i v->(Array.iteri (fun j w->(d i j w)) v))  lay
+    Array.iteri 
+      (fun i v->
+	 (
+	   Array.iteri 
+	     (fun j w->
+		(d i j w)
+	     ) v
+	 )
+      )  lay
       
   method foreach_map_entry1 (d:int->int->unit)=
     for i= -1 to Array.length lay +1 do

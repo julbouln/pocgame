@@ -314,38 +314,6 @@ object
 end;;
 
 
-class game_drawing_object=
-object(self)
-  inherit poclow_drawing_object
-
-  initializer
-    self#add_op "get_rpos" DrawTypeRead (
-      fun ovl->
-	let rcol=(get_draw_op_color ovl 0) in
-	let x1=ref (-1) and
-	    x2=ref (-1) and
-	    y1=ref (-1) and
-	    y2=ref (-1) in
-	  for i=0 to self#get_w -1 do
-	    for j=0 to self#get_h -1 do
-	      if (self#get_pixel i j)=rcol then
-		if !x1=(-1) && !y1=(-1) then 
-		  (
-		    x1:=i;
-		    y1:=j;
-		  )
-		else
-		  (
-		    x2:=i;
-		    y2:=j;
-		  );
-	    done;
-	  done;
-	  DrawValRectangle (new rectangle !x1 !y1 !x2 !y2)
-    );
-
-end;;
-
 
 
 drawing_vault#add_drawing_fun "with_mirror3"
@@ -383,7 +351,7 @@ let get_rpos dr=
       x2=ref (-1) and
       y1=ref (-1) and
       y2=ref (-1) in
-    print_string "get_rpos(NEW)";print_newline();
+    
     for i=0 to dr#get_w -1 do
       for j=0 to dr#get_h -1 do
 	if (dr#get_pixel i j)=rcol then
@@ -399,6 +367,19 @@ let get_rpos dr=
 	    )
       done;
     done;
+    print_string "get_rpos: ";
+    print_int !x1;
+    print_string "-";
+    print_int !y1;
+    print_string "-";
+    print_int !x2;
+    print_string "-";
+    print_int !y2;
+    print_newline();
+    if !x1=(-1) then x1:=0;
+    if !y1=(-1) then y1:=0;
+    if !x2=(-1) then x2:=0;
+    if !y2=(-1) then y2:=0;
     new rectangle !x1 !y1 !x2 !y2;;
 
 class game_object nm tilesfile gwi ghi wi hi=
@@ -440,13 +421,13 @@ object(self)
 
   method init_bcentre()=
 (*    let rpos=self#graphic#get_rpos in *)
-    let rpos=get_rpos (drawing_vault#get_cache_simple tilesfile) in 
-(*    let rpos=
+(*    let rpos=get_rpos (drawing_vault#get_cache_simple tilesfile) in *)
+    let rpos=
       let dr=(drawing_vault#get_cache_simple tilesfile) in
-	get_draw_op_rect (
-	  dr#exec_op_read "get_rops" [DrawValColor(255,36,196)]
-	) in
-*)
+	get_draw_op_rect [(
+	  dr#exec_op_read "get_rpos" [DrawValColor(255,36,196)]
+	)] 0 in
+
     let x1=rpos#get_x and
 	y1=rpos#get_y and
 	x2=rpos#get_w and
