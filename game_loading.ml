@@ -16,7 +16,6 @@ type loading_data=
 class game_loading_info=
 object
   val mutable m=Mutex.create();
-  val mutable cond=Condition.create();
 
   val mutable data=LNone
 
@@ -25,7 +24,6 @@ object
       Thread.delay (Random.float (0.15))
     done;
 
-    Condition.wait cond m;
  
   method get_unlock()=
     Mutex.unlock m;    
@@ -40,7 +38,6 @@ object
     done;
 
   method set_unlock()=
-    Condition.signal cond;
     Mutex.unlock m;
 
     (* to avoid interblockade *)
