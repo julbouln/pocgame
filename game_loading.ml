@@ -7,6 +7,7 @@ open Medias;;
 
 open Main;;
 
+let rec usleep sec = ignore (Unix.select [] [] [] sec);;
 
 type loading_data=
   | LNone
@@ -21,7 +22,8 @@ object
   val mutable data=LNone
 
   method get_lock()=
-    while (Mutex.try_lock m=false) do ()
+    while (Mutex.try_lock m=false) do
+      usleep(Random.float(1./.25.));
     done;
 
     Condition.wait cond m;
@@ -34,7 +36,8 @@ object
       d
 
   method set_lock()=
-    while (Mutex.try_lock m=false) do ()
+    while (Mutex.try_lock m=false) do 
+      usleep(Random.float(1./.25.));
     done;
 
   method set_unlock()=
