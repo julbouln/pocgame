@@ -4,6 +4,7 @@ open Obj_type;;
 open Game_obj;;
 type gm_object=
 {
+ oname:string;
  ofile:string;
 (* decal value *)
  odw:int;
@@ -20,7 +21,7 @@ type gm_object=
 class xml_gm_object_parser=
 object
   inherit xml_parser
-
+  val mutable name=""
   val mutable file=""
   val mutable w=0
   val mutable h=0
@@ -31,10 +32,14 @@ object
   val mutable frames=[]
   val mutable refresh=0
 
-  method get_val={ofile=file;odw=dw;odh=dh;ow=w;oh=h;oframes=frames;orefresh=refresh;ocw=cw;och=ch}
+  method get_val={oname=name;ofile=file;odw=dw;odh=dh;ow=w;oh=h;oframes=frames;orefresh=refresh;ocw=cw;och=ch}
 
   method tag=""
-  method parse_attr k v=()
+  method parse_attr k v=
+    match k with 
+      | "name" -> name<-v
+      | _ -> ()
+   
   method parse_child k v=
     match k with
       | "file" -> let p=(new xml_string_parser "path") in p#parse v;file<-p#get_val    
