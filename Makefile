@@ -3,7 +3,7 @@ OCAMLMAKEFILE = OCamlMakefile
 INCDIRS=../poclow ../poccore ../extlib-1.3 ../xml-light2.1
 LIBS=poclow poccore xml-light extLib str
 
-SOURCES = obj_type.ml layer.ml obj_layer.ml tile_layer.ml
+SOURCES = locales/locale.ml locales/fr.ml obj_type.ml layer.ml obj_layer.ml tile_layer.ml main.ml
 
 OCAMLOPT=ocamlopt.opt
 
