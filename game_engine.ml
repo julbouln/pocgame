@@ -109,6 +109,7 @@ object(self)
   
 end;;
 
+
 open Interface;;
 open Iface_object;;
 
@@ -203,44 +204,3 @@ object(self)
 
 
 end;;
-
-
-
-class xml_game_engine_with_iface_stage_parser=
-object (self)
-  inherit xml_stage_parser as super
-
-  val mutable map_type_parser=new xml_game_map_type_parser
-
-  method parse_child k v=
-    super#parse_child k v;
-    match k with
-      | "game_map_type" -> map_type_parser#parse v 
-      | _ -> ()
-(** object initial init *)
-  method init_object o=
-    o#set_lua_script (lua);
-    
-
-  method get_val=
-    let ofun()=
-      let o=
-	new game_engine_with_iface generic_cursor 
-(*	  (string_of_val (args_parser#get_val#get_val (`String "map_type_file")))*)
-	  (string_of_val (args_parser#get_val#get_val (`String "iface_file")))
-(*	  (text_of_val (args_parser#get_val#get_val (`String "script"))) *)
-      in
-	map_type_parser#init o#get_map#add_object_map o#get_map#add_tile_layer;
-	o#get_iobj#set_lua_script lua;
-(*	self#init_object (o:>stage); *)
-	(o:>stage)	  
-    in      
-      (id,ofun)
-
-end;;
-
-let xml_engine_stages_parser()=
-  let p=xml_iface_stages_parser() in
-    p#parser_add "engine_stage_with_iface" (fun()->new xml_game_engine_with_iface_stage_parser);
-    p;;
-
