@@ -1,6 +1,6 @@
 open Action;;
 
-open Game_obj;;
+open Game_object;;
 
 open Game_xml;;
 

@@ -10,7 +10,7 @@ LIBS=poclow poccore xml-light extLib str
 #   main.ml -> game_main.ml
 
 
-SOURCES = locales/locale.ml locales/fr.ml obj_type.ml layer.ml obj_layer.ml game_visual.ml tile_layer.ml game_obj.ml game_xml.ml game_decor.ml main.ml
+SOURCES = locales/locale.ml locales/fr.ml game_object.ml game_layer.ml game_object_layer.ml game_visual.ml game_tile_layer.ml game_xml.ml game_decor.ml game_main.ml
 
 OCAMLOPT=ocamlopt.opt
 

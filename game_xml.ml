@@ -1,7 +1,7 @@
 open Oxml;;
 
-open Obj_type;;
-open Game_obj;;
+open Game_object;;
+
 type gm_object=
 {
  oname:string;

@@ -1,9 +1,9 @@
 open Low;;
 open Rect;;
 open Video;;
-open Object;;
-open Layer;;
+open Medias;;
 
+open Game_layer;;
 open Game_visual;;
 
 (** Game tile layer class definition *)
@@ -11,9 +11,9 @@ open Game_visual;;
 
 class game_generic_tile_layer w h tw th=
 object(self)
-  inherit layer w h as super
+  inherit game_layer w h as super
     
-  val mutable border_layer=new layer w h
+  val mutable border_layer=new game_layer w h
 
   initializer
     border_layer#init (-1)
@@ -174,7 +174,7 @@ exception Shaded_out_of_array of (int*int);;
 
 class tile_layer wi hi tw th=
   object (self)
-    inherit layer wi hi as super
+    inherit game_layer wi hi as super
 	(* val mutable lay : int array array *) 
 
     val mutable terrains_tiles=

@@ -2,16 +2,59 @@
 open Low;;
 open Rect;;
 open Video;;
-open Object;;
+open Medias;;
 
 open Oxml;;
 open Anim;;
 open Action;;
 
 open Otype;;
-open Obj_type;;
-open Layer;;
-open Obj_layer;;
+
+(* more generic parent - without graphic *)
+class game_obj (nm:string) (wi:int) (hi:int) (gwi:int) (ghi:int)=
+object
+    val mutable name=nm
+    method get_name=name
+    method set_name n=name<-n
+
+    val mutable id=""
+    method get_id=id
+    method set_id i=id<-i
+
+    val mutable rect=new rectangle 0 0 wi hi
+    method get_rect=rect
+
+(* go in obj ? *)
+    val mutable prect=new rectangle 0 0 gwi ghi
+    method get_prect=prect
+
+    method update_prect()=
+      let px=prect#get_x and
+	py=prect#get_y and
+	cx=rect#get_x and
+	cy=rect#get_y in
+      let xdif= 32-px and
+	ydif= 32-py in
+
+	if px<0 then (rect#set_position (cx-1) cy;prect#set_position (32+px) py);
+	if px>32 then (rect#set_position (cx+1) cy;prect#set_position (px-32) py);
+      	if py<0 then (rect#set_position cx (cy-1);prect#set_position px (32+py));
+	if py>32 then (rect#set_position cx (cy+1);prect#set_position px (py-32));
+
+
+    val mutable direction=0
+    method get_direction=direction
+    method turn dir=direction<-dir;
+
+end;;
+
+
+class ['a] game_obj_types (none_obj:'a)=
+object
+  inherit ['a] obj_types none_obj
+end;;
+
+
 
 class game_action_object=
 object(self)
@@ -39,7 +82,7 @@ end;;
 
 class game_generic_object nm wi hi gwi ghi=
 object(self)
-  inherit obj nm wi hi gwi ghi
+  inherit game_obj nm wi hi gwi ghi
   inherit game_action_object
 
   val mutable lua_code=""
@@ -276,6 +319,7 @@ object(self)
 end;;
 *)
 
+(** DEPRECATED use canvas_NEW in poccore instead *)
 (** FROM POCENGINE *)
 (** graphical canvas *)
 class canvas =
@@ -407,192 +451,13 @@ end;;
 
 
 
-class canvas_NEW =
-object(self)
-  val mutable objs_list=RefList.empty()
-
-  val mutable tile_list=RefList.empty()
-
-  val mutable del_list=RefList.empty()
-
-  method clear()=
-    objs_list<-RefList.empty();
-    tile_list<-RefList.empty();
-    del_list<-RefList.empty();
-
-  method foreach_sorted f=
-    self#foreach_obj f;
-
-(** sort tiles to put from layer *)
-  method sort_layer()=
-    self#sort_obj  
-       (fun ao bo ->
-	    match ao#get_layer with
-	      | x when x < bo#get_layer -> -1
-	      | x when x = bo#get_layer -> 0
-	      | x when x > bo#get_layer -> 1
-	      | _ -> 0
-      );
-
-
-  method add_obj (o:graphic_generic_object)=    
-(*    o#set_graphic(); *)
-    RefList.add objs_list o;
-
-
-  method del_obj (od:graphic_generic_object)=
-  RefList.filter
-    ( fun o->
-	  if o#get_rect#get_x=od#get_rect#get_x 
-	  && o#get_rect#get_y=od#get_rect#get_y
-	then false else true
-    )
-    objs_list
-
-(*
-  method del_dead ()=
-    RefList.filter 
-      ( fun o->
-	  if o#will_i_dead=false then true else false	     	    
-      )
-      objs_list
-*) 
-
-  method sort_obj (f:graphic_generic_object->graphic_generic_object->int)=
-    RefList.sort ~cmp:f objs_list;
-
-  method foreach_obj (f:graphic_generic_object->unit)=
-      RefList.iter f objs_list
-
-
-(** sort tiles to put from position *)
-
-  method sort_position()=
-    self#sort_obj 
-      ( fun ao bo ->
-	  match ao#get_rect with
-	    | x when (x#get_y < bo#get_rect#get_y ) -> -1
-	    | x when (x#get_y= bo#get_rect#get_y*32)  -> 0
-	    | x when (x#get_y > bo#get_rect#get_y) -> 1
-	    | x when (x#get_x < bo#get_rect#get_x) -> -1
-	    | x when (x#get_x = bo#get_rect#get_x ) -> 0
-	    | x when (x#get_x> bo#get_rect#get_x) -> 1
-
-	    | _ -> 0
-      );
-
-  (** refresh the canvas. Refresh graphic part of each object *)
- method refresh (vx:int) (vy:int) (tw:int) (th:int)=
-
-   self#sort_position();
-   self#sort_layer();
-   self#foreach_obj (
-      fun o->
-	let ox=o#get_rect#get_x and
-	    oy=o#get_rect#get_y and
-	    ow=o#get_rect#get_w and
-	    oh=o#get_rect#get_h in
-	  
-	if 
-	  (ox+ow)>vx & (oy+oh)>vy & vx<(ox+800) & vy<(oy+600) then 
-
-	(
-	  let nx=ox-vx and
-	      ny=oy-vy in
-
-	    o#move nx ny;
-	    o#put();	
-	    o#move ox oy
-	)
-   )
-
-
-end;;
-
 let none_obj=(new game_object "none" (!tile_w) (!tile_h) "none" false false 1 1 );;
 let none_generic_obj=(new game_generic_object "none" (!tile_w) (!tile_h) 1 1 );;
 
+(** game_object types *)
 class game_object_types=
 object
   inherit [game_object] obj_types none_obj
-end;;
-
-class game_object_layer wi hi max=
-object(self)
-  inherit [game_object] obj_layer none_obj wi hi max as super
-  method init_put()=
-    self#foreach_object (fun k o->
-			o#init_put();
-		     );
-
-  method update_obj num=
-    let obj=self#get_object num in
-      obj#update_prect();
-      
-      super#update_obj num;
-
-  method update_action()=
-    self#foreach_object (fun k o->
-			   o#act 0 0;
-			   o#anim();
-			)
-end;;
-
-
-
-class ['a] obj_layer_hash iv wi hi max=
-object(self)
-  inherit ['a] obj_layer iv wi hi max as super
-
-
-  val mutable hash=Hashtbl.create 2
-  val mutable hash_rev=Hashtbl.create 2
-
-  
-  method add_hash (k:string) (n:int)=Hashtbl.add hash k n;Hashtbl.add hash_rev n k
-  method replace_hash k n=
-    let i=self#get_hash k in
-      self#del_hash k;
-      self#del_hash_rev i;
-      self#add_hash n i;
-  method get_hash k=Hashtbl.find hash k
-  method del_hash k=Hashtbl.remove hash k
- 
-  method get_hash_rev n=Hashtbl.find hash_rev n
-  method del_hash_rev n=Hashtbl.remove hash_rev n
-
-  method is_hash k=Hashtbl.mem hash k
-
-  method del_hash_object (k:string)=
-    let n=self#get_hash k in
-    self#del_object n;
-    self#del_hash k;
-    self#del_hash_rev n
-
-  method get_hash_object (k:string)=
-    self#get_object (self#get_hash k)
-end;;
-
-class game_object_layer_hash wi hi max=
-object(self)
-  inherit [game_object] obj_layer_hash none_obj wi hi max as super
-(*
-  method init_put()=
-    self#foreach_object (fun k o->
-			o#init_put();
-		     );
-*)
-  method update_obj num=
-    let obj=self#get_object num in
-      obj#update_prect();
-      
-      super#update_obj num;
-
-  method update_action()=
-    self#foreach_object (fun k o->
-			   o#act 0 0;
-			   o#anim();
-			)
 end;;
 
 

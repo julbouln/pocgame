@@ -21,7 +21,7 @@ open Rect;;
 open Video;;
 
 open Low;;
-open Object;;
+open Medias;;
 
 class game_visual vx vy=
 object

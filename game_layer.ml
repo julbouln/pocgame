@@ -5,7 +5,7 @@ open Rect;;
 
 exception Out_of_array of (int*int);;
 
-class layer wi hi=
+class game_layer wi hi=
   object (self)
     val mutable rect=new rectangle 0 0 wi hi
 

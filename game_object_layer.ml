@@ -1,10 +1,10 @@
 open Low;;
 open Rect;;
 open Video;;
-open Object;;
+open Medias;;
 
-open Obj_type;;
-open Layer;;
+open Game_object;;
+open Game_layer;;
 
 (** Game object layer class definition *)
 
@@ -21,9 +21,9 @@ object
 end;;
 
 
-class ['a] obj_layer (none_obj:'a) wi hi max=
+class ['a] game_obj_layer (none_obj:'a) wi hi max=
   object (self)
-    inherit layer wi hi as super
+    inherit game_layer wi hi as super
     val mutable stack=new del_stack
     val mutable objs=Array.make max none_obj
     val mutable is_objs=Array.make max false
@@ -159,3 +159,86 @@ class ['a] obj_layer (none_obj:'a) wi hi max=
 	  a
 
   end;;
+
+
+(** game_object layer *)
+class game_object_layer wi hi max=
+object(self)
+  inherit [game_object] game_obj_layer none_obj wi hi max as super
+  method init_put()=
+    self#foreach_object (fun k o->
+			o#init_put();
+		     );
+
+  method update_obj num=
+    let obj=self#get_object num in
+      obj#update_prect();
+      
+      super#update_obj num;
+
+  method update_action()=
+    self#foreach_object (fun k o->
+			   o#act 0 0;
+			   o#anim();
+			)
+end;;
+
+
+(** obj layer hash *)
+
+class ['a] game_obj_layer_hash iv wi hi max=
+object(self)
+  inherit ['a] game_obj_layer iv wi hi max as super
+
+
+  val mutable hash=Hashtbl.create 2
+  val mutable hash_rev=Hashtbl.create 2
+
+  
+  method add_hash (k:string) (n:int)=Hashtbl.add hash k n;Hashtbl.add hash_rev n k
+  method replace_hash k n=
+    let i=self#get_hash k in
+      self#del_hash k;
+      self#del_hash_rev i;
+      self#add_hash n i;
+  method get_hash k=Hashtbl.find hash k
+  method del_hash k=Hashtbl.remove hash k
+ 
+  method get_hash_rev n=Hashtbl.find hash_rev n
+  method del_hash_rev n=Hashtbl.remove hash_rev n
+
+  method is_hash k=Hashtbl.mem hash k
+
+  method del_hash_object (k:string)=
+    let n=self#get_hash k in
+    self#del_object n;
+    self#del_hash k;
+    self#del_hash_rev n
+
+  method get_hash_object (k:string)=
+    self#get_object (self#get_hash k)
+end;;
+
+class game_object_layer_hash wi hi max=
+object(self)
+  inherit [game_object] game_obj_layer_hash none_obj wi hi max as super
+(*
+  method init_put()=
+    self#foreach_object (fun k o->
+			o#init_put();
+		     );
+*)
+  method update_obj num=
+    let obj=self#get_object num in
+      obj#update_prect();
+      
+      super#update_obj num;
+
+  method update_action()=
+    self#foreach_object (fun k o->
+			   o#act 0 0;
+			   o#anim();
+			)
+end;;
+
+
