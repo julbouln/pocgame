@@ -1,4 +1,6 @@
 open Low;;
+
+open Generic;;
 open Rect;;
 open Video;;
 open Medias;;
@@ -180,6 +182,56 @@ object(self)
 			   o#anim();
 			)
 end;;
+
+
+
+(* NEW *)
+(*
+class ['a] game_obj_layer_NEW (none_obj:'a) wi hi max=
+  object (self)
+    inherit [string] game_generic_layer "none" wi hi as super
+    inherit ['a] generic_object_handler
+
+    method clear()=
+      for i=0 to wi-1 do
+	for j=0 to hi-1 do
+	  super#set_position i j "none"
+	done;
+      done;
+
+    method print_para_o w num=
+      print_string ("GAME OBJECT LAYER PARACHUTE : "^w^" "^string_of_int(num)^" OUT OF ARRAY");
+      print_newline();
+
+    method get_object_by_position x y=            
+      let n=self#get_position x y in
+	self#get_object n
+	
+    method update_obj_all()=
+      self#foreach_object(
+      fun k ob->self#update_obj k;
+    );
+  
+    method update_obj k=
+      let obj=self#get_object k in
+      if self#is_object k==true then (
+
+	obj#around_object self#out_of_lay (fun i j->
+					     self#set_position i j k;	    
+					  )
+      )
+
+    method move k x y=
+      let obj=self#get_object k in
+      self#set_position (x) (y) k;
+      self#set_position (obj#get_case_x) (obj#get_case_y) "none";
+      obj#move x y;
+
+    method move_from cx cy x y=
+      let k=self#get_position cx cy in
+      self#move k x y;
+  end;;
+*)
 
 
 (** obj layer hash *)

@@ -194,13 +194,18 @@ object(self)
     ) a;
 end;;
 
+
+exception Game_map_action_not_found of string;;
+
 class virtual ['tl] game_virtual_map w h=
 object(self)
   val mutable map_actions=Hashtbl.create 2
 
   method add_map_action (s:string) (o:game_object_map_actions)=Hashtbl.add map_actions s o
-  method get_map_action (s:string)=Hashtbl.find map_actions s
-
+  method get_map_action (s:string)=
+    (try
+       Hashtbl.find map_actions s
+     with Not_found -> raise (Game_map_action_not_found s))
   method foreach_map_action f=
     Hashtbl.iter f map_actions
 (*  val mutable decor_map=[new game_object_map (none_obj) w h 500] *)
