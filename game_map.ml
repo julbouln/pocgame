@@ -23,35 +23,11 @@ open Game_xml;;
 open Game_loading;;
 
 
-let loading_init_game_object_types_from_xml f (li:game_loading_info) add_obj=
-(*  let xinc=xinclude_process_file f in
-  let obj_xml=new xml_node (Xml.parse_string xinc) in*)
-  let obj_xml=xml_node_from_file f in
-  let pmt=new xml_game_object_types_parser in
-    pmt#parse obj_xml;
-    let h=pmt#get_hash in
-      Hashtbl.iter (
-	fun k v ->
-	  add_obj k v;
-	  li#set_lock();
-	  li#set_data (LData k);
-	  li#set_unlock();
-      ) h;
-
 
 (** game_object types *)
 class game_object_types=
 object(self)
   inherit [game_object] obj_types
-
-  method init_from_xml f=
-    init_game_object_types_from_xml f self#add_object_type
-
-  method loading_init_from_xml f (li:game_loading_info)=
-    loading_init_game_object_types_from_xml f li self#add_object_type
-
-      
-
 end;;
 
 class game_object_map wi hi=
@@ -80,16 +56,6 @@ object(self)
     obj_type#get_object_type nm
 
 
-  (** xml *)
-  method init_object_types_from_xml f=
-    obj_type#init_from_xml f;
-    obj_type#lua_init();
-    self#lua_parent_of "types" (obj_type:>lua_object);
-
-  method loading_init_object_types_from_xml f li=
-    obj_type#loading_init_from_xml f li;
-    obj_type#lua_init();
-    self#lua_parent_of "types" (obj_type:>lua_object);
 
 
   (** general *)
@@ -200,27 +166,6 @@ object(self)
       | _ ->()
 
     
-(* persistence *)
-(* DEPRECATED : use xml instead *)
-  method map_to_save=
-    let a=DynArray.create() in
-      self#foreach_object (
-	fun i o->
-	  if o#get_name<>"none" then (
-	    print_string ("GAME_OBJECT_MAP: save "^o#get_id^" of type "^o#get_name);print_newline();
-	    DynArray.add a (o#get_id,o#get_name,o#get_rect#get_x,o#get_rect#get_y);
-	  )    
-      );
-      DynArray.to_array a
-
- method map_from_load (a:(string*string*int*int) array)=
-   Array.iter (
-     fun v->
-       let (id,nm,x,y)=v in
-	 print_string ("GAME_OBJECT_MAP: load "^id^" of type "^nm);print_newline();  
-	 let r=self#add_object_from_type (Some id) nm x y in ()
-   ) a;
-
 
  method lua_init()=
    lua#set_val (OLuaVal.String "add_object_from_type") 
@@ -253,6 +198,10 @@ object(self)
 	 )
       );
 
+    self#lua_parent_of "types" (obj_type:>lua_object); 
+
+
+
    lo#lua_init();
 
 end;;
@@ -277,26 +226,29 @@ end;;
 class xml_game_object_map_type_parser=
 object(self)
   inherit [game_object_map] xml_object_parser (fun()->new game_object_map 0 0) as super
+  val mutable obj_types_parser=new xml_game_object_types_parser
+
+  method parse_child k v=
+    super#parse_child k v;
+    match k with
+      | "game_object_types" -> obj_types_parser#parse v
+      | _ ->()
 
   method init_object o=
     o#set_lua_script lua;
+
+    let h=obj_types_parser#get_hash in
+      Hashtbl.iter (
+	fun k v ->
+	  o#get_obj_type#add_object_type k v;
+      ) h;
+(*
     o#init_object_types_from_xml (string_of_val (args_parser#get_val#get_val (`String "types")))
-
-
-end;;
-
-
-class xml_game_object_map_type_with_loading_parser loading=
-object(self)
-  inherit [game_object_map] xml_object_parser (fun()->new game_object_map 0 0) as super
-
-  method init_object o=
-    o#set_lua_script lua;
-    loading#set_msgt (string_of_val (args_parser#get_val#get_val (`String "types")));
-    o#loading_init_object_types_from_xml (string_of_val (args_parser#get_val#get_val (`String "types"))) loading#get_loading_info;
-    loading#get_loading_info#set_data LNone;
+*)
 
 end;;
+
+
 
 class xml_game_object_maps_type_parser=
 object(self)
@@ -392,9 +344,6 @@ object(self)
 
   val mutable rect=new rectangle 0 0 w h
   method get_rect=rect
-
-  method init_type_from_xml f=
-    init_game_map_type_from_xml f self#add_object_map self#add_tile_layer
 
   method resize nw nh=
     self#foreach_tile_layer 
@@ -591,59 +540,6 @@ object(self)
 	    ) childs;
       | _ -> ()
 
-(* persistance *)
-(* DEPRECATED *)
-  val mutable map_file=new file
-
-  method objs_to_save=
-    print_string ("GAME_MAP: save maps");print_newline();
-    let a=Hashtbl.create 2 in
-      self#foreach_object_map 
-      (
-	
-	fun n act->
-	  print_string ("GAME_MAP: save "^n^" map");print_newline();
-	  Hashtbl.add a n act#map_to_save
-      );
-      a
-	
-  method objs_from_load a=
-    Hashtbl.iter (
-      fun n v->
-	print_string ("GAME_MAP: load "^n^" map");print_newline();  
-	let act=self#get_object_map n in
-	  act#map_from_load v
-    ) a;
-    
-  method private tile_to_save=
-    let a=Hashtbl.create 2 in
-      self#foreach_tile_layer 
-      (
-	
-	fun n t->
-	  print_string ("GAME_MAP: save "^n^" tile layer");print_newline();
-	  Hashtbl.add a n t#get_lay
-      );
-      a
-
-  method private tile_from_load al=
-    Hashtbl.iter (
-      fun n v->
-	print_string ("GAME_MAP: load "^n^" tile layer");print_newline();  
-	let t=self#get_tile_layer n in
-	  t#set_lay v
-    ) al;
-      
-  method save f=
-    map_file#save f (self#get_rect#get_w,self#get_rect#get_h,self#tile_to_save,self#objs_to_save)
-      
-  method load f =
-    print_string ("GAME_MAP: load maps");print_newline();
-    let (mw,mh,tile_ar,obj_ar)=map_file#load f in
-      self#resize mw mh;
-      self#tile_from_load tile_ar;
-      self#objs_from_load obj_ar;
-      ()
 
 
   method lua_init()=

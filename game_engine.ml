@@ -15,7 +15,7 @@ open Binding;;
 open Game_visual;;
 open Game_map;;
 
-class game_engine curs file=
+class game_engine curs=
 object(self)
   inherit stage curs as super
 
@@ -57,11 +57,12 @@ object(self)
     )
 
 
-
+  initializer
+    map#set_canvas (Some canvas);
 
   method on_load()=
-    map#set_canvas (Some canvas);
-    map#init_type_from_xml file;
+()
+(*    map#init_type_from_xml file; *)
 
 
   method on_loop()=
@@ -118,12 +119,15 @@ let usleep sec=Thread.delay sec;;
 
 
 
-class game_engine_with_iface curs map_type_file iface_file englua=
+class game_engine_with_iface curs iface_file=
 object(self)
-  val mutable engine=new game_engine curs map_type_file
+  val mutable engine=new game_engine curs
   inherit iface_stage curs iface_file as iface
 
+  method get_map=engine#get_map
+
   val mutable engine_iobj=new iface_object video#get_w video#get_h 
+  method get_iobj=engine_iobj
 
   method on_load()=
 
@@ -133,16 +137,16 @@ object(self)
     ignore(self#lua_init());
 
 
-      engine_iobj#set_layer (-1);
-      engine_iobj#move 0 0;
-      engine_iobj#show();
-      engine_iobj#set_grab_focus true;
-      engine_iobj#set_lua_script englua;
-      engine_iobj#lua_parent_of "engine" (engine:>lua_object);
-      ignore(engine_iobj#lua_init());
-
-      iface#get_iface#iface_add_object "engine" engine_iobj;
-      ignore(engine_iobj#get_lua#exec_val_fun (OLuaVal.String "on_load") [OLuaVal.Nil]);
+    engine_iobj#set_layer (-1);
+    engine_iobj#move 0 0;
+    engine_iobj#show();
+    engine_iobj#set_grab_focus true;
+(*    engine_iobj#set_lua_script engine#get_lua_script; *)
+    engine_iobj#lua_parent_of "engine" (engine:>lua_object);
+    ignore(engine_iobj#lua_init());
+    
+    iface#get_iface#iface_add_object "engine" engine_iobj;
+    ignore(engine_iobj#get_lua#exec_val_fun (OLuaVal.String "on_load") [OLuaVal.Nil]);
 
 
 	
@@ -206,23 +210,29 @@ class xml_game_engine_with_iface_stage_parser=
 object (self)
   inherit xml_stage_parser as super
 
+  val mutable map_type_parser=new xml_game_map_type_parser
+
   method parse_child k v=
     super#parse_child k v;
-
+    match k with
+      | "game_map_type" -> map_type_parser#parse v 
+      | _ -> ()
 (** object initial init *)
   method init_object o=
     o#set_lua_script (lua);
-
+    
 
   method get_val=
     let ofun()=
       let o=
 	new game_engine_with_iface generic_cursor 
-	  (string_of_val (args_parser#get_val#get_val (`String "map_type_file")))
+(*	  (string_of_val (args_parser#get_val#get_val (`String "map_type_file")))*)
 	  (string_of_val (args_parser#get_val#get_val (`String "iface_file")))
-	  (text_of_val (args_parser#get_val#get_val (`String "script")))
+(*	  (text_of_val (args_parser#get_val#get_val (`String "script"))) *)
       in
-	self#init_object (o:>stage);
+	map_type_parser#init o#get_map#add_object_map o#get_map#add_tile_layer;
+	o#get_iobj#set_lua_script lua;
+(*	self#init_object (o:>stage); *)
 	(o:>stage)	  
     in      
       (id,ofun)

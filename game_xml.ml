@@ -76,6 +76,7 @@ object(self)
 end;;
 
 
+(* DEPRECATED *)
 let init_game_object_types_from_xml f add_obj=
 (*  let xinc=xinclude_process_file f in
   let obj_xml=new xml_node (Xml.parse_string xinc) in *)
