@@ -26,7 +26,7 @@ object
       usleep(Random.float(1./.25.));
     done;
 
-    Condition.wait cond m;
+(*    Condition.wait cond m; *)
  
   method get_unlock()=
     Mutex.unlock m;    
@@ -41,7 +41,7 @@ object
     done;
 
   method set_unlock()=
-    Condition.signal cond;
+(*    Condition.signal cond; *)
     Mutex.unlock m;
 
     (* to avoid interblockade *)
