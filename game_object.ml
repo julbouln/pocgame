@@ -154,6 +154,27 @@ object
     method get_direction=direction
     method turn dir=direction<-dir;
 
+    method scroll p=
+      let px=prect#get_x and
+	  py=prect#get_y in 
+	match direction with
+	  | 0 -> prect#set_position px (py-p);
+	  | 2 -> prect#set_position (px + p) py;
+	  | 4 -> prect#set_position px (py+p); 
+	  | 6 -> prect#set_position (px-p) py;
+	  | _ -> ();
+	      
+    method next_position()=
+      let x=rect#get_x and
+	  y=rect#get_y in
+      match direction with
+	  | 0 -> (x,y-1);
+	  | 2 -> (x+1,y);
+	  | 4 -> (x,y+1); 
+	  | 6 -> (x-1,y);
+	  | _ -> (x,y);
+
+
 end;;
 
 
@@ -247,6 +268,15 @@ object(self)
       lua#set_val (OLuaVal.String "get_type") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.string) (fun()->self#get_name));
 
       lua#set_val (OLuaVal.String "get_id") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.string) (fun()->self#get_id));
+
+      lua#set_val (OLuaVal.String "scroll") (OLuaVal.efunc (OLuaVal.int **->> OLuaVal.unit) self#scroll);
+      lua#set_val (OLuaVal.String "next_position") 
+	(OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.value) 
+	   (fun()->
+	     let np=self#next_position() in
+	       lua_of_val_ext (`Position np)
+	   )
+	);
 
       lo#lua_init();
 

@@ -101,10 +101,13 @@ object(self)
       in
       let args=args_parser#get_val in
       let (gw,gh)=size_of_val (args#get_val (`String "pixel_size")) and
-	  (w,h)=size_of_val (args#get_val (`String "case_size")) in
+	  (w,h)=size_of_val (args#get_val (`String "case_size")) and
+	  block=if args#is_val(`String "blocking") then (bool_of_val(args#get_val(`String "blocking"))) else false in
+
 	o#set_name id;
 	o#get_rect#set_size w h;
 	o#get_prect#set_size gw gh;
+	o#set_blocking block;
 	graphics_parser#init (o#get_graphics#add_graphic);
 	states_parser#init (o#get_states#add_state);
 	o#set_props props_parser#get_val;

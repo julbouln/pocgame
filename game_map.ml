@@ -387,8 +387,21 @@ object(self)
     object_maps#foreach_object f
 
 
-(*  method position_blocking x y=
-    if self#get_tile_layer#out_of_lay x y then true else false
+  method is_position_blocking x y=
+    if rect#is_position x y then
+      (
+	let r=ref false in
+	  self#foreach_object_map (
+	    fun mid m->
+	      if m#is_object_at_position x y then
+	      let o=m#get_object_at_position x y in
+		r:=!r || o#get_blocking
+	  );
+	  !r
+      )
+    else
+      true
+(*    if self#get_tile_layer#out_of_lay x y then true else false
 *)
 (*
     else
@@ -572,6 +585,12 @@ object(self)
     lua#set_val (OLuaVal.String "add_object_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.string) (fun m t x y->self#add_object_from_type m None t x y));
     lua#set_val (OLuaVal.String "add_object_named_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#add_object_named_from_type);
     lua#set_val (OLuaVal.String "delete_object") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#delete_object);
+
+
+    lua#set_val (OLuaVal.String "is_position_blocking") 
+      (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.bool) 
+	 self#is_position_blocking
+      );
 
     lua#set_val (OLuaVal.String "get_object_id_at_position") 
       (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.value) 
