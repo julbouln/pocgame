@@ -188,6 +188,15 @@ object(self)
 
 
  method lua_init()=
+   lua#set_val (OLuaVal.String "add_object_from_type") 
+     (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.string) 
+	(fun t x y->self#add_object_from_type None t x y));
+   lua#set_val (OLuaVal.String "add_object_named_from_type") 
+     (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) 
+	(fun n t x y->ignore(self#add_object_from_type (Some n) t x y)));
+   
+   lua#set_val (OLuaVal.String "delete_object") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) self#delete_object);
+
    lo#lua_init();
 
 end;;
@@ -357,6 +366,7 @@ object(self)
     
   method add_object_map (s:string) (o:game_object_map)=
     print_string "add object map";print_newline();
+(*    ignore(o#lua_init()); *)
     self#lua_parent_of s (o:>lua_object);
     o#set_canvas canvas;
     ignore(object_maps#add_object (Some s) o);
@@ -470,7 +480,8 @@ object(self)
 	       );
 
   method load_from_file f=
-    let x=Xml.parse_file f in
+    let xinc=Xinclude.xinclude_process_file f in
+    let x=Xml.parse_string xinc in
       self#from_xml x
 		
   method from_xml_string s=
@@ -563,6 +574,7 @@ object(self)
 
 
   method lua_init()=
+(* DEPRECATED use mapname.func instead *)
     lua#set_val (OLuaVal.String "add_object_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.string) (fun m t x y->self#add_object_from_type m None t x y));
     lua#set_val (OLuaVal.String "add_object_named_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#add_object_named_from_type);
     lua#set_val (OLuaVal.String "delete_object") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#delete_object);
