@@ -169,11 +169,11 @@ class ['a] xml_game_obj_parser (iv:'a)=
 object
   inherit xml_gm_object_with_state_parser as super
 
-  method get_obj (f:string->string->string->int->int->int->int->game_state_container->(unit->'a))=f name t file w h cw ch (new game_state_container states)
+  method get_obj (f:string->string->string->int->int->int->int->game_state_container->((unit->'a)*string))=f name t file w h cw ch (new game_state_container states)
 end;;
 
 
-class ['a] xml_game_objs_parser (name:string) (iv:'a) (f:string->string->string->int->int->int->int->game_state_container->(unit->'a))=
+class ['a] xml_game_objs_parser (name:string) (iv:'a) (f:string->string->string->int->int->int->int->game_state_container->((unit->'a)*string))=
 object
   inherit [gm_object] xml_list_parser name (fun()->new xml_game_obj_parser iv) as super
   val mutable objs=DynArray.create()
@@ -186,5 +186,5 @@ object
 	  DynArray.add objs (p#get_obj f)
 
   method get_objs=
-    (DynArray.to_array objs : (unit->'a) array)
+    (DynArray.to_array objs : ((unit->'a)*string) array)
 end;;

@@ -56,7 +56,7 @@ object(self)
 	) res;
   
 
-  method object_types_from_xml_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(unit->'a))=
+  method object_types_from_xml_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->((unit->'a)*string))=
     print_string ("GAME_MAP:object types from xml "^f);print_newline();
     let obj_xml=new xml_node (Xml.parse_file f) in
     let p=new xml_game_objs_parser n iv fu in p#parse obj_xml;
@@ -64,10 +64,8 @@ object(self)
 	Array.iter (
 	  fun v-> 
 	    print_string "GAME_MAP: new type";print_newline();
-	    let o=v() in
-	    let nm=o#get_name in
-	    print_string ("GAME_MAP: add type "^nm);print_newline(); 
-	      self#add_object_type nm v
+	    print_string ("GAME_MAP: add type "^(snd v));print_newline(); 
+	      self#add_object_type (snd v) (fst v)
 (*
 (fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
 *)
