@@ -213,6 +213,14 @@ object(self)
 
   method is_hash k=Hashtbl.mem hash k
 
+  method foreach_object_hash f=
+    Hashtbl.iter (
+      fun k i ->
+	f k (self#get_hash_object k)
+    ) hash
+
+
+
   method del_hash_object (k:string)=
     let n=self#get_hash k in
     self#del_object n;

@@ -107,7 +107,6 @@ object(self)
     self#update_action(); 
 
   method map_add_object id t x y=
-
     let n=self#add_object_from_type t x y in
       print_string ("MAP: add object "^n);print_newline();
       match id with
@@ -133,12 +132,6 @@ object(self)
 
   method map_is_object id=
     self#is_hash id
-
-  method foreach_object_hash f=
-    let d i o=
-      let no=self#get_object i in
-      f (no#get_id) no in
-	self#foreach_object d
 
 
 (* persistence *)
