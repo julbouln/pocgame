@@ -203,7 +203,7 @@ class game_map w h=
 object(self)
   inherit lua_object as lo
   inherit xml_object
-  
+  method get_id="map"
   val mutable actions=new state_object
 
   val mutable canvas=None

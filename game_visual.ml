@@ -32,6 +32,7 @@ open Binding;;
 class game_visual vx vy=
 object(self)
   inherit lua_object as lo 
+  method get_id="visual"
  val mutable rect=new rectangle vx vy (video#get_w) (video#get_h)
   val mutable change=false
 
