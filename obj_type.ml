@@ -52,6 +52,7 @@ end;;
 (* object_types are dynamic for create unit of type *)
 (* objects are static for get caracteristic *) 
 
+exception No_game_obj_type of string;;
 
 class ['a] game_obj_types (none_obj:'a)=
   object
@@ -67,8 +68,13 @@ none_obj
       if(Hashtbl.mem objects nm)==false then
 	Hashtbl.add objects nm (obj());	  
       Hashtbl.add object_types nm obj
-    method get_object_type nm=(Hashtbl.find object_types nm)()
-    method get_object nm=(Hashtbl.find objects nm)
+    method get_object_type nm=
+      try
+	(Hashtbl.find object_types nm)()
+      with Not_found -> raise (No_game_obj_type nm)
+    method get_object nm=      
+      (Hashtbl.find objects nm)
+
     method is_object_type nm=(Hashtbl.mem objects nm)
 
     method count_objects_type=Hashtbl.length objects			       

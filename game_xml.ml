@@ -51,3 +51,106 @@ class xml_gm_objects_parser name=
 object
   inherit [gm_object] xml_list_parser name (fun()->new xml_gm_object_parser)
 end;;
+
+
+type state={frames:int array;refresh:int;action:unit->unit;sound:string array};;
+
+type state_anim=
+    {mutable state_name:string;
+     mutable anim_frames:int array;
+     mutable anim_refresh:int;
+     mutable sounds:string array
+   };;
+
+let state_anim2state s=
+  {frames=s.anim_frames;
+   refresh=s.anim_refresh;
+   action=(function()->());
+   sound=s.sounds
+};;
+
+
+class xml_state_parser=
+object
+  inherit xml_parser
+val mutable name="none"
+val mutable frames=[|0|] 
+val mutable refresh=0;
+val mutable snds=[|"none"|]
+  method tag=""
+method get_val=
+    {state_name=name;
+     anim_frames=frames;
+     anim_refresh=refresh;
+     sounds=snds
+    }
+
+  method parse_attr k v=
+    match k with
+      | "name"-> name<-v
+      | _ -> ()
+  method parse_child k v=
+    match k with
+
+      | "frames" -> let p=(new xml_intlist_parser "frame" (fun()->new xml_int_parser "frame"))  in p#parse v;frames<-p#get_array
+      | "sounds" -> let p=(new xml_stringlist_parser "sound" (fun()->new xml_string_parser "sound"))  in p#parse v;snds<-p#get_array
+      | "refresh" -> let p=(new xml_int_parser "value") in p#parse v;refresh<-p#get_val
+      | _ -> ()
+
+
+end;;
+
+class xml_state_list_parser=
+object
+  inherit [state_anim] xml_list_parser "state" (fun()->new xml_state_parser)
+end;;
+
+
+
+class xml_gm_object_with_state_parser=
+object
+  inherit xml_gm_object_parser as super
+
+val mutable states=[||] 
+  method parse_child k v=
+    super#parse_child k v;
+    match k with
+    | "states" -> 
+	let p=new xml_state_list_parser in
+	  p#parse v;
+	  states<-p#get_array
+    | _ -> ()
+
+  method get_states=states
+  
+end;;
+
+
+
+exception Container_state_not_found of string;;
+
+(* FIXME must be game_state_container *)
+
+class game_state_container (states:state_anim array)=
+object
+  val mutable sts=Hashtbl.create 2;
+initializer
+
+
+  Array.iter (function s->
+(*		print_string ("add state "^s.state_name);print_newline(); *)
+		Hashtbl.add sts s.state_name (state_anim2state s);
+	     ) states;
+
+method is_state n=
+  Hashtbl.mem sts n 
+method get_state n=
+  if Hashtbl.mem sts n then
+    Hashtbl.find sts n
+  else raise (Container_state_not_found n)
+
+end;;
+
+let none_stc=(new game_state_container [|{state_name="idle";anim_frames=[|0|];anim_refresh=0;sounds=[|"none"|]}|]);;
+
+
