@@ -1,18 +1,15 @@
 OCAMLMAKEFILE = OCamlMakefile
 
-INCDIRS=../poccore ../extlib-1.3 ../oxinclude ../xml-light2.1 ../pociface
-LIBS=poccore xinclude xml-light extLib str pociface
+#INCDIRS=../oxinclude 
+#LIBS=xinclude xml-light str
 
-# obj_type.ml -> game_object_type.ml
-#   layer.ml -> game_layer.ml
-#   object_layer.ml -> game_object.ml, game_object_layer.ml
-#   tile_layer.ml -> game_tile_layer.ml
-#   main.ml -> game_main.ml
 
+PACKS=pociface oxinclude
+
+LIBINSTALL_FILES=*.cmi *.cmx *.a pocgame.cmxa
+#LIB_PACK_NAME=pocgame
 
 SOURCES = game_object.ml game_layer.ml game_object_layer.ml game_visual.ml game_tile_layer.ml game_xml.ml game_decor.ml game_loading.ml game_map.ml game_engine.ml
-
-OCAMLOPT=ocamlopt.opt
 
 RESULT  = pocgame
 
