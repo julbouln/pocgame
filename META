@@ -1,4 +1,5 @@
 description = "Pocengine game"
 requires = "pociface,oxinclude"
 version = "0.1"
+archive(byte,mt) = "pocgame.cma"
 archive(native,mt) = "pocgame.cmxa"
