@@ -63,6 +63,8 @@ object(self)
 
 
   val mutable screen_tile=(tile_empty())
+  method screen_tile=screen_tile
+
   val mutable scr_w=800
   val mutable scr_h=600
 
@@ -75,6 +77,10 @@ object(self)
   val mutable fullscreen=ref false
   val mutable windowed=ref false
   val mutable fps=32
+
+  val mutable depth=16
+
+  method set_depth d=depth<-d
 
   method set_fs f=fullscreen:=f
 
@@ -109,6 +115,7 @@ method parse_args()=
     ("-w",Arg.Int (self#set_scr_w),(n("screen width")));
     ("-h",Arg.Int (self#set_scr_h),(n("screen height")));
     ("-fps",Arg.Int (self#set_fps),(n("frame per second")));
+    ("-bpp",Arg.Int (self#set_depth),(n("depth")));
     ("-lang",Arg.String (self#set_lang),(n("default language")))] in 
   let usage= "usage : "^info#get_cmd^" [-fs] [-ws] [-w width] [-h height] [-fps fps] [-lang lang]" in
     Arg.parse args (fun s -> ()) usage
@@ -123,7 +130,7 @@ method medias_init()=
 
   if !windowed=true then fullscreen:=false;
 
-  screen_tile<-video#init (scr_w) (scr_h) 16 (!fullscreen);
+  screen_tile<-video#init (scr_w) (scr_h) (depth) (!fullscreen);
   video#set_def_size 800 600;
 
   audio#init 44100 2 ;
