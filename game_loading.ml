@@ -14,43 +14,53 @@ type loading_data=
   | LData of string
   | LEnd;;
 
+let print_loading_data_t d=
+  (match d with
+    | LNone -> print_string "LNone";
+    | LData d-> print_string "LData";
+    | LEnd ->print_string "LEnd";
+  );print_newline();;
+
 class game_loading_info=
 object
   val mutable m=Mutex.create();
   val mutable cond=Condition.create();
 
-  val mutable odata=LNone
+  val mutable odata=LData("bla")
   val mutable data=LNone
-
     
-
   method get_lock()=
     Mutex.lock m;
-    while data=odata do
+(*    if data=odata then (  *)
+      print_string "GAME_LOADING: Attente de changement de valeur...";print_newline();
       Condition.wait cond m; 
-    done
+      print_string "GAME_LOADING: Changement de valeur signalé!";print_newline();
+
+(*    )    *)
 
   method get_unlock()=
     Mutex.unlock m;    
-
 
   method set_lock()=
     Mutex.lock m;
 
   method set_unlock()=
-    Condition.signal cond; 
     Mutex.unlock m;
 
     (* to avoid interblockade *)
-    Thread.delay (Random.float (1.));
+    Thread.delay (Random.float (0.2));
 
   method get_data=
+
+    print_string "GAME_LOADING: Recuperation de valeur";print_newline();
     odata<-data;
     data
 
   method set_data (d:loading_data)=
+    print_string "GAME_LOADING: Initialisation de valeur";print_newline();
     odata<-data;
     data<-d; 
+    Condition.signal cond; 
 
 end;;
 
@@ -72,15 +82,20 @@ object(self)
 
 
   method loading()=
+    print_string "GAME_LOADING: Demarrage ...";print_newline();
     self#on_load();
     let d=ref LNone in
-      while (li#get_lock();d:=li#get_data; !d <> LEnd) do
-	
+      while (!d<>LEnd) do
+	li#get_lock();
+	d:=li#get_data;
+
 	self#on_loop !d;
 	li#get_unlock();
-	Thread.delay (Random.float (1.));
+	Thread.delay (Random.float (0.2));
       done;
       li#get_unlock();
+      print_loading_data_t !d;
+    print_string "GAME_LOADING: Fin ...";print_newline();
 
   method on_load()=
     waiting#move (video#f_size_w 512) (video#f_size_h 384);
