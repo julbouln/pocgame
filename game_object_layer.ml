@@ -6,6 +6,8 @@ open Medias;;
 open Game_object;;
 open Game_layer;;
 
+open Otype;;
+
 (** Game object layer class definition *)
 
 class del_stack=
@@ -170,7 +172,6 @@ object(self)
   method update_obj num=
     let obj=self#get_object num in
       obj#update_prect();
-      
       super#update_obj num;
 
   method update_action()=
@@ -186,6 +187,12 @@ end;;
 class ['a] game_obj_layer_hash iv wi hi max=
 object(self)
   inherit ['a] game_obj_layer iv wi hi max as super
+
+  method update_action()=
+    self#foreach_object (fun k o->
+			   o#act 0 0;
+			   o#anim();
+			)
 
 
   val mutable hash=Hashtbl.create 2
@@ -233,4 +240,23 @@ object(self)
 			)
 end;;
 
+
+class game_generic_object_layer_hash wi hi max=
+object(self)
+  inherit [game_generic_object] game_obj_layer_hash none_generic_obj wi hi max as super
+  method update_obj num=
+    let obj=self#get_object num in
+      obj#update_prect();      
+      super#update_obj num;
+
+
+
+
+
+end;;
+
+class game_generic_object_types=
+object
+  inherit [game_generic_object] obj_types none_generic_obj
+end;;
 

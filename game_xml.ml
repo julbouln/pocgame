@@ -61,6 +61,7 @@ object
 end;;
 
 
+
 type state={frames:int array;refresh:int;action:unit->unit;sound:string array};;
 
 type state_anim=
@@ -114,27 +115,6 @@ object
 end;;
 
 
-
-class xml_gm_object_with_state_parser=
-object
-  inherit xml_gm_object_parser as super
-
-val mutable states=[||] 
-  method parse_child k v=
-    super#parse_child k v;
-    match k with
-    | "states" -> 
-	let p=new xml_state_list_parser in
-	  p#parse v;
-	  states<-p#get_array
-    | _ -> ()
-
-  method get_states=states
-  
-end;;
-
-
-
 exception Container_state_not_found of string;;
 
 (* FIXME must be game_state_container *)
@@ -162,3 +142,49 @@ end;;
 let none_stc=(new game_state_container [|{state_name="idle";anim_frames=[|0|];anim_refresh=0;sounds=[|"none"|]}|]);;
 
 
+class xml_gm_object_with_state_parser=
+object
+  inherit xml_gm_object_parser as super
+
+val mutable states=[||] 
+  method parse_child k v=
+    super#parse_child k v;
+    match k with
+    | "states" -> 
+	let p=new xml_state_list_parser in
+	  p#parse v;
+	  states<-p#get_array
+    | _ -> ()
+
+  method get_states=states
+  
+(*
+  method get_obj (f:string->string->string->int->int->int->int->game_state_container->'a)=f name t file w h cw ch (new game_state_container states)
+*)
+
+end;;
+
+
+class ['a] xml_game_obj_parser (iv:'a)=
+object
+  inherit xml_gm_object_with_state_parser as super
+
+  method get_obj (f:string->string->string->int->int->int->int->game_state_container->(unit->'a))=f name t file w h cw ch (new game_state_container states)
+end;;
+
+
+class ['a] xml_game_objs_parser (name:string) (iv:'a) (f:string->string->string->int->int->int->int->game_state_container->(unit->'a))=
+object
+  inherit [gm_object] xml_list_parser name (fun()->new xml_game_obj_parser iv) as super
+  val mutable objs=DynArray.create()
+
+  method parse_child k v=
+    super#parse_child k v;
+    match k with
+      | ct -> let p=new xml_game_obj_parser iv in 
+	  p#parse v;
+	  DynArray.add objs (p#get_obj f)
+
+  method get_objs=
+    (DynArray.to_array objs : (unit->'a) array)
+end;;
