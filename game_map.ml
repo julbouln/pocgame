@@ -4,6 +4,8 @@ open Graphic;;
 open Rect;;
 open File;;
 
+open Olua;;
+
 open Oxml;;
 
 open Game_xml;;
@@ -14,28 +16,11 @@ open Game_decor;;
 
 open Game_loading;;
 
-class virtual game_object_map_actions=
-object
-  method virtual map_update:unit->unit
-
-  method virtual map_add_object:string option->string->int->int->string
-  method virtual map_copy_object :string option -> string -> string
-  method virtual map_move_object:string->int->int->unit
-  method virtual map_del_object:string->unit
-
-  method virtual map_is_object:string->bool
-
-  method virtual map_to_save:(string*string*int*int) array
-  method virtual map_from_load: (string*string*int*int) array->unit
-
-
-end;;
-
-
-class ['a] game_object_map wi hi max =
+class game_object_map wi hi=
 object(self)
-  inherit ['a] game_obj_layer wi hi max
-  inherit game_object_map_actions
+  inherit lua_object as lo
+  inherit [game_object] game_obj_layer wi hi
+
 
   method is_obj_with_type t=
     let r=ref false in
@@ -45,6 +30,16 @@ object(self)
 	);
       !r
 	
+  val mutable obj_type=new game_object_types
+  method get_obj_type=obj_type
+    
+  method add_object_type nm (t:unit->'a)=
+    obj_type#add_object_type nm t
+  method get_object_from_type nm=
+    obj_type#get_object_type nm
+
+  (** xml *)
+(*
   method get_objs_xml_string f=
     let n=xml_reduce (Xml.parse_file f) (fun n->
 					   self#is_obj_with_type (Xml.attrib n "name")
@@ -74,19 +69,6 @@ object(self)
 	) res;
   
 
-  val mutable obj_type=new game_obj_types
-  method get_obj_type=obj_type
-    
-  method add_object_type nm (t:unit->'a)=
-    obj_type#add_object_type nm t
-  method get_object_from_type nm=
-    obj_type#get_object_type nm
-
-(* loading part *)
-  val mutable m=Mutex.create();
-  val mutable cond=Condition.create();
-
-
   method object_types_from_xml_string_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=
     let obj_xml=new xml_node (Xml.parse_string f) in
     let p=new xml_game_objs_parser n fu in p#parse obj_xml;
@@ -110,120 +92,132 @@ object(self)
 	  *)
       ) p#get_objs;
 
+*)
+  method init_object_types_from_xml f=
+    obj_type#init_from_xml f
 
-  method add_object_at (o:'a) (x:int) (y:int)=
+(** general *)
+
+  method add_object_at (id:string option) (o:'a) (x:int) (y:int)=    
+
     o#move x y;
-    let id=self#add_object None o in
-      id
+    let n=self#add_object id o in
+      print_string ("GAME_OBJECT_MAP: add object "^n);print_newline();
+      o#lua_init();
+      self#lua_parent_of n (o:>lua_object);
+      n
 	  
-  method add_object_from_type (t:string) (x:int) (y:int)=
-    let o=self#get_object_from_type t in
-      o#set_name t;
-      self#add_object_at o x y
-
-
-(* map actions *)
- 
-  method map_update()=
+  method update()=
     self#clear();
     self#update_obj_all();
     self#update_action(); 
 
-  method map_add_object id t x y=
-    let n=self#add_object_from_type t x y in
-      print_string ("GAME_MAP: add object "^n);print_newline();
-      match id with
-	| Some nid ->self#map_rename_object n nid;nid
-	| None -> n    
 
-  method map_move_object id x y=
-(*    print_string ("GAME_MAP: move object "^id);print_newline(); *)
-    let o=self#get_object id in
-      o#move x y
+  method add_object_from_type id t x y=
+    let o=self#get_object_from_type t in
+      o#set_name t;
+      self#add_object_at id o x y 
 
-  method map_copy_object cid id=
+  method copy_object cid id=
     let o=self#get_object id in
     let no=(self#get_object_from_type o#get_name) in
-    let n=self#add_object_at no o#get_rect#get_x o#get_rect#get_y in
-      match cid with
-	| Some nid ->self#map_rename_object n nid;nid
-	| None -> n
-
-  method map_rename_object cid id=
-    print_string ("GAME_MAP: rename object "^cid^" to "^id);print_newline();
-    let o=self#get_object cid in
-      o#set_id id;
-      self#rename_object cid id
-
-  method map_del_object id=
-    print_string ("GAME_MAP: del object "^id);print_newline();
-    self#delete_object id
-
-  method map_is_object id=
-    self#is_object id
-
+    self#add_object_at cid no o#get_rect#get_x o#get_rect#get_y
 
 (* persistence *)
 
- method map_to_save=
+  method map_to_save=
     let a=DynArray.create() in
       self#foreach_object (
 	fun i o->
 	  if o#get_name<>"none" then (
-	    print_string ("GAME_MAP: save "^o#get_id^" of type "^o#get_name);print_newline();
+	    print_string ("GAME_OBJECT_MAP: save "^o#get_id^" of type "^o#get_name);print_newline();
 	    DynArray.add a (o#get_id,o#get_name,o#get_rect#get_x,o#get_rect#get_y);
 	  )    
       );
       DynArray.to_array a
 
-  method map_from_load (a:(string*string*int*int) array)=
-    Array.iter (
-      fun v->
-	let (id,nm,x,y)=v in
-	  print_string ("GAME_MAP: load "^id^" of type "^nm);print_newline();  
-	  let r=self#map_add_object (Some id) nm x y in ()
-    ) a;
+ method map_from_load (a:(string*string*int*int) array)=
+   Array.iter (
+     fun v->
+       let (id,nm,x,y)=v in
+	 print_string ("GAME_OBJECT_MAP: load "^id^" of type "^nm);print_newline();  
+	 let r=self#add_object_from_type (Some id) nm x y in ()
+   ) a;
+
+
+ method lua_init()=
+   lo#lua_init();
+
 end;;
 
 
-exception Game_map_action_not_found of string;;
+exception Game_object_map_not_found of string;;
+exception Game_tile_layer_not_found of string;;
 
-class virtual ['tl] game_virtual_map w h=
+class game_map w h=
 object(self)
+  inherit lua_object as lo
 
-(* map actions *)
-  val mutable map_actions=Hashtbl.create 2
-    
-  method add_map_action (s:string) (o:game_object_map_actions)=Hashtbl.add map_actions s o
+  val mutable rect=new rectangle 0 0 w h
+  method get_rect=rect
 
-  method get_map_action (s:string)=
+  method resize nw nh=
+    self#foreach_tile_layer 
+      ( 
+	fun k t->
+	  t#resize nw nh
+      );
+    self#foreach_object_map 
+      ( 
+	fun k om->
+	  om#resize nw nh
+      );
+    rect#set_size nw nh;
+
+  val mutable tile_layers=Hashtbl.create 2
+
+  method add_tile_layer (s:string) (o:game_generic_tile_layer)=
+    Hashtbl.add tile_layers s o
+
+  method get_tile_layer (s:string)=
     (try
-       Hashtbl.find map_actions s
-     with Not_found -> raise (Game_map_action_not_found s))
+       Hashtbl.find tile_layers s
+     with Not_found -> raise (Game_tile_layer_not_found s))
 
-  method foreach_map_action f=
-    Hashtbl.iter f map_actions
-(*  val mutable decor_map=[new game_object_map (none_obj) w h 500] *)
+  method foreach_tile_layer f=
+    Hashtbl.iter f tile_layers
 
-  method virtual get_rect : rectangle
-  method virtual get_tile_layer : 'tl
-  method virtual resize : int -> int -> unit
+  (* map actions *)
+  val mutable object_maps=Hashtbl.create 2
+    
+  method add_object_map (s:string) (o:game_object_map)=
+    self#lua_parent_of s (o:>lua_object);
+    Hashtbl.add object_maps s o
+
+  method get_object_map (s:string)=
+    (try
+       Hashtbl.find object_maps s
+     with Not_found -> raise (Game_object_map_not_found s))
+
+  method foreach_object_map f=
+    Hashtbl.iter f object_maps
 
 (* on tile *)
-  method foreach_tile f=
+(*  method foreach_tile f=
     self#get_tile_layer#foreach_map_entry f
-
-  method tile_init t=
-
-      for i=0 to self#get_rect#get_w-1 do
-	for j=0 to self#get_rect#get_h-1 do
-	  let mt=randomize 2 in
-	    self#get_tile_layer#set_position i j (Some (t+mt)); 
-	done;
+*)
+  method tile_layer_init tn t=
+    let tl=self#get_tile_layer tn in
+    for i=0 to self#get_rect#get_w-1 do
+      for j=0 to self#get_rect#get_h-1 do
+	let mt=randomize 2 in
+	  tl#set_position i j (Some (t+mt)); 
       done;
+    done;
 
-  method position_blocking x y=
+(*  method position_blocking x y=
     if self#get_tile_layer#out_of_lay x y then true else false
+*)
 (*
     else
       if self#get_decor_map#is_object x y then
@@ -234,31 +228,39 @@ object(self)
 
 (* actions *)
 
-  method add_object mid=
-    let m=self#get_map_action mid in
-      m#map_add_object
+  method add_object_from_type mid=
+    let m=self#get_object_map mid in
+      m#add_object_from_type
+
+
+  method add_object_named_from_type mid id t x y=
+    let m=self#get_object_map mid in
+      ignore(m#add_object_from_type (Some id) t x y)
 
   method copy_object mid=
-    let m=self#get_map_action mid in
-      m#map_copy_object
+    let m=self#get_object_map mid in
+      m#copy_object
 
   method move_object mid=
-    let m=self#get_map_action mid in
-      m#map_move_object
+    let m=self#get_object_map mid in
+      m#move_object
 
-  method del_object mid=
-    let m=self#get_map_action mid in
-      m#map_del_object
+  method delete_object mid=
+    let m=self#get_object_map mid in
+      m#delete_object
 
   method is_object mid=
-    let m=self#get_map_action mid in
-      m#map_is_object
+    let m=self#get_object_map mid in
+      m#is_object
+
+  method get_object mid=
+    let m=self#get_object_map mid in
+      m#get_object
 
 (* update layer *)
 
   method update()=
-    self#get_tile_layer#update();
-    self#foreach_map_action (fun i m->m#map_update());
+    self#foreach_object_map (fun i m->m#update());
 
 
 (* persistance *)
@@ -267,7 +269,7 @@ object(self)
   method objs_to_save=
     print_string ("GAME_MAP: save maps");print_newline();
     let a=Hashtbl.create 2 in
-      self#foreach_map_action 
+      self#foreach_object_map 
       (
 	
 	fun n act->
@@ -280,21 +282,32 @@ object(self)
     Hashtbl.iter (
       fun n v->
 	print_string ("GAME_MAP: load "^n^" map");print_newline();  
-	let act=self#get_map_action n in
+	let act=self#get_object_map n in
 	  act#map_from_load v
     ) a;
     
   method private tile_to_save=
-    (self#get_tile_layer#get_lay,self#get_tile_layer#get_border_layer_lay)
+    let a=Hashtbl.create 2 in
+      self#foreach_tile_layer 
+      (
+	
+	fun n t->
+	  print_string ("GAME_MAP: save "^n^" tile layer");print_newline();
+	  Hashtbl.add a n t#get_lay
+      );
+      a
+
+  method private tile_from_load al=
+    Hashtbl.iter (
+      fun n v->
+	print_string ("GAME_MAP: load "^n^" tile layer");print_newline();  
+	let t=self#get_tile_layer n in
+	  t#set_lay v
+    ) al;
       
   method save f=
     map_file#save f (self#get_rect#get_w,self#get_rect#get_h,self#tile_to_save,self#objs_to_save)
       
-  method private tile_from_load al=
-    let (a,b)=al in
-      self#get_tile_layer#set_lay a;
-      self#get_tile_layer#set_border_layer_lay b;
- 
   method load f =
     print_string ("GAME_MAP: load maps");print_newline();
     let (mw,mh,tile_ar,obj_ar)=map_file#load f in
@@ -303,54 +316,11 @@ object(self)
       self#objs_from_load obj_ar;
       ()
 
-end;;
 
-
-class game_generic_map w h=
-object(self)
-
-  val mutable rect=new rectangle 0 0 w h
-  method get_rect=rect
-
-  val mutable tile_layer=new game_generic_tile_layer w h 32 32
-  method get_tile_layer=tile_layer
-
-
-  method resize nw nh=
-    rect<-new rectangle 0 0 nw nh;
-    tile_layer<-new game_generic_tile_layer nw nh 32 32;
+  method lua_init()=
+    lua#set_val (OLuaVal.String "add_object_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#add_object_named_from_type);
+    lua#set_val (OLuaVal.String "delete_object") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#delete_object);
+    lo#lua_init();
 
 end;;
 
-
-class game_map w h=
-object(self)
-
-  val mutable rect=new rectangle 0 0 w h
-  method get_rect=rect
-
-  val mutable tile_layer=new game_tile_layer w h 32 32 "medias/tiles/terrains.png"
-  method get_tile_layer=tile_layer
-
-  val mutable grille=new graphic_from_file "medias/misc/grille.png" 32 32
-
-  method put_grille vx vy x y=
-    grille#move ((x*32)-vx) ((y*32)-vy);
-    grille#put();
-(*
-  method put_decor_grille (vx:int) (vy:int)=
-    decor_map#foreach_object (
-      fun k obj->
-	obj#around_object decor_layer#out_of_lay (
-	  fun x y->
-	    grille#move (x*32-vx) (y*32-vy);
-	    grille#put();
-	)
-    )
-*)
-
-  method resize nw nh=
-    rect<-new rectangle 0 0 nw nh;
-    tile_layer<-new game_tile_layer nw nh 32 32 "medias/tiles/terrains.png";
-
-end;;

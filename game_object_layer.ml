@@ -16,10 +16,11 @@ open Otype;;
 
 exception No_obj_at_position of (int*int);;
 
-class ['a] game_obj_layer wi hi max=
+class ['a] game_obj_layer wi hi=
   object (self)
     inherit [string] game_generic_layer wi hi as super
     inherit ['a] generic_object_handler
+
 
     method get_object_by_position x y=            
       let n=self#get_position x y in
@@ -53,7 +54,7 @@ class ['a] game_obj_layer wi hi max=
 	    )
 	)
 	  
-    method move k x y=
+    method move_object k x y=
       let obj=self#get_object k in
 	self#set_position (x) (y) (Some k);
 	self#set_position (obj#get_case_x) (obj#get_case_y) None;

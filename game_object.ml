@@ -15,7 +15,7 @@ open Oval;;
 open Otype;;
 
 open Olua;;
-
+open Timer;;
 
 (*
 <game_object_type name="decor">
@@ -72,93 +72,6 @@ open Olua;;
 </game_object>
 *)
 
-
-(*
- 
- h=30x60x60 f = 108000 f
- m = 30x60 f = 1800 f
- s = 30 f
- f = f
-*)
-
-type time=
-{
-  h:int;
-  m:int;
-  s:int;
-  f:int;
-}
-
-
-class game_time=
-object(self)
-  val mutable timers=Hashtbl.create 2
-  method add_timer (t:time) (f:unit->unit)=
-    Hashtbl.add timers (self#from_time t) f
-  method del_timer (t:time)=
-    Hashtbl.remove timers (self#from_time t)
-
-
-  val mutable tasks=Hashtbl.create 2
-  method add_task (t:time) (f:unit->unit)=
-    Hashtbl.add tasks (self#from_time t) f
-  method del_task (t:time)=
-    Hashtbl.remove tasks (self#from_time t)
-
-  val mutable frm=0
-  val mutable cfrm=0
- 
-  method get_cfrm=cfrm
-
-  val mutable run=false
-
-  method start()=run<-true
-  method stop()=run<-false
-
-  method set_limit t=frm<-self#from_time t
-
-  method get_cur_frame=cfrm
-
-  method step()=
-    if run then (
-      Hashtbl.iter 
-	(
-	  fun tfr e->
-	    if cfrm mod tfr=0 then e()
-	) tasks;
-      if Hashtbl.mem timers cfrm then (
-	let e=Hashtbl.find timers cfrm in e();
-      );
-
-      if cfrm<frm then
-	cfrm<-cfrm+1
-      else
-	cfrm<-0
-    )
-
-  method to_time fr=
-    let h=fr/108000 and
-	m=(fr mod 108000)/1800 and
-	s=((fr mod 108000) mod 1800)/30 and
-	f=(((fr mod 108000) mod 1800) mod 30) in
-      {
-	h=h;
-	m=m;
-	s=s;
-	f=f;
-      }
-	
-  method from_time t=    
-    (t.h*108000)+ (t.m * 1800) + (t.s*30) + t.f
-
-  method add_timer_from_now (t:time) (f:unit->unit)=
-    print_string "GAME_TIME: add timer ";
-    let ft=self#from_time t in
-    let nt=self#to_time (ft+cfrm) in
-      print_int cfrm;
-      self#add_timer nt f;
-	print_newline();
-end;;
 
 (* more generic parent - without graphic *)
 class game_obj (nm:string) (wi:int) (hi:int) (gwi:int) (ghi:int)=
@@ -244,10 +157,6 @@ object
 end;;
 
 
-class ['a] game_obj_types=
-object
-  inherit ['a] obj_types
-end;;
 
 (* DEPRECATED *)
 class game_action_object=
@@ -280,7 +189,7 @@ object(self)
   inherit lua_object as lo
  
 (** time *)
-  val mutable time=new game_time
+  val mutable time=new timer
   initializer
     time#start();
     time#set_limit       
@@ -367,9 +276,14 @@ object(self)
   method add_graphic n gr=
     print_string ("GRAPHICS_CONTAINER : add graphic "^n);print_newline();
     self#add_object (Some n) gr;
+    gr#lua_init();
     self#lua_parent_of n (gr:>lua_object)
 
-  method graphics_update()=()
+  method graphics_update()=
+    self#foreach_object (
+      fun k v->
+	ignore(v#get_lua#exec_val_fun (OLuaVal.String "on_update") [OLuaVal.Nil];)
+    );
   
   method graphics_register reg=
     self#foreach_object (
@@ -427,10 +341,11 @@ object(self)
   method get_bcentre_x=(fst bcentre)
   method get_bcentre_y=(snd bcentre)
 
-  method init_bcentre tilesfile=
+  method init_bcentre gr_id=
 (*    let rpos=self#graphic#get_rpos in *)
 (*    let rpos=get_rpos (drawing_vault#get_cache_simple tilesfile) in *)
-    let dr=(drawing_vault#get_cache_simple tilesfile) in
+(*    let dr=(drawing_vault#get_cache_simple tilesfile) in *)
+    let dr=(graphics#get_object gr_id)#get_drawing 0 in
     let lv=list_of_val (
 	dr#exec_op_read_from_list "get_rpos" [`Color(255,36,196)]
     ) in
@@ -465,9 +380,12 @@ object(self)
   method lua_init()=
     lua#set_val (OLuaVal.String "get_pixel_x") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_pixel_x));
     lua#set_val (OLuaVal.String "get_pixel_y") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_pixel_y));
+    lua#set_val (OLuaVal.String "init_bcentre") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) (self#init_bcentre));
     lua#set_val (OLuaVal.String "properties") (OLuaVal.Table props#to_lua#to_table);
 
+    graphics#lua_init();
     self#lua_parent_of "graphics" (graphics:>lua_object);
+    states#lua_init();
     self#lua_parent_of "states" (states:>lua_object);
     super#lua_init();
 
@@ -475,6 +393,7 @@ end;;
 
 (** xml part *)
 
+(** metatype *)
 class xml_game_object_mt_parser=
 object(self)
   inherit xml_parser
@@ -483,10 +402,12 @@ object(self)
   val mutable props_parser=new xml_val_ext_list_parser "properties"
   val mutable nm=""
 
+  val mutable lua=""
+
   val mutable graphics_a=Hashtbl.create 2
   val mutable states_a=Hashtbl.create 2
 
-  method get_val=(nm,args_parser#get_val,props_parser#get_val, graphics_a,states_a)
+  method get_val=(nm,args_parser#get_val,props_parser#get_val, graphics_a,states_a,lua)
   
   method parse_attr k v=
     match k with
@@ -508,8 +429,18 @@ object(self)
 	  let p=new xml_states_mt_parser in
 	    p#parse v;
 	    states_a<-p#get_hash
+      | "script" -> lua<-v#get_pcdata;
+
       | _ -> ()
 end;;
+
+let game_object_metatype_from_xml f=
+  let obj_mt_xml=new xml_node (Xml.parse_file f) in
+  let pmt=new xml_game_object_mt_parser in
+    pmt#parse obj_mt_xml;
+    pmt#get_val
+
+(** object *)
 
 class xml_game_object_parser=
 object(self)
@@ -519,12 +450,20 @@ object(self)
   val mutable graphics_parser=(Global.get xml_default_graphics_parser)()
   val mutable states_parser=new xml_state_actions_parser    
 
-  val mutable mt=("",new val_ext_handler,new val_ext_handler, Hashtbl.create 2,Hashtbl.create 2)
-  method set_metatype m=mt<-m
-    
+  val mutable mt=("",new val_ext_handler,new val_ext_handler, Hashtbl.create 2,Hashtbl.create 2,"")
+  method set_metatype m=mt<-m 
 
+  
+  method get_type=nm
+
+ 
+  method parse_attr k v=
+    match k with
+      | "metatype"->mt<-game_object_metatype_from_xml v
+      | "name"->nm<-v
+      | _ -> ()
   method parse_child k v=
-    let (nm,vha,vhp,grh,sth)=mt in
+    let (nm,vha,vhp,grh,sth,l)=mt in
     super#parse_child k v;
     props_parser#parse_child k v;
     match k with
@@ -547,17 +486,51 @@ object(self)
 	graphics_parser#init (o#get_graphics#add_graphic);
 	states_parser#init (o#get_states#add_state);
 	o#set_props props_parser#get_val;
-	self#init_object o;
+	let (nm,vha,vhp,grh,sth,l)=mt in
+	o#set_lua_script (l^lua);
+	o#lua_init();
+(*	self#init_object o; *)
 	o	  
     in      
-      (id,ofun)
+      (nm,ofun)
 
 end;;
 
+(** object types *)
+
+class xml_game_object_types_parser=
+object(self)
+  inherit [(unit->game_object)] xml_stringhash_parser "game_object" (fun()->new xml_game_object_parser)
+end;;
+
+
+let init_game_object_types_from_xml f add_obj=
+  let obj_mt_xml=new xml_node (Xml.parse_file f) in
+  let pmt=new xml_game_object_types_parser in
+    pmt#parse obj_mt_xml;
+    let h=pmt#get_hash in
+      Hashtbl.iter (
+	fun k v ->
+	  add_obj k v
+      ) h;
+
+(** types *)
+
+(* deprecated *)
+class ['a] game_obj_types=
+object
+  inherit ['a] obj_types
+end;;
+
+
 (** game_object types *)
 class game_object_types=
-object
+object(self)
   inherit [game_object] obj_types
+
+  method init_from_xml f=
+    init_game_object_types_from_xml f self#add_object_type
+
 end;;
 
 
