@@ -265,13 +265,14 @@ object(self)
       self#del_hash_rev i;
       self#add_hash n i;
   method get_hash k=
-(try 
-    Hashtbl.find hash k
- with Not_found -> raise (Game_obj_hash_not_found k))
+    (try 
+       Hashtbl.find hash k
+     with Not_found -> raise (Game_obj_hash_not_found k))
+
   method del_hash k=
-(try 
-    Hashtbl.remove hash k
- with Not_found -> raise (Game_obj_hash_not_found k))
+    (try 
+       Hashtbl.remove hash k
+     with Not_found -> raise (Game_obj_hash_not_found k))
  
   method get_hash_rev n=Hashtbl.find hash_rev n
   method del_hash_rev n=Hashtbl.remove hash_rev n

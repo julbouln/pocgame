@@ -49,7 +49,7 @@ object
       | "pixel_size" -> let p=(new xml_size_parser ) in p#parse v;w<-p#get_w;h<-p#get_h;
       | "case_size" -> let p=(new xml_size_parser ) in p#parse v;cw<-p#get_w;ch<-p#get_h;
       | "decal_value" -> let p=(new xml_size_parser ) in p#parse v;dw<-p#get_w;dh<-p#get_h;
-      | "frames" -> let p=(new xml_intlist_parser "frame" (fun()->new xml_int_parser "frame"))  in p#parse v;frames<-p#get_list
+      | "frames" -> let p=(new xml_intlist_parser "frame" (fun()->new xml_int_parser "n"))  in p#parse v;frames<-p#get_list
       | "refresh" -> let p=(new xml_int_parser "value") in p#parse v;refresh<-p#get_val
       | _ -> ()
 
@@ -101,7 +101,7 @@ method get_val=
   method parse_child k v=
     match k with
 
-      | "frames" -> let p=(new xml_intlist_parser "frame" (fun()->new xml_int_parser "frame"))  in p#parse v;frames<-p#get_array
+      | "frames" -> let p=(new xml_intlist_parser "frame" (fun()->new xml_int_parser "n"))  in p#parse v;frames<-p#get_array
       | "sounds" -> let p=(new xml_stringlist_parser "sound" (fun()->new xml_string_parser "sound"))  in p#parse v;snds<-p#get_array
       | "refresh" -> let p=(new xml_int_parser "value") in p#parse v;refresh<-p#get_val
       | _ -> ()
