@@ -1,6 +1,6 @@
 OCAMLMAKEFILE = OCamlMakefile
 
-PACKS=pociface oxinclude
+PACKS=pociface
 
 LIBINSTALL_FILES=*.cmi *.cmo *.cmx *.a pocgame.cma pocgame.cmxa
 

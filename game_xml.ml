@@ -1,13 +1,12 @@
+open Value_xml;;
+open Value_val;;
+open Value_xinclude;;
+
 open Core_graphic;;
 open Core_action;;
 open Core_type;;
 open Core_xml;;
 open Core_val;;
-
-open Oxml;;
-open Oval;;
-
-
 
 open Game_object;;
 
@@ -78,7 +77,7 @@ end;;
 
 
 let init_game_object_types_from_xml f add_obj=
-  let xinc=Xinclude.xinclude_process_file f in
+  let xinc=xinclude_process_file f in
   let obj_xml=new xml_node (Xml.parse_string xinc) in
   let pmt=new xml_game_object_types_parser in
     pmt#parse obj_xml;

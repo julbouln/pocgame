@@ -1,3 +1,6 @@
+open Value_xml;;
+open Value_val;;
+open Value_lua;;
 
 open Core_val;;
 open Core_rect;;
@@ -13,9 +16,7 @@ open Core_sprite;;
 
 open Binding;;
 
-open Oxml;;
-open Oval;;
-open Olua;;
+
 
 (** Main game object class *)
 class game_object=
@@ -193,13 +194,14 @@ object(self)
       
     let (x1,y1)=position_of_val (List.nth lv 0) and
 	(x2,y2)=position_of_val (List.nth lv 1) in
-      
+
       bcentre<-
 	(
 	  (x1+x2)/2,
 	  (y1+y2)/2
-	)
-
+	);
+(*      print_string("GAME_OBJECT: bcentre : "^string_of_int (fst bcentre)^","^string_of_int (snd bcentre));print_newline();
+*)
   method get_pixel_x=(rect#get_x*32) + prect#get_x - (fst bcentre) + 16
   method get_pixel_y=(rect#get_y*32) + prect#get_y - (snd bcentre) + 16
 
@@ -208,6 +210,9 @@ object(self)
       lua#set_val (OLuaVal.String "move") (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#move);
       lua#set_val (OLuaVal.String "get_case_x") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_case_x));
       lua#set_val (OLuaVal.String "get_case_y") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_case_y));
+
+      lua#set_val (OLuaVal.String "get_bcentre_x") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_bcentre_x));
+      lua#set_val (OLuaVal.String "get_bcentre_y") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_bcentre_y));
 
 
 

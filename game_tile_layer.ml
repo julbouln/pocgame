@@ -1,5 +1,7 @@
 
-open Ocommon;;
+open Value_common;;
+open Value_xml;;
+open Value_lua;;
 
 open Core_rect;;
 open Core_video;;
@@ -12,8 +14,7 @@ open Binding;;
 open Game_layer;;
 open Game_visual;;
 
-open Oxml;;
-open Olua;;
+
 (** Game tile layer class definition *)
 
 

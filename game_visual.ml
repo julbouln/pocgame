@@ -17,6 +17,8 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 *)
 
+open Value_lua;;
+
 open Core_rect;;
 open Core_video;;
 open Core_medias;;
@@ -25,7 +27,7 @@ open Core_event;;
 
 open Binding;;
 
-open Olua;;
+
 
 class game_visual vx vy=
 object(self)

@@ -1,4 +1,8 @@
-open Ocommon;;
+open Value_common;;
+open Value_lua;;
+open Value_xml;;
+open Value_xinclude;;
+open Value_val;;
 
 open Core_val;;
 open Core_medias;;
@@ -8,10 +12,6 @@ open Core_file;;
 open Core_action;;
 open Core_xml;;
 open Core_type;;
-
-open Olua;;
-open Oxml;;
-open Oval;;
 
 open Game_xml;;
 open Game_object;;
@@ -24,7 +24,7 @@ open Game_loading;;
 
 
 let loading_init_game_object_types_from_xml f (li:game_loading_info) add_obj=
-  let xinc=Xinclude.xinclude_process_file f in
+  let xinc=xinclude_process_file f in
   let obj_xml=new xml_node (Xml.parse_string xinc) in
   let pmt=new xml_game_object_types_parser in
     pmt#parse obj_xml;
@@ -541,7 +541,7 @@ object(self)
 	       );
 
   method load_from_file f=
-    let xinc=Xinclude.xinclude_process_file f in
+    let xinc=xinclude_process_file f in
     let x=Xml.parse_string xinc in
       self#from_xml x
 		

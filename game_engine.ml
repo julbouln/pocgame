@@ -1,3 +1,8 @@
+open Value_lua;;
+open Value_val;;
+
+open Core_stage;;
+open Core_xml;;
 open Core_main;;
 open Core_event;;
 open Core_video;;
@@ -6,8 +11,6 @@ open Core_medias;;
 open Core_graphic;;
 open Core_font;;
 open Binding;;
-
-open Olua;;
 
 open Game_visual;;
 open Game_map;;
@@ -109,7 +112,9 @@ open Interface;;
 open Iface_object;;
 
 
-let rec usleep sec = ignore (Unix.select [] [] [] sec);;
+
+(*let rec usleep sec = ignore (Unix.select [] [] [] sec);;*)
+let usleep sec=Thread.delay sec;;
 
 
 
@@ -196,9 +201,6 @@ object(self)
 end;;
 
 
-open Oval;;
-open Core_stage;;
-open Core_xml;;
 
 class xml_game_engine_with_iface_stage_parser=
 object (self)
