@@ -4,6 +4,8 @@ open Game_object;;
 
 open Game_xml;;
 
+(* DEPRECATED *)
+(*
 class game_decor nm w h file cw ch stc=
 object (self)
   inherit game_object nm file w h cw ch as super
@@ -23,3 +25,4 @@ class xml_decors_parser=
 object
   inherit xml_gm_objects_parser "decor"
 end;;
+*)

@@ -6,6 +6,7 @@ open Medias;;
 open Drawing;;
 open Generic;;
 open Binding;;
+open Graphic;;
 
 open Oxml;;
 open Anim;;
@@ -15,46 +16,60 @@ open Otype;;
 
 open Olua;;
 
-open Properties;;
-
 
 (*
- <game_object_metatype name="wol_decor"/>
-  <!-- graphics definitions -->
-  <graphics>
-   <graphic_from_drawing_fun>
-     <fun_args>
-       <val_string str="with_alpha"/>
-       <val_color r="255" g="255" b="255"/>
-       <val_string str="load_multiple"/>
-       <val_string str="!return args.filename"/> 
-       <val_size w="!return args.pixel_size.w" h="!return args.pixel_size.h"/>
-     </fun_args>
-     <values>
-      <!-- relative position -->
-      <val_position name="rel_position" x="0" y="0"/>
-     </values>
-    </graphic_from_drawing_fun>
-  </graphics>
+<game_object_type name="decor">
+ <graphics>
+  <graphic_object id="main" type="graphic_from_file">
   <script>
+   function self.on_update()
+    obj=self.parent;
+    self.move(obj.get_pixel_x,obj.get_pixel_y)
+   end
   </script>
- </game_object_metatype>
+  </graphic_object>
+ </graphics>
+ <state_actions>
+  <state_object id="idle">
+   <action_object id="anim" type="action_anim"/>
+    <args>
+     <val_int name="refresh" value="2"/>
+     <val_list name="frames">
+      <val_int value="0"/>
+     </val_list>
+    </args>
+    <script>
+     function self.on_loop()
+      obj=self.parent;
+      obj.main.set_cur_drawing (self.get_frame());
+     end
+    </script>
+   </action_object>
+  </state_object>
+ </state_actions>
+</game_object_type>
 
-<game_object_type metatype="wol_decor"/>
+<game_object name="montagne2" type="decor">
+ <graphics>
+  <graphic_object id="main" type="graphic_from_file">
+   <args>
+    <val_string name="filename" value="medias/misc/montagne2.png"/>
+    <val_size name="size" w="500" h="500"/>
+   </args>
+  </graphic_object>
+ </graphics>
  <args>
-  <val_string name="name" str="montagne2"/>
-  <val_string name="filename" str="medias/misc/montagne2.png"/>
-  <val_size name="pixel_size" w="500" h="500"/> 
-  <val_size name="case_size" w="15" h="5"/> 
+  <val_size name="case_size" w="15" h="5"/>
+  <val_size name="pixel_size" w="500" h="500"/>
  </args>
+ <properties>
+  <val_string name="name" value="Montagne 2"/>
+  <val_string name="editor_type" value="Montagne"/>
+  <val_text name="desc">
+   Grande Montagne
+  </val_text>
+ </properties> 
 </game_object>
-
-<game_object type="montagne2">
- <values>
-  <val_position name="position" x="10" y="10"/>
- </values>
-</game_object>
-
 *)
 
 
@@ -149,6 +164,7 @@ end;;
 class game_obj (nm:string) (wi:int) (hi:int) (gwi:int) (ghi:int)=
 object
   inherit generic_object 
+
     val mutable name=nm
     method get_name=name
     method set_name n=name<-n
@@ -225,8 +241,6 @@ object
     method get_direction=direction
     method turn dir=direction<-dir;
 
-
-
 end;;
 
 
@@ -235,6 +249,7 @@ object
   inherit ['a] obj_types
 end;;
 
+(* DEPRECATED *)
 class game_action_object=
 object(self)
     val mutable state_manager=new state_object_manager
@@ -258,7 +273,9 @@ end;;
 class game_generic_object nm wi hi gwi ghi=
 object(self)
   inherit game_obj nm wi hi gwi ghi
-  inherit game_action_object as action
+(*  inherit game_action_object as action *)
+  val mutable actions=new state_actions
+  inherit lua_object as lo
  
 (** time *)
   val mutable time=new game_time
@@ -272,18 +289,15 @@ object(self)
 	f=0;
       }
 
-  method act vx vy=
-    action#act vx vy;
+  method act()=
+    actions#act();
     time#step();
 
 (** properties *)
-  val mutable props=new properties
+  val mutable props=new val_ext_handler
   method get_props=props
   method set_props p=props<-p
-(** lua ? *)
-  val mutable lua_code=""
-  method set_lua l=lua_code<-l
-  method get_lua=lua_code
+
        
   val mutable blocking=false;
   method set_blocking b=blocking<-b
@@ -327,54 +341,77 @@ object(self)
 		f x y	    
 	done;
       done;
+
+    method lua_init()=
+      lua#set_val (OLuaVal.String "move") (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#move);
+      lua#set_val (OLuaVal.String "get_case_x") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_case_x));
+      lua#set_val (OLuaVal.String "get_case_y") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_case_y));
+
+      lua#set_val (OLuaVal.String "get_direction") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_direction));
+      lua#set_val (OLuaVal.String "turn") (OLuaVal.efunc (OLuaVal.int **->> OLuaVal.unit) self#turn);
+
+      lo#lua_init();
+
+
       
 end;;
 
-class game_graphics_container=
-object
-  val mutable graphs=DynArray.create()
 
-  method add_graphic (gr:canvas_object)=DynArray.add graphs gr
+class graphics_container=
+object(self)
+  inherit [graphic_object] generic_object_handler
 
+  method graphics_update()=()
+  
   method graphics_register reg=
-    DynArray.iter (fun o->reg o) graphs
- 
-  method graphics_unregister unreg=
-    DynArray.iter (fun o->unreg o) graphs
- 
-end;;
+    self#foreach_object (
+      fun k o->
+	reg (o:>canvas_object)
+    );
 
+  method graphics_unregister unreg=
+    self#foreach_object (
+      fun k o->
+	unreg (o:>canvas_object)
+    );
+end;;
 
 class game_object nm tilesfile gwi ghi wi hi=
 object(self)
   inherit game_generic_object nm wi hi gwi ghi as super
 
+  val mutable graphics=new graphics_container
+  method get_graphics=graphics
+(*
   val mutable graphic=new graphic_from_file tilesfile gwi ghi
-
-  initializer
+*)
+(*  initializer
     self#init_bcentre()
-
-  method act vx vy=
-    super#act vx vy;
-    let cur=self#graphic#get_cur_drawing in
+*)
+  method act()=
+    super#act();
+(*    let cur=self#graphic#get_cur_drawing in
       self#graphic#set_cur_drawing (((self#graphic#get_drawings_size)/8)*direction + 
 				   self#get_current_state#get_frame);
-      
+*)    
   method move x y=
     super#move x y;
     self#graphics_update()
       
   method graphics_register (reg:canvas_object->unit)=
-    reg (graphic:>canvas_object)
+    graphics#graphics_register reg;
+(*    reg (graphic:>canvas_object) *)
   method graphics_unregister (unreg:canvas_object->unit)=
-    unreg (graphic:>canvas_object)
+    graphics#graphics_unregister unreg;
+(*    unreg (graphic:>canvas_object) *)
   method graphics_update ()=
-    self#graphic#move (self#get_pixel_x) (self#get_pixel_y);
-
+    graphics#graphics_update()
+(*    self#graphic#move (self#get_pixel_x) (self#get_pixel_y); *)
+(*
   method graphic=graphic
   method get_graphic=graphic
   method set_graphic()=graphic<-new graphic_from_file tilesfile gwi ghi
-
+*)
 
   (* baricentre *)
     
@@ -382,7 +419,7 @@ object(self)
   method get_bcentre_x=(fst bcentre)
   method get_bcentre_y=(snd bcentre)
 
-  method init_bcentre()=
+  method init_bcentre tilesfile=
 (*    let rpos=self#graphic#get_rpos in *)
 (*    let rpos=get_rpos (drawing_vault#get_cache_simple tilesfile) in *)
     let dr=(drawing_vault#get_cache_simple tilesfile) in
@@ -417,9 +454,11 @@ object(self)
   method get_pixel_y=(rect#get_y*32) + prect#get_y - (snd bcentre) + 16
 
 
-  method lua_register (interp:lua_interp)=
-    interp#parse (id^"={}");
-    props#lua_register id interp
+  method lua_init()=
+    lua#set_val (OLuaVal.String "get_pixel_x") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_pixel_x));
+    lua#set_val (OLuaVal.String "get_pixel_y") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_pixel_y));
+    
+    super#lua_init();
 
 end;; 
 

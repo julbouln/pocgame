@@ -62,8 +62,7 @@ class ['a] game_obj_layer wi hi max=
 
     method update_action()=
       self#foreach_object (fun k o->
-			   o#act 0 0;
-			   o#anim();
+			   o#act();
 			)
 
   end;;

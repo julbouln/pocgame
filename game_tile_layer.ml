@@ -2,6 +2,7 @@
 open Rect;;
 open Video;;
 open Medias;;
+open Graphic;;
 open Drawing;;
 open Binding;;
 open Game_layer;;
@@ -118,9 +119,9 @@ end;;
 class game_tile_layer w h tw th file =
 object(self)
   inherit game_generic_tile_layer w h tw th as super
-  val mutable tiles=new graphic_from_file file tw th 
+  val mutable tiles=new graphic_from_file "tiles" file tw th 
   method get_tiles=tiles
-  val mutable black=new graphic_from_drawing ("black_"^string_of_int tw^"x"^string_of_int th) 
+  val mutable black=new graphic_from_drawing "black" ("black_"^string_of_int tw^"x"^string_of_int th) 
     (fun()->
        let dr=drawing_vault#new_drawing() in 
 	 dr#create tw th (0,0,0);
@@ -129,7 +130,7 @@ object(self)
  (tile_box tw th (0,0,0));
 *)
 (* FIXME : must be passed as arg *)
-  val mutable borders=new graphic_from_file "medias/tiles/bordures.png" tw th 
+  val mutable borders=new graphic_from_file "borders" "medias/tiles/bordures.png" tw th 
   method get_borders=borders
 
   method put_map (vrect:game_visual)=

@@ -1,5 +1,6 @@
 
 open Medias;;
+open Graphic;;
 open Rect;;
 open File;;
 
@@ -24,8 +25,8 @@ object
 
   method virtual map_is_object:string->bool
 
-  method virtual map_to_save:(string*string*string*int*int) array
-  method virtual map_from_load: (string*string*string*int*int) array->unit
+  method virtual map_to_save:(string*string*int*int) array
+  method virtual map_from_load: (string*string*int*int) array->unit
 
 
 end;;
@@ -54,7 +55,7 @@ object(self)
 
   method foreach_objs_xml_from_string f d=
     let decor_xml=new xml_node (Xml.parse_string f) in
-    let p=new xml_decors_parser in p#parse decor_xml;
+    let p=new xml_gm_objects_parser "game_object" in p#parse decor_xml;
       let res=Array.of_list p#get_list in
 	Array.iteri (
 	  fun r v-> 
@@ -64,7 +65,7 @@ object(self)
 
   method foreach_objs_xml f d=
     let decor_xml=new xml_node (Xml.parse_file f) in
-    let p=new xml_decors_parser in p#parse decor_xml;
+    let p=new xml_gm_objects_parser "game_object" in p#parse decor_xml;
       let res=Array.of_list p#get_list in
 	Array.iteri (
 	  fun r v-> 
@@ -170,15 +171,15 @@ object(self)
 	fun i o->
 	  if o#get_name<>"none" then (
 	    print_string ("GAME_MAP: save "^o#get_id^" of type "^o#get_name);print_newline();
-	    DynArray.add a (o#get_id,o#get_name,o#get_lua,o#get_rect#get_x,o#get_rect#get_y);
+	    DynArray.add a (o#get_id,o#get_name,o#get_rect#get_x,o#get_rect#get_y);
 	  )    
       );
       DynArray.to_array a
 
-  method map_from_load (a:(string*string*string*int*int) array)=
+  method map_from_load (a:(string*string*int*int) array)=
     Array.iter (
       fun v->
-	let (id,nm,lua,x,y)=v in
+	let (id,nm,x,y)=v in
 	  print_string ("GAME_MAP: load "^id^" of type "^nm);print_newline();  
 	  let r=self#map_add_object (Some id) nm x y in ()
     ) a;
@@ -331,7 +332,7 @@ object(self)
   val mutable tile_layer=new game_tile_layer w h 32 32 "medias/tiles/terrains.png"
   method get_tile_layer=tile_layer
 
-  val mutable grille=new graphic_from_file "medias/misc/grille.png" 32 32
+  val mutable grille=new graphic_from_file "grille" "medias/misc/grille.png" 32 32
 
   method put_grille vx vy x y=
     grille#move ((x*32)-vx) ((y*32)-vy);
