@@ -112,7 +112,8 @@ end;;
 class game_tile_layer w h tw th file =
 object(self)
   inherit game_generic_tile_layer w h tw th as super
-val mutable tiles=new graphic_object_alpha tw th file false false false
+  val mutable tiles=new graphic_object_alpha tw th file false false false
+  method get_tiles=tiles
   val mutable black=new graphic_real_object ("black_"^string_of_int tw^"x"^string_of_int th) (tile_box tw th (0,0,0));
   val mutable borders=new graphic_object tw th "medias/tiles/bordures.png" false false
 

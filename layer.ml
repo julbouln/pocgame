@@ -35,6 +35,7 @@ class layer wi hi=
       self#foreach_map_entry (fun i j v->self#set_position i j 0)
 	
     method get_lay=lay 
+    method set_lay l=lay<-l
 
     method get_position x y=
       try

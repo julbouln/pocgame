@@ -282,8 +282,11 @@ object(self)
   method del_obj (od:game_object)=
   RefList.filter
     ( fun o->
-	if o#get_name=od#get_name then false else true
-)
+	if o#get_name=od#get_name 
+	  && o#get_rect#get_x=od#get_rect#get_x 
+	  && o#get_rect#get_y=od#get_rect#get_y
+	then false else true
+    )
     objs_list
 
 
@@ -415,6 +418,9 @@ object(self)
   method get_hash_rev n=Hashtbl.find hash_rev n
 
   method is_hash k=Hashtbl.mem hash k
+
+  method del_hash_object (k:string)=
+    self#del_object (self#get_hash k)
 
   method get_hash_object (k:string)=
     self#get_object (self#get_hash k)
