@@ -5,3 +5,6 @@
 * new objects
  - pathfinding must be here, not in poccore
  - add highlevel game_object click, put and move interaction on map
+ - add network capabilities with game_network_server_map and game_network_client_map
+ - add multimap support for server
+ - found a way to not open window in server mode

@@ -154,6 +154,8 @@ object(self)
       ignore(engine_iobj#get_lua#exec_val_fun (OLuaVal.String "on_loop") [OLuaVal.Nil]);
     iface#on_loop();
     curs#put();    
+    video#flip();
+
 
     t2<-Unix.gettimeofday();
 
@@ -162,7 +164,7 @@ object(self)
     if (t2 -. t1)<(1./. ffps) then
       usleep ((1./. ffps)  -. (t2 -. t1));     
 
-    video#flip();
+
 
   method ev_parser e=
     iface#ev_parser e;

@@ -91,11 +91,12 @@ object
 
     method update_prect()=
       let px=prect#get_x and
-	py=prect#get_y and
-	cx=rect#get_x and
-	cy=rect#get_y in
+	  py=prect#get_y and
+	  cx=rect#get_x and
+	  cy=rect#get_y in
+
       let xdif= 32-px and
-	ydif= 32-py in
+	  ydif= 32-py in
 
 	
 	if px<0 then (
