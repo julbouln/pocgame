@@ -4,6 +4,7 @@ open Core_video;;
 open Core_stage;;
 open Core_medias;;
 open Core_graphic;;
+open Core_font;;
 open Binding;;
 
 open Olua;;
@@ -144,25 +145,38 @@ object(self)
   val mutable t2=0.
 
   val mutable ffps=float main#get_fps
-				
+  val mutable lcount=0				
+  val mutable fcount=0				
+
+
+  val mutable fpsgr=new graphic_text "fpsinfo" FontEmbed (200,200,200)
 					 
   method on_loop()=
+
     t1<-Unix.gettimeofday();
-    video#blank();
+(*    video#blank(); *)
     engine#on_loop();
 
       ignore(engine_iobj#get_lua#exec_val_fun (OLuaVal.String "on_loop") [OLuaVal.Nil]);
     iface#on_loop();
-    curs#put();    
+    curs#put();  
+    fpsgr#move 8 (video#get_h - 16);
+    fpsgr#put();
+  
+    video#flip();
 
     t2<-Unix.gettimeofday();
 
-    
+    lcount<-lcount+1;
+    fcount<-fcount+(int_of_float (1./.(t2 -. t1)));
+(*    print_string "fps:";print_int (fcount/lcount);print_newline(); *)
+    fpsgr#set_text ("fps: "^string_of_int(fcount/lcount));
+
     
     if (t2 -. t1)<(1./. ffps) then
       usleep ((1./. ffps)  -. (t2 -. t1));     
 
-    video#flip();
+
 
 
 
