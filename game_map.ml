@@ -96,6 +96,7 @@ object(self)
 	  
   method add_object_from_type (t:string) (x:int) (y:int)=
     let o=self#get_object_from_type t in
+      o#set_name t;
       self#add_object_at o x y
 
 
