@@ -59,13 +59,13 @@ object(self)
   method object_types_from_xml_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(unit->'a))=
     print_string ("GAME_MAP:object types from xml "^f);print_newline();
     let obj_xml=new xml_node (Xml.parse_file f) in
-      print_string ("GAME_MAP:xml loaded");print_newline();
     let p=new xml_game_objs_parser n iv fu in p#parse obj_xml;
+      print_string ("GAME_MAP:xml loaded");print_newline();
 	Array.iter (
 	  fun v-> 
 	    let o=v() in
 	    let nm=o#get_name in
-	      print_string ("ADD TYPE:"^nm);print_newline(); 
+	    print_string ("ADD TYPE:"^nm);print_newline(); 
 	      self#add_object_type nm v
 (*
 (fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
