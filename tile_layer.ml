@@ -15,8 +15,17 @@ object(self)
     
   val mutable border_layer=new layer w h
 
+  initializer
+    border_layer#init (-1)
+
+  method get_border_layer_lay=border_layer#get_lay
+  method set_border_layer_lay b=border_layer#set_lay b
+
   method set_border_position  px py v=
     border_layer#set_position px py v
+
+  method get_border_position  px py=
+    border_layer#get_position px py 
 
   method update()=()
 (*    self#update_border 6 9;  *)
@@ -115,8 +124,9 @@ object(self)
   val mutable tiles=new graphic_object_alpha tw th file false false false
   method get_tiles=tiles
   val mutable black=new graphic_real_object ("black_"^string_of_int tw^"x"^string_of_int th) (tile_box tw th (0,0,0));
+(* FIXME : must be passed as arg *)
   val mutable borders=new graphic_object tw th "medias/tiles/bordures.png" false false
-
+  method get_borders=borders
 
   method put_map (vrect:game_visual)=
     vrect#foreach_in_visual (
@@ -125,7 +135,8 @@ object(self)
 	  self#put_black x y vrect
 	else (
 	  self#put x y vrect; 
-	  (*	  self#put_border x y vrect  *)
+	  if self#get_border_position x y<> -1 then
+	    self#put_border x y vrect  
 	)
     )
 (*    super#foreach_map_entry1 (
@@ -144,9 +155,9 @@ object(self)
     tiles#put();
 
   method put_border x y (vrect:game_visual)=
-      borders#move ((x*tw)-vrect#get_x) ((y*th)-vrect#get_y);      
-      borders#set_cur_tile (super#get_position x y);
-      borders#put();
+    borders#move ((x*tw)-vrect#get_x) ((y*th)-vrect#get_y);      
+    borders#set_cur_tile (border_layer#get_position x y);
+    borders#put();
 
   method put_black x y (vrect:game_visual)=
     black#move ((x*tw)-vrect#get_x) ((y*th)-vrect#get_y);      

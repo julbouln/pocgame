@@ -12,6 +12,12 @@ class layer wi hi=
     val mutable lay=
       Array.make_matrix wi hi (-1)
 
+    method init v=
+      self#foreach_map_entry (
+	fun x y cv->
+	  self#set_position x y v
+      );
+
     method out_of_lay x y=
       if x>=0 && y>=0 && x<wi && y<hi then false else true 
 
