@@ -43,7 +43,7 @@ object (self)
 	bcentre<-
 	(
 	  (x1+x2)/2,
-	  (y1+y2)/2
+  (y1+y2)/2
 	)
 
     initializer
@@ -58,9 +58,22 @@ object (self)
     method set_layer l=layer<-l
     method get_layer=layer
 
-
-
     val mutable prect=new rectangle 0 0 gwi ghi
+
+    method update_prect()=
+      let px=prect#get_x and
+	py=prect#get_y and
+	cx=rect#get_x and
+	cy=rect#get_y in
+      let xdif= 32-px and
+	ydif= 32-py in
+
+	if px<0 then (rect#set_position (cx-1) cy;prect#set_position (32+px) py);
+	if px>32 then (rect#set_position (cx+1) cy;prect#set_position (px-32) py);
+      	if py<0 then (rect#set_position cx (cy-1);prect#set_position px (32+py));
+	if py>32 then (rect#set_position cx (cy+1);prect#set_position px (py-32));
+
+
 
     val mutable direction=0
     method get_direction=direction
@@ -309,7 +322,7 @@ object(self)
 	if (check_fow o#get_case_x o#get_case_y)==2 then
 (*	  o#init_put(); *)
 	  (
-	    print_string "put";print_newline()
+
 	    o#put_shadow vx vy tw th; 
 	    o#put vx vy tw th;	
 	  )
@@ -327,9 +340,21 @@ end;;
 
 class game_object_layer wi hi max=
 object(self)
-  inherit [game_object] obj_layer none_obj wi hi max
+  inherit [game_object] obj_layer none_obj wi hi max as super
   method init_put()=
     self#foreach_object (fun k o->
 			o#init_put();
 		     );
+
+  method update_obj num=
+    let obj=self#get_object num in
+      obj#update_prect();
+      
+      super#update_obj num;
+
+  method update_action()=
+    self#foreach_object (fun k o->
+			   o#act 0 0;
+			   o#anim();
+			)
 end;;
