@@ -22,11 +22,14 @@ object
   val mutable odata=LNone
   val mutable data=LNone
 
+    
+
   method get_lock()=
     Mutex.lock m;
     while data=odata do
       Condition.wait cond m; 
     done
+
   method get_unlock()=
     Mutex.unlock m;    
 
@@ -39,10 +42,12 @@ object
     Mutex.unlock m;
 
     (* to avoid interblockade *)
+    Thread.delay (Random.float (1.));
 
   method get_data=
     odata<-data;
     data
+
   method set_data (d:loading_data)=
     odata<-data;
     data<-d; 
@@ -73,6 +78,7 @@ object(self)
 	
 	self#on_loop !d;
 	li#get_unlock();
+	Thread.delay (Random.float (1.));
       done;
       li#get_unlock();
 
