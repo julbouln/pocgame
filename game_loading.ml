@@ -99,7 +99,7 @@ object(self)
     print_string "GAME_LOADING: Fin ...";print_newline();
 
   method on_load()=
-    waiting#move (video#f_size_w 512) (video#f_size_h 384);
+    waiting#move (video#get_w/2 - waiting#get_rect#get_w/2) (video#get_h/2 - waiting#get_rect#get_h/2);
 
 
   method on_loop msg1=

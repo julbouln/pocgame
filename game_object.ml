@@ -316,33 +316,6 @@ end;;
 
 
 
-drawing_vault#add_drawing_fun "with_mirror3"
-  (
-    fun vl->
-      let par=get_draw_op_string vl 0 and
-	  col=List.nth vl (List.length vl -1) in
-      let drl=drawing_vault#exec_drawing_fun par (List.tl vl) in
-      let column=(Array.length drl)/3 in
-      let ndrl=Array.make (column*8) drl.(0) in
-	Array.iteri (
-	  fun i dr->
-	    ndrl.(i)<-dr;
-	) drl;
-	let copy_col v m mirror=
-	  let k=ref 0 in
-	    for i=v*column to (v+1)*column - 1 do
-	      ndrl.(column*m + !k)<-(if mirror then ((drl.(i))#exec_op_copy "mirror" []).(0) else drl.(i));
-	      k:= !k+1;
-	    done
-	in
-	  copy_col 2 4 false;
-	  copy_col 1 6 true;
-	  copy_col 1 2 false;
-
-	  ndrl
-
-  );;
-
 
 
 let get_rpos dr=
