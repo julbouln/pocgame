@@ -84,3 +84,4 @@ let init_game_object_types_from_xml f add_obj=
 	  add_obj k v
       ) h;
 
+

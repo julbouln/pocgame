@@ -53,7 +53,6 @@ object
     Thread.delay (Random.float (0.2));
 
   method get_data=
-
 (*    print_string "GAME_LOADING: Recuperation de valeur";print_newline();*)
     odata<-data;
     data
@@ -72,6 +71,7 @@ object(self)
 (*  val mutable waiting=new graphic_with_anim (let gr=new graphic_white_border "medias/iface/sablier.png" 67 67 in gr#set_over true; gr:>graphic_generic_object) [|0;1;2;3;4;5|] 4
 *)
   val mutable li=new game_loading_info
+  method get_loading_info=li
   method set_loading_info i=li<-i
 
   val mutable msgt="Empty"
@@ -85,7 +85,7 @@ object(self)
 
 
   method loading()=
-    print_string "GAME_LOADING: Demarrage ...";print_newline();
+    print_string "GAME_LOADING: Démarrage ...";print_newline();
     self#on_load();
     let d=ref LNone in
       while (!d<>LEnd) do
@@ -105,7 +105,12 @@ object(self)
   method on_loop msg1=
     video#blank();
     match msg1 with
-      | LNone ->()
+      LNone ->
+	    print_string "None";print_newline();
+	    waiting#anim();
+	    waiting#put();
+	    video#flip();
+
       | LData m ->
 	  let msg=(msgt^" "^ m ^"...")  in
 (*	    tile_string (main#screen_tile) (0,0) msg (255,255,255);*)

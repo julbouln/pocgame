@@ -1,4 +1,4 @@
-
+open Core_main;;
 open Core_event;;
 open Core_video;;
 open Core_stage;;
@@ -142,6 +142,8 @@ object(self)
 	
   val mutable t1=0.
   val mutable t2=0.
+
+  val mutable ffps=float main#get_fps
 				
 					 
   method on_loop()=
@@ -156,8 +158,9 @@ object(self)
     t2<-Unix.gettimeofday();
 
     
-    if (t2 -. t1)<(1./. 30.) then
-      usleep ((1./. 30.)  -. (t2 -. t1));     
+    
+    if (t2 -. t1)<(1./. ffps) then
+      usleep ((1./. ffps)  -. (t2 -. t1));     
 
     video#flip();
 

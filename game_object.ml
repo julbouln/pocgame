@@ -291,7 +291,7 @@ object(self)
   inherit lua_object as lo
 
   method add_graphic n gr=
-    print_string ("GRAPHICS_CONTAINER : add graphic "^n);print_newline();
+(*    print_string ("GRAPHICS_CONTAINER : add graphic "^n);print_newline(); *)
     self#add_object (Some n) gr;
     gr#lua_init();
     self#lua_parent_of n (gr:>lua_object)

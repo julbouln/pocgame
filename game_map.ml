@@ -23,6 +23,21 @@ open Game_xml;;
 open Game_loading;;
 
 
+let loading_init_game_object_types_from_xml f (li:game_loading_info) add_obj=
+  let xinc=Xinclude.xinclude_process_file f in
+  let obj_xml=new xml_node (Xml.parse_string xinc) in
+  let pmt=new xml_game_object_types_parser in
+    pmt#parse obj_xml;
+    let h=pmt#get_hash in
+      Hashtbl.iter (
+	fun k v ->
+	  add_obj k v;
+	  li#set_lock();
+	  li#set_data (LData k);
+	  li#set_unlock();
+      ) h;
+
+
 (** game_object types *)
 class game_object_types=
 object(self)
@@ -30,6 +45,11 @@ object(self)
 
   method init_from_xml f=
     init_game_object_types_from_xml f self#add_object_type
+
+  method loading_init_from_xml f (li:game_loading_info)=
+    loading_init_game_object_types_from_xml f li self#add_object_type
+
+      
 
 end;;
 
@@ -65,12 +85,18 @@ object(self)
     obj_type#lua_init();
     self#lua_parent_of "types" (obj_type:>lua_object);
 
+  method loading_init_object_types_from_xml f li=
+    obj_type#loading_init_from_xml f li;
+    obj_type#lua_init();
+    self#lua_parent_of "types" (obj_type:>lua_object);
+
+
   (** general *)
   method add_object_at (id:string option) (o:'a) (x:int) (y:int)=    
 
     o#move x y;
     let n=self#add_object id o in
-      print_string ("GAME_OBJECT_MAP: add object "^n);print_newline();
+(*      print_string ("GAME_OBJECT_MAP: add object "^n);print_newline(); *)
 (*      o#lua_init();*)
       self#lua_parent_of n (o:>lua_object);
       n
@@ -222,9 +248,6 @@ class xml_game_object_map_type_parser=
 object(self)
   inherit [game_object_map] xml_object_parser (fun()->new game_object_map 0 0) as super
 
-  method get_type="unique"
- 
-
   method init_object o=
     o#set_lua_script lua;
     o#init_object_types_from_xml (string_of_val (args_parser#get_val#get_val (`String "types")))
@@ -232,12 +255,29 @@ object(self)
 
 end;;
 
+
+class xml_game_object_map_type_with_loading_parser loading=
+object(self)
+  inherit [game_object_map] xml_object_parser (fun()->new game_object_map 0 0) as super
+
+  method init_object o=
+    o#set_lua_script lua;
+    loading#set_msgt (string_of_val (args_parser#get_val#get_val (`String "types")));
+    o#loading_init_object_types_from_xml (string_of_val (args_parser#get_val#get_val (`String "types"))) loading#get_loading_info;
+    loading#get_loading_info#set_data LNone;
+
+end;;
+
 class xml_game_object_maps_type_parser=
 object(self)
-  inherit [xml_game_object_map_type_parser,game_object_map] xml_parser_container "game_object_map_type" (fun()->new xml_game_object_map_type_parser)
+  inherit [xml_game_object_map_type_parser,game_object_map] xml_parser_container "game_object_map_type" (fun()->new xml_game_object_map_type_parser) as super
 
   initializer
-    self#parser_add "unique" (fun()->new xml_game_object_map_type_parser)
+    self#parser_add "with_loading" (fun()->new xml_game_object_map_type_parser);
+    self#parser_add "normal" (fun()->new xml_game_object_map_type_parser);
+    
+
+
 
 end;;
 
@@ -282,16 +322,16 @@ object(self)
 
   val mutable maps_type_parser=new xml_game_object_maps_type_parser
   val mutable layers_type_parser=new xml_game_tile_layers_type_parser
+
  
   method parse_attr k v=()
 
   method parse_child k v=
     match k with
       | "game_object_maps_type" ->
-	  print_string "object maps";print_newline();
 	  maps_type_parser#parse v;	  
+	  
       | "game_tile_layers_type" ->
-	  print_string "tile layers";print_newline();
 	  layers_type_parser#parse v;
       | _ -> ()
 
@@ -342,7 +382,7 @@ object(self)
   val mutable tile_layers=new game_tile_layer_handler
 
   method add_tile_layer (s:string) (o:game_generic_tile_layer)=
-    print_string "add tile layer";print_newline();
+(*    print_string "add tile layer";print_newline(); *)
     ignore(tile_layers#add_object (Some s) o)
 
   method get_tile_layer (s:string)=
@@ -365,7 +405,7 @@ object(self)
   val mutable object_maps=new game_object_map_handler
     
   method add_object_map (s:string) (o:game_object_map)=
-    print_string "add object map";print_newline();
+(*    print_string "add object map";print_newline(); *)
 (*    ignore(o#lua_init()); *)
     self#lua_parent_of s (o:>lua_object);
     o#set_canvas canvas;
@@ -520,6 +560,7 @@ object(self)
       | _ -> ()
 
 (* persistance *)
+(* DEPRECATED *)
   val mutable map_file=new file
 
   method objs_to_save=
