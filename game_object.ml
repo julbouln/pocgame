@@ -1,11 +1,11 @@
 
-open Low;;
 open Rect;;
 open Video;;
 open Medias;;
 
 open Drawing;;
 open Generic;;
+open Binding;;
 
 open Oxml;;
 open Anim;;
@@ -393,8 +393,8 @@ object(self)
 
   method act vx vy=
     super#act vx vy;
-    let cur=self#graphic#get_cur_tile in
-      self#graphic#set_cur_tile (((self#graphic#get_tiles_size)/8)*direction + 
+    let cur=self#graphic#get_cur_drawing in
+      self#graphic#set_cur_drawing (((self#graphic#get_drawings_size)/8)*direction + 
 				   self#get_current_state#get_frame);
       
   method move x y=

@@ -20,7 +20,7 @@
 open Rect;;
 open Video;;
 
-open Low;;
+open Binding;;
 open Medias;;
 
 open Main;;
@@ -29,8 +29,6 @@ class game_visual vx vy=
 object
   val mutable rect=new rectangle vx vy (video#get_w) (video#get_h)
   val mutable change=false
-
-  val mutable black=new graphic_real_object "outofmap" (tile_box 32 32 (0,0,0));
 
   method is_in x y=
      x>=rect#get_x && y>=rect#get_y && x<rect#get_x+rect#get_w && y<rect#get_y+rect#get_h
@@ -81,12 +79,12 @@ object
       | NoScroll -> ();
     
 
-  method parse e=
+  method parse x y=
     dir<-NoScroll;
-    if e.ex<border then dir<-ScrollLeft;
-    if e.ex>(main#scr_w-border) then dir<-ScrollRight;
-    if e.ey<border then dir<-ScrollUp;
-    if e.ey>(main#scr_h-border) then dir<-ScrollDown;
+    if x<border then dir<-ScrollLeft;
+    if x>(main#scr_w-border) then dir<-ScrollRight;
+    if y<border then dir<-ScrollUp;
+    if y>(main#scr_h-border) then dir<-ScrollDown;
     
      
 end;;

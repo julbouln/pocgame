@@ -314,7 +314,7 @@ object(self)
   method get_decor_layer=decor_layer
 *)
 
-  val mutable grille=new graphic_simple_object "medias/misc/grille.png"
+  val mutable grille=new graphic_object_from_file "medias/misc/grille.png" 32 32
 
   method put_grille vx vy x y=
     grille#move ((x*32)-vx) ((y*32)-vy);

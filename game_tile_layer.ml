@@ -1,8 +1,9 @@
-open Low;;
+
 open Rect;;
 open Video;;
 open Medias;;
-
+open Drawing;;
+open Binding;;
 open Game_layer;;
 open Game_visual;;
 
@@ -119,7 +120,14 @@ object(self)
   inherit game_generic_tile_layer w h tw th as super
   val mutable tiles=new graphic_object_from_file file tw th 
   method get_tiles=tiles
-  val mutable black=new graphic_real_object ("black_"^string_of_int tw^"x"^string_of_int th) (tile_box tw th (0,0,0));
+  val mutable black=new graphic_from_drawing ("black_"^string_of_int tw^"x"^string_of_int th) 
+    (fun()->
+       let dr=drawing_vault#new_drawing() in 
+	 dr#create tw th (0,0,0);
+	 [|dr|])
+(*val mutable black=new graphic_real_object ("black_"^string_of_int tw^"x"^string_of_int th)
+ (tile_box tw th (0,0,0));
+*)
 (* FIXME : must be passed as arg *)
   val mutable borders=new graphic_object_from_file "medias/tiles/bordures.png" tw th 
   method get_borders=borders
@@ -148,20 +156,20 @@ object(self)
   method put x y vrect=
     tiles#move ((x*tw)-vrect#get_x) ((y*th)-vrect#get_y);      
     (match (super#get_position x y) with
-      | Some v->tiles#set_cur_tile v;tiles#put();
+      | Some v->tiles#set_cur_drawing v;tiles#put();
       | None -> ());
 
 
   method put_border x y (vrect:game_visual)=
     borders#move ((x*tw)-vrect#get_x) ((y*th)-vrect#get_y);      
-    (match (super#get_position x y) with
-       | Some v->borders#set_cur_tile v;borders#put();
+    (match (super#get_border_position x y) with
+       | Some v->borders#set_cur_drawing v;borders#put();
        | None -> ());
 
 
   method put_black x y (vrect:game_visual)=
     black#move ((x*tw)-vrect#get_x) ((y*th)-vrect#get_y);      
-    black#set_cur_tile (0);
+    black#set_cur_drawing (0);
     black#put();
 
 

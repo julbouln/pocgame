@@ -1,4 +1,3 @@
-open Low;;
 
 open Generic;;
 open Rect;;
@@ -61,8 +60,8 @@ class ['a] game_obj_layer wi hi max=
 	obj#move x y;
 
 
-  method update_action()=
-    self#foreach_object (fun k o->
+    method update_action()=
+      self#foreach_object (fun k o->
 			   o#act 0 0;
 			   o#anim();
 			)

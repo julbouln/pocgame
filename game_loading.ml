@@ -1,5 +1,3 @@
-open Low;;
-
 open Video;;
 open Anim;;
 
@@ -110,13 +108,13 @@ object(self)
       | LNone ->()
       | LData m ->
 	  let msg=(msgt^" "^ m ^"...")  in
-	    tile_string (main#screen_tile) (0,0) msg (255,255,255);
+(*	    tile_string (main#screen_tile) (0,0) msg (255,255,255);*)
 	    print_string msg;print_newline();
       
 	    waiting#anim();
 	    waiting#put();
 
-	    tile_string (main#screen_tile) ((video#f_size_w 490),(video#f_size_h 460)) "Please wait ..." (255,255,255);
+(*	    tile_string (main#screen_tile) ((video#f_size_w 490),(video#f_size_h 460)) "Please wait ..." (255,255,255);*)
 	    video#flip();
       | LEnd -> ();
         
