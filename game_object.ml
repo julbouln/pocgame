@@ -314,6 +314,69 @@ object
 end;;
 
 
+class game_drawing_object=
+object(self)
+  inherit poclow_drawing_object
+
+  initializer
+    self#add_op "get_rpos" DrawTypeRead (
+      fun ovl->
+	let rcol=(get_draw_op_color ovl 0) in
+	let x1=ref (-1) and
+	    x2=ref (-1) and
+	    y1=ref (-1) and
+	    y2=ref (-1) in
+	  for i=0 to self#get_w -1 do
+	    for j=0 to self#get_h -1 do
+	      if (self#get_pixel i j)=rcol then
+		if !x1=(-1) && !y1=(-1) then 
+		  (
+		    x1:=i;
+		    y1:=j;
+		  )
+		else
+		  (
+		    x2:=i;
+		    y2:=j;
+		  );
+	    done;
+	  done;
+	  DrawValRectangle (new rectangle !x1 !y1 !x2 !y2)
+    );
+
+end;;
+
+
+
+drawing_vault#add_drawing_fun "with_mirror3"
+  (
+    fun vl->
+      let par=get_draw_op_string vl 0 and
+	  col=List.nth vl (List.length vl -1) in
+      let drl=drawing_vault#exec_drawing_fun par (List.tl vl) in
+      let column=(Array.length drl)/3 in
+      let ndrl=Array.make (column*8) drl.(0) in
+	Array.iteri (
+	  fun i dr->
+	    ndrl.(i)<-dr;
+	) drl;
+	let copy_col v m mirror=
+	  let k=ref 0 in
+	    for i=v*column to (v+1)*column - 1 do
+	      ndrl.(column*m + !k)<-(if mirror then ((drl.(i))#exec_op_copy "mirror" []).(0) else drl.(i));
+	      k:= !k+1;
+	    done
+	in
+	  copy_col 2 4 false;
+	  copy_col 1 6 true;
+	  copy_col 1 2 false;
+
+	  ndrl
+
+  );;
+
+
+
 let get_rpos dr=
   let rcol=(255,36,196) in
   let x1=ref (-1) and
@@ -321,21 +384,21 @@ let get_rpos dr=
       y1=ref (-1) and
       y2=ref (-1) in
     print_string "get_rpos(NEW)";print_newline();
-  for i=0 to dr#get_w -1 do
-    for j=0 to dr#get_h -1 do
-      if (dr#get_pixel i j)=rcol then
-	if !x1=(-1) && !y1=(-1) then 
-	  (
-	    x1:=i;
-	    y1:=j;
-	  )
-	else
-	  (
-	    x2:=i;
-	    y2:=j;
-	  )
+    for i=0 to dr#get_w -1 do
+      for j=0 to dr#get_h -1 do
+	if (dr#get_pixel i j)=rcol then
+	  if !x1=(-1) && !y1=(-1) then 
+	    (
+	      x1:=i;
+	      y1:=j;
+	    )
+	  else
+	    (
+	      x2:=i;
+	      y2:=j;
+	    )
+      done;
     done;
-  done;
     new rectangle !x1 !y1 !x2 !y2;;
 
 class game_object nm tilesfile gwi ghi wi hi=
@@ -343,6 +406,10 @@ object(self)
   inherit game_generic_object nm wi hi gwi ghi as super
 
   val mutable graphic=new graphic_object_from_file tilesfile gwi ghi
+
+  initializer
+    self#init_bcentre()
+
   method act vx vy=
     super#act vx vy;
     let cur=self#graphic#get_cur_tile in
@@ -373,7 +440,13 @@ object(self)
 
   method init_bcentre()=
 (*    let rpos=self#graphic#get_rpos in *)
-    let rpos=get_rpos (drawing_vault#get_cache_simple tilesfile) in
+    let rpos=get_rpos (drawing_vault#get_cache_simple tilesfile) in 
+(*    let rpos=
+      let dr=(drawing_vault#get_cache_simple tilesfile) in
+	get_draw_op_rect (
+	  dr#exec_op_read "get_rops" [DrawValColor(255,36,196)]
+	) in
+*)
     let x1=rpos#get_x and
 	y1=rpos#get_y and
 	x2=rpos#get_w and
