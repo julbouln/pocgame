@@ -99,6 +99,11 @@ class ['a] obj_layer (none_obj:'a) wi hi max=
       self#set_object num none_obj;
       is_objs.(num)<-false;
 
+    method update_obj_all()=
+      self#foreach_object(
+      fun k ob->self#update_obj k;
+    );
+  
     method update_obj num=
       let obj=self#get_object num in
       if self#is_object_num num==true then (

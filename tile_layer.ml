@@ -4,8 +4,34 @@ open Video;;
 open Object;;
 open Layer;;
 
+open Game_visual;;
 
 (** Game tile layer class definition *)
+
+
+
+class tile_layer_NEW w h tw th file =
+object(self)
+
+  inherit layer w h as super
+
+  val mutable tiles=
+      new graphic_object_alpha tw th file false false false
+
+  method put_map (vrect:game_visual)=
+    super#foreach_map_entry (
+      fun x y v->
+	self#put x y vrect; 
+    );
+  
+  method put x y vrect=
+    if vrect#is_in (x*tw) (y*th) then (
+      tiles#move ((x*tw)-vrect#get_x) ((y*th)-vrect#get_y);      
+      tiles#set_cur_tile (super#get_position x y);
+      tiles#put();
+    )
+
+end;;
 
 
 exception Border_out_of_array of (int*int);;
@@ -15,6 +41,7 @@ class tile_layer wi hi tw th=
   object (self)
     inherit layer wi hi as super
 	(* val mutable lay : int array array *) 
+
     val mutable terrains_tiles=
       new graphic_object_alpha (!tile_w) (!tile_h) "medias/tiles/terrains.png" false true false
     val mutable borders_tiles=
