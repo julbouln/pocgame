@@ -37,7 +37,7 @@ object(self)
 	(w,h)=size_of_val (args#get_val (`String "case_size")) and
 	block=if args#is_val(`String "blocking") then (bool_of_val(args#get_val(`String "blocking"))) else false in
       
-      o#set_name id; 
+      o#set_name nm; 
       o#get_rect#set_size w h;
       o#get_prect#set_size gw gh;
       o#set_blocking block;
@@ -189,7 +189,45 @@ end;;
 
 
 
+class xml_game_engine_stage_parser=
+object (self)
+  inherit xml_stage_parser as super
 
+  val mutable map_type_parser=new xml_game_map_type_parser
+  val mutable interaction_parser=new xml_interaction_object_parser
+
+  method parse_child k v=
+    super#parse_child k v;
+    match k with
+      | "game_map_type" -> map_type_parser#parse v 
+      | "interaction"->	  interaction_parser#parse v
+      | _ -> ()
+(** object initial init *)
+  method init_object o=
+    o#set_lua_script (lua);
+    
+
+  method get_val=
+    let ofun()=
+      let o=
+	new game_engine generic_cursor 
+      in
+	map_type_parser#init o#get_map#add_object_map o#get_map#add_tile_layer;
+	let inter=(snd interaction_parser#get_val)() in
+	  o#set_interaction inter;
+	self#init_object (o:>stage); 
+	(o:>stage)	  
+    in      
+      (id,ofun)
+
+end;;
+
+let xml_engine_stages_parser()=
+  let p=xml_iface_stages_parser() in
+    p#parser_add "game_engine" (fun()->new xml_game_engine_stage_parser);
+    p;;
+
+(*
 class xml_game_engine_with_iface_stage_parser=
 object (self)
   inherit xml_stage_parser as super
@@ -228,3 +266,4 @@ let xml_engine_stages_parser()=
     p#parser_add "engine_stage_with_iface" (fun()->new xml_game_engine_with_iface_stage_parser);
     p;;
 
+*)

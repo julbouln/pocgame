@@ -19,6 +19,8 @@ class game_engine curs=
 object(self)
   inherit stage curs as super
 
+  val mutable interaction=new interaction_lua
+  method set_interaction i=interaction<-i
 
   val mutable grille=
     new graphic_from_drawing "grille"
@@ -60,12 +62,10 @@ object(self)
   initializer
     map#set_canvas (Some canvas);
 
-  method on_load()=
-()
-(*    map#init_type_from_xml file; *)
 
 
   method on_loop()=
+    super#on_loop();
     map#update();
 
     map#foreach_tile_layer (
@@ -76,28 +76,14 @@ object(self)
 
 
   method ev_parser e=
-    (match e with
-       | EventMouse em ->
-	   (match em with
-	      | MouseMotion(x,y) -> 
-		  curs#move x y;
-	      | MouseRelease(x,y,but) -> 
-		  curs#set_state "normal";
-	      | MouseClick(x,y,but) -> 
-		  curs#set_state "clicked";
-	      | _ -> ()
-	   )
-       | EventKeyboard ek->
-	 (match ek with
-	    | KeyboardPress (k,uk)-> ()
-	    | _ -> ()
-	 )
-       | _ -> ()
-    )
+    interaction#ev_parser e
 
   method lua_init()=
 
     lua#set_val (OLuaVal.String "put_object_map_grille") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) (self#put_object_map_grille));
+
+    ignore(interaction#lua_init());
+    self#lua_parent_of "interaction" (interaction:>lua_object);
 
     ignore(map#lua_init());
     self#lua_parent_of "map" (map:>lua_object);
@@ -119,7 +105,7 @@ open Iface_object;;
 let usleep sec=Thread.delay sec;;
 
 
-
+(*
 class game_engine_with_iface curs iface_file=
 object(self)
   val mutable engine=new game_engine curs
@@ -150,21 +136,10 @@ object(self)
     ignore(engine_iobj#get_lua#exec_val_fun (OLuaVal.String "on_load") [OLuaVal.Nil]);
 
 
-	
-  val mutable t1=0.
-  val mutable t2=0.
-
-  val mutable ffps=float main#get_fps
-  val mutable lcount=0				
-  val mutable fcount=0				
-
-
   val mutable fpsgr=new graphic_text "fpsinfo" (FontEmbed) (200,200,200) 
 					 
   method on_loop()=
 
-    t1<-Unix.gettimeofday();
-(*    video#blank(); *)
     engine#on_loop();
 
       ignore(engine_iobj#get_lua#exec_val_fun (OLuaVal.String "on_loop") [OLuaVal.Nil]);
@@ -175,26 +150,13 @@ object(self)
  
     video#flip();
 
-    t2<-Unix.gettimeofday();
-
-    lcount<-lcount+1;
-    fcount<-fcount+(int_of_float (1./.(t2 -. t1)));
 (*    print_string "fps:";print_int (fcount/lcount);print_newline(); *)
     fpsgr#set_text ("fps: "^string_of_int(fcount/lcount)); 
 
     
-    if (t2 -. t1)<(1./. ffps) then
-      usleep ((1./. ffps)  -. (t2 -. t1));     
-
-
-
-
 
   method ev_parser e=
     iface#ev_parser e;
-
-
-  
     
   method lua_init()=
     ignore(engine#lua_init());
@@ -204,3 +166,4 @@ object(self)
 
 
 end;;
+*)

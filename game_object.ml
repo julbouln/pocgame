@@ -30,6 +30,9 @@ object(self)
     (** update prect from rect *)
     method update_prect()=
       let px=prect#get_x and
+	  py=prect#get_y in
+	rect#set_position (px/32) (py/32)
+(*      let px=prect#get_x and
 	  py=prect#get_y and
 	  cx=rect#get_x and
 	  cy=rect#get_y in
@@ -83,6 +86,7 @@ object(self)
 	    prect#set_position (px-32) (py-32);
 	  )
 	);
+*)
 
     (** direction *)
     val mutable direction=0
@@ -174,6 +178,7 @@ object(self)
   (** move to case *)
   method move x y=
     self#set_case_position x y;
+    prect#set_position (x*32) (y*32);
     self#graphics_update()
 
   (** turn to direction *)
@@ -202,8 +207,12 @@ object(self)
 	);
 (*      print_string("GAME_OBJECT: bcentre : "^string_of_int (fst bcentre)^","^string_of_int (snd bcentre));print_newline();
 *)
-  method get_pixel_x=(rect#get_x*32) + prect#get_x - (fst bcentre) + 16
-  method get_pixel_y=(rect#get_y*32) + prect#get_y - (snd bcentre) + 16
+  method get_pixel_x=
+    prect#get_x - (fst bcentre) + 16
+    (*(rect#get_x*32) + prect#get_x - (fst bcentre) + 16 *)
+  method get_pixel_y=
+    prect#get_y - (snd bcentre) + 16
+    (*(rect#get_y*32) + prect#get_y - (snd bcentre) + 16 *)
 
 
   method lua_init()=
