@@ -85,10 +85,6 @@ object(self)
   val mutable m=Mutex.create();
   val mutable cond=Condition.create();
 
-  val mutable load_obj_type=new game_loading_info
-  method get_load_obj_type=load_obj_type
-
-
 
   method object_types_from_xml_string_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=
     let obj_xml=new xml_node (Xml.parse_string f) in
@@ -96,13 +92,11 @@ object(self)
 	Array.iter (
 	  fun v-> 
 	    self#add_object_type (fst v) (snd v);
-	    load_obj_type#set_data (LData (fst v));
 (*
 (fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
 *)
 	) p#get_objs;
 
-	load_obj_type#set_data (LEnd);
 
   method object_types_from_xml_func (n:string) (f:string) (fu:string->string->string->int->int->int->int->game_state_container->(string*(unit->'a)))=
     let obj_xml=new xml_node (Xml.parse_file f) in
@@ -110,13 +104,11 @@ object(self)
 	Array.iter (
 	  fun v-> 
 	    self#add_object_type (fst v) (snd v);
-	    load_obj_type#set_data (LData (fst v));
 (*
 (fun nm t f w h cw ch stc->new game_decor nm w h f cw ch stc)
 *)
 	) p#get_objs;
 
-	load_obj_type#set_data (LEnd);
 
   method add_object_at (o:'a) (x:int) (y:int)=
     o#move x y;
