@@ -23,7 +23,7 @@ open Video;;
 open Low;;
 open Medias;;
 
-open Game_main;;
+open Main;;
 
 class game_visual vx vy=
 object

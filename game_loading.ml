@@ -5,7 +5,7 @@ open Anim;;
 
 open Medias;;
 
-open Game_main;;
+open Main;;
 
 
 type loading_data=
