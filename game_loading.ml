@@ -39,7 +39,7 @@ object
     Mutex.unlock m;
 
     (* to avoid interblockade *)
-(*    Thread.delay (Random.float (0.15)); *)
+    Thread.delay (Random.float (0.15)); 
 
   method set_data d=
     data<-d;
