@@ -105,7 +105,7 @@ object(self)
 	current_load_type<-"end";
 	Condition.signal cond;
 	Mutex.unlock m;
-
+	Thread.delay (Random.float (1./. 25.));
 
   method add_object_at (o:'a) (x:int) (y:int)=
     o#move x y;
