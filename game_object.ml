@@ -238,8 +238,13 @@ object(self)
       lua#set_val (OLuaVal.String "get_case_x") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_case_x));
       lua#set_val (OLuaVal.String "get_case_y") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_case_y));
 
-      lua#set_val (OLuaVal.String "get_direction") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_direction));
-      lua#set_val (OLuaVal.String "turn") (OLuaVal.efunc (OLuaVal.int **->> OLuaVal.unit) self#turn);
+      lua#set_val (OLuaVal.String "get_prect_x") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->prect#get_x));
+      lua#set_val (OLuaVal.String "get_prect_y") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->prect#get_y));
+
+      lua#set_val (OLuaVal.String "set_prect_position") (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) (prect#set_position));
+
+
+      lua#set_val (OLuaVal.String "get_type") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.string) (fun()->self#get_name));
 
       lo#lua_init();
 
@@ -298,6 +303,10 @@ object(self)
 *)    
   method move x y=
     super#move x y;
+    self#graphics_update()
+
+  method turn d=
+    super#turn d;
     self#graphics_update()
       
   method graphics_register (reg:canvas_object->unit)=
@@ -362,6 +371,13 @@ object(self)
     lua#set_val (OLuaVal.String "get_pixel_y") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_pixel_y));
     lua#set_val (OLuaVal.String "init_bcentre") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) (self#init_bcentre));
     lua#set_val (OLuaVal.String "properties") (OLuaVal.Table props#to_lua#to_table);
+
+    lua#set_val (OLuaVal.String "turn") (OLuaVal.efunc (OLuaVal.int **->> OLuaVal.unit) self#turn);
+    lua#set_val (OLuaVal.String "get_direction") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_direction));
+
+
+
+    lua#set_val (OLuaVal.String "graphics_update") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.unit) (self#graphics_update));
 
     graphics#lua_init();
     self#lua_parent_of "graphics" (graphics:>lua_object);

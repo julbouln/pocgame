@@ -113,6 +113,7 @@ object(self)
     t1<-Unix.gettimeofday();
     engine#on_loop();
     iface#on_loop();
+      ignore(engine_iobj#get_lua#exec_val_fun (OLuaVal.String "on_loop") [OLuaVal.Nil]);
     curs#put();    
     video#flip();
     t2<-Unix.gettimeofday();

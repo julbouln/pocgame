@@ -559,7 +559,8 @@ object(self)
 
 
   method lua_init()=
-    lua#set_val (OLuaVal.String "add_object_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#add_object_named_from_type);
+    lua#set_val (OLuaVal.String "add_object_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.string) (fun m t x y->self#add_object_from_type m None t x y));
+    lua#set_val (OLuaVal.String "add_object_named_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#add_object_named_from_type);
     lua#set_val (OLuaVal.String "delete_object") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#delete_object);
 
     lua#set_val (OLuaVal.String "init_tile_layer") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.int **->> OLuaVal.unit) self#tile_layer_init);
