@@ -387,6 +387,7 @@ object(self)
 end;;
 
 let none_obj=(new game_object "none" (!tile_w) (!tile_h) "none" false false 1 1 );;
+let none_generic_obj=(new game_generic_object "none" (!tile_w) (!tile_h) 1 1 );;
 
 class game_object_types=
 object
