@@ -4,6 +4,8 @@ open Graphic;;
 open Rect;;
 open File;;
 
+open Action;;
+
 open Olua;;
 open Oxml;;
 open Oval;;
@@ -58,7 +60,9 @@ object(self)
 
   (** xml *)
   method init_object_types_from_xml f=
-    obj_type#init_from_xml f
+    obj_type#init_from_xml f;
+    obj_type#lua_init();
+    self#lua_parent_of "types" (obj_type:>lua_object);
 
   (** general *)
   method add_object_at (id:string option) (o:'a) (x:int) (y:int)=    
@@ -318,6 +322,8 @@ class game_map w h=
 object(self)
   inherit lua_object as lo
   
+  val mutable actions=new state_object
+
   val mutable canvas=None
   method set_canvas (c:canvas option)=canvas<-c
 
@@ -425,7 +431,7 @@ object(self)
 
   method update()=
     self#foreach_object_map (fun i m->m#update());
-
+    actions#loop();
 
   method save_to_file f=
     let fo=open_out f in
@@ -488,6 +494,12 @@ object(self)
 			  let ot=self#get_tile_layer (Xml.attrib oc "id") in
 			    ot#from_xml oc;
 		      ) (Xml.children c);
+		      
+		  | "actions" ->
+		      let n=new xml_node c in
+		      let p=(Global.get xml_default_actions_parser)() in
+			p#parse n;
+			p#init_simple (actions#add_action);
 		  | _ -> ()
 	    ) childs;
       | _ -> ()
@@ -558,7 +570,8 @@ object(self)
     lua#set_val (OLuaVal.String "save_to_file") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) self#save_to_file);
 
 
-
+    actions#lua_init();
+    self#lua_parent_of "actions" (actions:>lua_object);
 
     lo#lua_init();
 

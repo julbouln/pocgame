@@ -74,19 +74,19 @@ open Timer;;
 
 
 (* more generic parent - without graphic *)
-class game_obj (nm:string) (wi:int) (hi:int) (gwi:int) (ghi:int)=
+class game_obj=
 object
   inherit generic_object 
 
-    val mutable name=nm
+    val mutable name=""
     method get_name=name
     method set_name n=name<-n
 
-    val mutable rect=new rectangle 0 0 wi hi
+    val mutable rect=new rectangle 0 0 0 0
     method get_rect=rect
 
 (* go in obj ? *)
-    val mutable prect=new rectangle 0 0 gwi ghi
+    val mutable prect=new rectangle 0 0 0 0
     method get_prect=prect
 
     method update_prect()=
@@ -159,9 +159,9 @@ end;;
 
 
 
-class game_generic_object nm wi hi gwi ghi=
+class game_generic_object=
 object(self)
-  inherit game_obj nm wi hi gwi ghi
+  inherit game_obj
 (*  inherit game_action_object as action *)
   val mutable states=new state_actions
   method get_states=states
@@ -278,9 +278,9 @@ object(self)
     );
 end;;
 
-class game_object nm tilesfile gwi ghi wi hi=
+class game_object=
 object(self)
-  inherit game_generic_object nm wi hi gwi ghi as super
+  inherit game_generic_object as super
 
   val mutable graphics=new graphics_container
   method get_graphics=graphics

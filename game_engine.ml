@@ -82,7 +82,7 @@ object(self)
   val mutable engine=new game_engine curs map_type_file
   inherit iface_stage curs iface_file as iface
 
-
+  val mutable engine_iobj=new iface_object video#get_w video#get_h 
 
   method on_load()=
 
@@ -91,7 +91,7 @@ object(self)
 
     ignore(self#lua_init());
 
-    let engine_iobj=new iface_object video#get_w video#get_h in
+
       engine_iobj#set_layer (-1);
       engine_iobj#move 0 0;
       engine_iobj#show();
@@ -100,9 +100,8 @@ object(self)
       engine_iobj#lua_parent_of "engine" (engine:>lua_object);
       ignore(engine_iobj#lua_init());
 
-
       iface#get_iface#iface_add_object "engine" engine_iobj;
-
+      ignore(engine_iobj#get_lua#exec_val_fun (OLuaVal.String "on_load") [OLuaVal.Nil]);
 
 
 	
@@ -134,6 +133,7 @@ object(self)
     self#lua_parent_of "engine" (engine:>lua_object);
 
     iface#lua_init();
+
 
 end;;
 

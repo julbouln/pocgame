@@ -63,7 +63,7 @@ let game_object_metatype_from_xml f=
 
 class xml_game_object_parser=
 object(self)
-  inherit [game_object] xml_object_parser (fun()->new game_object "" "" 0 0 0 0) as super
+  inherit [game_object] xml_object_parser (fun()->new game_object) as super
   val mutable props_parser=new xml_val_ext_list_parser "properties"
 
   val mutable graphics_parser=(Global.get xml_default_graphics_parser)()
@@ -97,11 +97,14 @@ object(self)
   method get_val=
     let ofun()=
       let o=
-	let args=args_parser#get_val in
-	let (gw,gh)=size_of_val (args#get_val (`String "pixel_size")) and
-	    (w,h)=size_of_val (args#get_val (`String "case_size")) in
-	  new game_object id "" gw gh w h
+	  new game_object
       in
+      let args=args_parser#get_val in
+      let (gw,gh)=size_of_val (args#get_val (`String "pixel_size")) and
+	  (w,h)=size_of_val (args#get_val (`String "case_size")) in
+	o#set_name id;
+	o#get_rect#set_size w h;
+	o#get_prect#set_size gw gh;
 	graphics_parser#init (o#get_graphics#add_graphic);
 	states_parser#init (o#get_states#add_state);
 	o#set_props props_parser#get_val;
