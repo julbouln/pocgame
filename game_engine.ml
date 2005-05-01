@@ -37,10 +37,10 @@ object(self)
 	[|dr|]
     )
 
-
+(*
   val mutable canvas=new canvas
   method get_canvas=canvas
-
+*)
   val mutable map=new game_map 0 0
   method get_map=map
 
@@ -75,7 +75,7 @@ object(self)
       fun k t->
 	t#put_map vrect;
     );
-    canvas#refresh vrect#get_x vrect#get_y 32 32;
+    canvas#refresh vrect#get_x vrect#get_y 32 32; 
 
 
   method ev_parser e=

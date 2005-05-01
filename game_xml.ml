@@ -34,14 +34,23 @@ object(self)
     let (gw,gh)=size_of_val (args#get_val (`String "pixel_size")) and
 	(w,h)=size_of_val (args#get_val (`String "case_size")) and
 	block=if args#is_val(`String "blocking") then (bool_of_val(args#get_val(`String "blocking"))) else false in
-      
+
+    let props=props_parser#get_val in
+(*      if props#is_val (`String "nom") then(
+	print_string ("found prop!");print_newline());
+
+      if args#is_val (`String "pixel_size") then(
+	print_string ("found arg!");print_newline());
+*)    
       o#set_name nm; 
       o#get_rect#set_size w h;
       o#get_prect#set_size gw gh;
       o#set_blocking block;
       graphics_parser#init_simple (o#get_graphics#add_graphic);
       states_parser#init_simple (o#get_states#add_state);
-      o#set_props props_parser#get_val;
+      o#set_props props;
+
+(*      o#get_lua#set_val (Value_lua.OLuaVal.String "properties") (Value_lua.OLuaVal.Table props_parser#get_val#to_lua#to_table); *)
       o#set_lua_script (lua);
 (*      ignore(o#lua_init()); *)
  

@@ -333,6 +333,15 @@ object(self)
     let m=self#get_object_map mid in
       m#foreach_object f
 
+  method move_object_to_map mid dmid oid=
+    let m=self#get_object_map mid and
+	dm=self#get_object_map dmid in
+    let o=m#get_object oid in
+      m#delete_object oid;
+      let n=dm#add_object_at (Some oid) o o#get_rect#get_x o#get_rect#get_y in
+	()
+      
+
 (* update layer *)
 
   method update()=
@@ -423,7 +432,7 @@ object(self)
       );
 (* /DEPRECATED *)
 
-
+    lua#set_val (OLuaVal.String "move_object_to_map") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#move_object_to_map);
 
     lua#set_val (OLuaVal.String "is_position_blocking") 
       (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.bool) 
