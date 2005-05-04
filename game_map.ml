@@ -296,6 +296,20 @@ object(self)
 
 (* objects *)
 
+(** get "mapid.objid" in (mapid,objid) *)
+  method object_map_id id=
+    let lid=Str.split (Str.regexp "#") id in
+    let mid=List.nth lid 0 and
+	oid=List.nth lid 1 in
+(*      print_string (mid^"."^oid);print_newline(); *)
+      (mid,oid)
+
+(** comp *)
+  method add_object_named_from_type_comp id t x y=
+    let (mid,oid)=self#object_map_id id in
+      self#add_object_named_from_type mid oid t x y
+
+(** obj map methods *)
   method add_object_from_type mid id t x y=
     let m=self#get_object_map mid in
     let n=m#add_object_from_type id t x y in
@@ -417,9 +431,17 @@ object(self)
       
 
   method lua_init()=
+(* compatible with map object funcs *)
+    lua#set_val (OLuaVal.String "add_object_named_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#add_object_named_from_type_comp);
+
 (* DEPRECATED use mapname.func instead *)
+(*
     lua#set_val (OLuaVal.String "add_object_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.string) (fun m t x y->self#add_object_from_type m None t x y));
-    lua#set_val (OLuaVal.String "add_object_named_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#add_object_named_from_type);
+*)
+(*    lua#set_val (OLuaVal.String "add_object_named_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#add_object_named_from_type);
+*)
+
+
     lua#set_val (OLuaVal.String "delete_object") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#delete_object);
     lua#set_val (OLuaVal.String "get_object_id_at_position") 
       (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.value) 

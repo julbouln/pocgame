@@ -44,6 +44,31 @@ object(self)
   val mutable map=new game_map 0 0
   method get_map=map
 
+
+(** stage part : get & add & delete graphic in object id with graphic id *)
+  method get_graphic id gid=
+    let (mid,oid)=map#object_map_id id in
+    let m=map#get_object_map mid in
+    let o=m#get_object oid in
+      (Some (o#get_graphic gid))
+
+  method add_graphic id gid go=
+    let (mid,oid)=map#object_map_id id in
+    let m=map#get_object_map mid in
+    let o=m#get_object oid in
+      canvas#add_obj (go:>canvas_object);
+      o#add_graphic gid go
+
+  method delete_graphic id gid=
+    let (mid,oid)=map#object_map_id id in
+    let m=map#get_object_map mid in
+    let o=m#get_object oid in
+    let gr=o#get_graphic gid in
+      canvas#del_obj (gr:>canvas_object);
+      o#delete_graphic gid
+
+
+
   val mutable vrect=new game_visual 0 0
   method get_vrect=vrect
 
