@@ -66,6 +66,7 @@ object(self)
   method add_object_at (id:string option) (o:'a) (x:int) (y:int)=    
     self#add_object_to_canvas o;
     let n=self#add_object id o in
+      o#fun_init();
       ignore(o#lua_init());
       self#lua_parent_of n (o:>lua_object);
       o#move x y;
