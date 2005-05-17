@@ -1,3 +1,4 @@
+open Core_rect;;
 open Game_dijkstra;;
 
 (** Pathfinding class *)
@@ -16,12 +17,15 @@ object(self)
   val mutable graph=cree_graphe (-1,-1) (wi*hi)
   val mutable cached_graph=create_rech_graphe (cree_graphe (-1,-1) (wi*hi))
 
+  val mutable rect=new rectangle 0 0 wi hi
 
   method set_map m=map<-m
   method get_map=map
 
+  method set_position x y v=map.(x).(y)<-v
+
   method private map2sommet()=
-    let a=Array.create (wi*hi) (-1,-1) in
+    let a=Array.create (rect#get_w*rect#get_h) (-1,-1) in
     let ca=ref 0 in
       Array.iteri 
 	(fun i v->
@@ -38,7 +42,7 @@ object(self)
 	
 	
   method private map2arc()=
-    let a=Array.create (wi*hi*8) ((-1,-1),(-1,-1),0.) in  
+    let a=Array.create (rect#get_w*rect#get_h*16) ((-1,-1),(-1,-1),0.) in  
     let ca=ref 0 in
       Array.iteri 
 	(fun i v->
@@ -49,11 +53,12 @@ object(self)
 	      if w=true then 
 		for k=(-1) to 1 do
 		  for l=(-1) to 1 do
-		    if (i+k)>=0 && (j+l)>=0 && (i+k)<wi && (j+l)<hi then (
+		    if (i+k)>=0 && (j+l)>=0 && (i+k)<rect#get_w && (j+l)<rect#get_h then (
 		      if map.(i+k).(j+l)=true then (
 			let c=ref 1.41 in
 			if (k=0 & l=(-1)) || (k=1 & l=0) || (k=0 & l=1) || (k=(-1) & l=0) then 
 			  c:=1.;
+(*			  print_int !ca;print_newline(); *)
 			a.(!ca)<-((i,j),(i+k,j+l),!c);
 			ca:= !ca+1;
 
@@ -67,11 +72,29 @@ object(self)
       a	
 
   method init()=
-    timeit "calcul des sommets" (fun()->Array.iter (fun x -> ajoute_sommet x graph) (self#map2sommet()));
-    timeit "calcul des arcs" (fun()->Array.iter (fun (a,b,c) -> let (x1,y1)=a and (x2,y2)=b in if x1<>(-1)&&y1<>(-1)&&x2<>(-1)&&y2<>(-1) then ajoute_arc a b c graph) (self#map2arc()));
-      for i=0 to graph.ind -1 do graph.m.(i).(i) <- Cout 0.0 done;
+    timeit "calcul des sommets" 
+      (fun()->Array.iter 
+	 (fun x -> ajoute_sommet x graph) 
+	 (self#map2sommet())
+      );
+    timeit "calcul des arcs" 
+      (fun()->Array.iter 
+	 (fun (a,b,c) -> 
+	    let (x1,y1)=a and (x2,y2)=b in 
+	      if x1<>(-1)&&y1<>(-1)&&x2<>(-1)&&y2<>(-1) then 
+		ajoute_arc a b c graph) 
+	 (self#map2arc())
+      );
+    
+    for i=0 to graph.ind -1 do graph.m.(i).(i) <- Cout 0.0 done;
       timeit "calcul des angles adjacents" (fun()->sadj_init graph);
 (*      cached_graph<-(timeit "creation du graph" (fun()->create_rech_graphe graph)); *)
+
+  method init_empty w h=
+    map<-Array.create_matrix w h true;
+    graph<-cree_graphe (-1,-1) (w*h);
+    cached_graph<-create_rech_graphe (cree_graphe (-1,-1) (w*h));
+    rect#set_size w h;
 
   method init_from_array a=
     self#set_map a;
@@ -79,13 +102,15 @@ object(self)
 (*
     self#path_calc_all()    
 *)	
+
+
   method unblock_position i j=
 (*    Printf.printf "unblock %i-%i\n" i j; *)
     map.(i).(j)<-true;
 
     for k=(-1) to 1 do
       for l=(-1) to 1 do
-	if (i+k)>=0 && (j+l)>=0 &&(i+k)<wi && (j+l)<hi then
+	if (i+k)>=0 && (j+l)>=0 &&(i+k)<rect#get_w && (j+l)<rect#get_h then
 	  if map.(i+k).(j+l)=true then 
 	    let c=ref 1.41 in
 	    if (k=0 & l=(-1)) || (k=1 & l=0) || (k=0 & l=1) || (k=(-1) & l=0) then c:=1.;
@@ -100,7 +125,7 @@ object(self)
 
     for k=(-1) to 1 do
       for l=(-1) to 1 do
-	if (i+k)>=0 && (j+l)>=0 &&(i+k)<wi && (j+l)<hi then
+	if (i+k)>=0 && (j+l)>=0 &&(i+k)<rect#get_w && (j+l)<rect#get_h then
 (*	  if map.(i+k).(j+l)=true then *)
 	    del_arc (i+k,j+l) (i,j) graph;
       done

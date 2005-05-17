@@ -65,7 +65,7 @@ object(self)
     match k with
       | "graphics" ->
 	  graphics_parser#parse v;	  
-      | "state_actions" ->
+      | "states" ->
 	  states_parser#parse v;
       | _ -> ()
 

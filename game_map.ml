@@ -16,7 +16,7 @@ open Core_type;;
 open Game_object;;
 open Game_object_layer;;
 open Game_tile_layer;;
-
+open Game_pathfinding;;
 
 (** Map *)
 
@@ -348,6 +348,11 @@ object(self)
     let m=self#get_object_map mid in
       m#foreach_object f
 
+  method foreach_map_object f=
+    self#foreach_object_map 
+      (fun mid m->
+	   m#foreach_object f
+      );
   method move_object_to_map mid dmid oid=
     let m=self#get_object_map mid and
 	dm=self#get_object_map dmid in
@@ -420,6 +425,11 @@ object(self)
 	    | _ -> ()
       ) xml#children;
 
+
+  (** PATHFINDING *)
+  val mutable path=new pathfinding_map w h
+
+
   method save_to_file f=
     let fo=open_out f in
       self#xml_to_init();
@@ -429,7 +439,16 @@ object(self)
   method load_from_file f=
     xml#of_file f;
     self#xml_of_init();
-      
+
+    path#init_empty rect#get_w rect#get_h;
+    self#foreach_map_object (fun oid o->
+			       if o#get_blocking=true then (
+				 path#set_position (o#get_case_x) (o#get_case_y) false
+				   
+			       )
+			    );
+      path#init();
+
 
   method lua_init()=
 (* compatible with map object funcs *)
@@ -461,6 +480,7 @@ object(self)
       (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.bool) 
 	 self#is_position_blocking
       );
+
 
     lua#set_val (OLuaVal.String "init_tile_layer") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.int **->> OLuaVal.unit) self#tile_layer_init);
     lua#set_val (OLuaVal.String "resize") (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#resize);

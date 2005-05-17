@@ -14,6 +14,8 @@ open Core_type;;
 open Core_timer;;
 open Core_sprite;;
 
+open Core_fun;;
+
 open Binding;;
 
 
@@ -158,6 +160,20 @@ object(self)
   method get_pixel_y=
     prect#get_y - (snd bcentre) + 16
     (*(rect#get_y*32) + prect#get_y - (snd bcentre) + 16 *)
+
+(** for fun *)
+  method pixel_x()=self#get_pixel_x
+  method pixel_y()=self#get_pixel_y
+  method case_x()=self#get_case_x
+  method case_y()=self#get_case_y
+  method case_w()=self#get_case_w
+  method case_h()=self#get_case_h
+  method direction()=self#get_direction
+
+
+  method functionize : functionizer=
+    `GameObjectFun 
+      (self :> game_object_fun)
 
 
   method lua_init()=
