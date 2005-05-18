@@ -93,32 +93,33 @@ object(self)
     self#add_object_at cid no o#get_rect#get_x o#get_rect#get_y
 
   method xml_to_init()=
-    xml#set_tag "game_object_map";
-
+    xml<-new xml_node;
     let a=DynArray.create() in
       self#foreach_object (
-	     fun k o->
-	       let e=new xml_node in
-		 e#of_list [
-		   Tag "game_object";
-		   Attribute ("id",k);
-		   Attribute ("type",o#get_name);
-		 ];
-		 (* args *)
-		 let vh=new val_ext_handler in
-		   vh#set_val (`String "position") (`Position (o#get_rect#get_x,o#get_rect#get_y));
-		   vh#set_id "args";
-		   
-		   e#add_child vh#to_xml;
-		   (* properties *)
-		   let pr=(o#get_props) in
-		     e#add_child pr#to_xml;
-
-		     DynArray.add a e#to_node;
+	fun k o->
+	  let e=new xml_node in
+	    e#of_list [
+	      Tag "game_object";
+	      Attribute ("id",k);
+	      Attribute ("type",o#get_name);
+	    ];
+	    (* args *)
+	    let vh=new val_ext_handler in
+	      vh#set_id "args";
+	      vh#set_val (`String "position") (`Position (o#get_rect#get_x,o#get_rect#get_y));
+	      
+	      
+	      e#add_child vh#to_xml;
+	      (* properties *)
+(*	      let pr=(o#get_props) in
+		e#add_child pr#to_xml;
+*)      
+	      DynArray.add a e#to_node;
       );
       
-      xml#of_list (DynArray.to_list a)
-
+      xml#of_list (DynArray.to_list a);
+    xml#set_tag "game_object_map";
+    xml#add_attrib ("id",self#get_id);
 
   method xml_of_init()=
     List.iter (
@@ -320,6 +321,10 @@ object(self)
     let m=self#get_object_map mid in
       ignore(m#add_object_from_type (Some id) t x y);
 	
+  method is_object mid=
+    let m=self#get_object_map mid in
+      m#is_object
+
   method copy_object mid=
     let m=self#get_object_map mid in
       m#copy_object
@@ -327,6 +332,11 @@ object(self)
   method move_object mid=
     let m=self#get_object_map mid in
       m#move_object
+
+  method set_object_state mid oid st_n st_v=
+    let m=self#get_object_map mid in
+    let o=m#get_object oid in
+      o#get_states#set_state st_n st_v
 
   method delete_object mid id=
     let m=self#get_object_map mid in
@@ -369,9 +379,12 @@ object(self)
     actions#loop();
 
   method xml_to_init()=
-    xml#set_tag "game_map";
-    xml#add_attrib ("w",string_of_int self#get_rect#get_w);
-    xml#add_attrib ("h",string_of_int self#get_rect#get_h);
+    xml<-new xml_node;
+    xml#of_list [
+      Tag "game_map";
+      Attribute ("w",string_of_int self#get_rect#get_w);
+      Attribute ("h",string_of_int self#get_rect#get_h);
+    ];
 
 (* object maps *)    
     let mapn=new xml_node in
@@ -394,6 +407,10 @@ object(self)
 	  mapt#add_child m#get_xml
       );
       xml#add_child mapt;
+
+      
+
+
 
   method xml_of_init()=
     let w=int_of_string(xml#attrib "w") and

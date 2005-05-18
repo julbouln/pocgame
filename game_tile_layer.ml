@@ -26,7 +26,9 @@ object(self)
   inherit xml_object  
 
   method xml_to_init()=
+    xml<-new xml_node;
     xml#set_tag "game_tile_layer";
+    xml#add_attrib ("id",self#get_id);
     xml#set_pcdata 
       (String.concat "|" 
        (List.map (fun p->
