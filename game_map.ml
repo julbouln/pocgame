@@ -107,13 +107,14 @@ object(self)
 	    let vh=new val_ext_handler in
 	      vh#set_id "args";
 	      vh#set_val (`String "position") (`Position (o#get_rect#get_x,o#get_rect#get_y));
+	      vh#set_val (`String "pixel_position") (`Position (o#get_prect#get_x,o#get_prect#get_y));
 	      
 	      
 	      e#add_child vh#to_xml;
 	      (* properties *)
 (*	      let pr=(o#get_props) in
 		e#add_child pr#to_xml;
-*)      
+*)    
 	      DynArray.add a e#to_node;
       );
       
@@ -132,13 +133,26 @@ object(self)
 		| "args" -> 
 		    args#from_xml cc
 		| "properties" -> 
-		    props#from_xml cc
+		    props#from_xml cc 
 		| _ ->()
 	  ) c#children;
 		let (x,y)=position_of_val (args#get_val (`String "position")) in
-		let oid=self#add_object_from_type (Some (c#attrib "id")) (c#attrib "type") x y in
-		let o=self#get_object oid in
-		  o#get_props#flatten props;
+
+		  
+		let oid=(c#attrib "id") and
+		    otype=(c#attrib "type") in
+
+		  if self#is_object oid then (
+		    let o=self#get_object oid in
+		      o#move x y;
+		      let (px,py)=position_of_val (args#get_val (`String "pixel_position")) in
+		      o#jump px py;
+		  )		    
+		  else
+		    ignore(self#add_object_from_type (Some oid) otype x y);
+		  
+		  let o=self#get_object oid in
+		    o#get_props#flatten props;
     ) xml#children;
     
 

@@ -35,8 +35,8 @@ object (self)
     let c=ref 0 in
       List.iter(
 	fun v->
-	  let y= !c / rect#get_w in
-	  let x= !c - (rect#get_w * y) in
+	  let x= !c / rect#get_w in
+	  let y= !c - (rect#get_w * x) in
 	    self#set_position x y v;
 	    c:= !c+1;
       ) l;
