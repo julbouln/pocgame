@@ -96,6 +96,8 @@ object(self)
     super#on_loop();
     map#update();
 
+
+  method on_loop_graphic()=
     map#foreach_tile_layer (
       fun k t->
 	t#put_map vrect;

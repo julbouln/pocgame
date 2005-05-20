@@ -82,12 +82,14 @@ object(self)
     true
 end;;
 
-class sync_objects_message_handler from_xml=
+class sync_objects_message_handler set_frames from_xml=
 object(self)
   inherit message_handler
   method parse msg=
     from_xml msg#get_data;
-    
+
+    let fr=(int_of_val (msg#get_values#get_val (`String "frames"))) in
+      set_frames fr;
     message_generic_response msg;
 
   method check msg=
@@ -98,11 +100,38 @@ class net_game_engine curs=
 object(self)
   inherit game_engine curs as super
 
+  val mutable nsync=0
+  val mutable frames=0
+  val mutable tframes=0
+  val mutable mframes=0
+
+  method on_loop()=
+    super#on_loop();
+    frames<-frames+1;
+    
+  method get_frames()=frames
+  method set_frames f=
+(*    print_string "frame diff:";print_int (f-frames);print_newline();
+    print_string "server : ";print_int f;print_newline();
+    print_string "me : ";print_int frames;print_newline();
+*)
+    if nsync>0 then (
+    tframes<-tframes+(f-frames);
+    mframes<-tframes/nsync;
+    );
+    frames<-f;
+    nsync<-nsync+1;
+    let fmod=((float mframes)/.(float 900)) in
+(*    print_string "frame per sync : ";print_int mframes;print_newline();
+    print_string "frame modif : ";print_float (fmod);print_newline();
+*)
+      frml#set_fmod (fmod);
+      
   method init_message_handler (mph:message_parser_handler)=
     mph#handler_add "set_state" (new set_state_object_message_handler map#is_object map#set_object_state); 
     mph#handler_add "add_object" (new add_object_message_handler (fun mid n t x y->ignore(map#add_object_from_type mid (Some n) t x y)));
     mph#handler_add "delete_object" (new delete_object_message_handler map#delete_object);
-    mph#handler_add "sync_objects" (new sync_objects_message_handler self#map_from_xml);
+    mph#handler_add "sync_objects" (new sync_objects_message_handler self#set_frames self#map_from_xml);
 
   method map_from_xml xml=
     map#set_xml xml;
@@ -177,7 +206,9 @@ object(self)
     conn#message_send 
       (xml_message_of_string (
 	 "<message type=\"sync_objects\" dst=\""^dst^"\">
-<values/>
+<values>
+<val_int name=\"frames\" value=\""^string_of_int frames^"\"/>
+</values>
 <data>"^
 	   map#get_xml#to_string
 	 ^"

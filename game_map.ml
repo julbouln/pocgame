@@ -112,9 +112,9 @@ object(self)
 	      
 	      e#add_child vh#to_xml;
 	      (* properties *)
-(*	      let pr=(o#get_props) in
+	      let pr=(o#get_props) in
 		e#add_child pr#to_xml;
-*)    
+    
 	      DynArray.add a e#to_node;
       );
       
