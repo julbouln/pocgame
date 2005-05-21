@@ -112,6 +112,7 @@ object(self)
 	      
 	      e#add_child vh#to_xml;
 	      (* properties *)
+	      o#reinit_caml_props();
 	      let pr=(o#get_props) in
 		e#add_child pr#to_xml;
     
@@ -152,7 +153,9 @@ object(self)
 		    ignore(self#add_object_from_type (Some oid) otype x y);
 		  
 		  let o=self#get_object oid in
-		    o#get_props#flatten props;
+		    o#get_props#flatten props; 
+		    o#reinit_lua_props();
+(*		    o#set_props props; *)
     ) xml#children;
     
 
