@@ -12,6 +12,7 @@ open Game_map;;
 
 open Net_message;;
 open Net_conn;;
+open Net_client;;
 open Net_server;;
 
 (** types de messages :
@@ -19,6 +20,8 @@ open Net_server;;
     - delete_object : supprime un objet de jeu
     - set_object_state : change l'etat d'un objet
     - sync_objects : synchronize les objets
+
+    - add_type : ajoute un type d'objet depuis un xml distant
 *)
 
 
@@ -95,6 +98,9 @@ object(self)
   method check msg=
     true
 end;;
+
+
+(** game net stages *)
 
 class net_game_engine curs=
 object(self)

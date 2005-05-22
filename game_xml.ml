@@ -268,6 +268,29 @@ object (self)
 
 end;;
 
+
+open Net_message;;
+
+class add_object_type_message_handler (add_object_type:string->string->(unit->game_object)->unit)=
+object(self)
+  inherit message_handler
+  method parse msg=
+    let mid=(string_of_val (msg#get_values#get_val (`String "map_layer"))) in
+(*    let otype=(string_of_val (msg#get_values#get_val (`String "type"))) in *)
+
+    let t_parser=new xml_game_object_type_parser in
+      t_parser#parse msg#get_data;
+    let t=t_parser#get_val in
+      add_object_type mid (fst t) (snd t);
+	
+      message_generic_response msg;
+
+  method check msg=
+    true
+end;;
+
+
+
 let xml_engine_stages_parser()=
   let p=xml_factory_stages_parser() in
     p#parser_add "game_engine" (fun()->new xml_game_engine_stage_parser);
