@@ -131,8 +131,9 @@ object(self)
     let sffps=30. +. ((float mframes)/.(float 30)) in
 (*    let fmod=((float mframes)/.(float 900)) in*)
 (*    print_string "frame per sync : ";print_int mframes;print_newline(); *)
-    print_string "serv fps : ";print_float (sffps);print_newline(); 
+(*    print_string "serv fps : ";print_float (sffps);print_newline(); 
     print_string "fps : ";print_float frml#get_ffps;print_newline();
+*)
     frml#set_ffps sffps;
 (*
     print_string "frame modif : ";print_float (fmod);print_newline();
