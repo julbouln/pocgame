@@ -117,7 +117,7 @@ object(self)
     
   method get_frames()=frames
   method set_frames f=
-(*    print_string "frame diff:";print_int (f-frames);print_newline();
+(*    print_string "frame diff:";print_int (f-frames);print_newline(); 
     print_string "server : ";print_int f;print_newline();
     print_string "me : ";print_int frames;print_newline();
 *)
@@ -127,11 +127,17 @@ object(self)
     );
     frames<-f;
     nsync<-nsync+1;
-    let fmod=((float mframes)/.(float 900)) in
-(*    print_string "frame per sync : ";print_int mframes;print_newline();
+
+    let sffps=30. +. ((float mframes)/.(float 30)) in
+(*    let fmod=((float mframes)/.(float 900)) in*)
+(*    print_string "frame per sync : ";print_int mframes;print_newline(); *)
+    print_string "serv fps : ";print_float (sffps);print_newline(); 
+    print_string "fps : ";print_float frml#get_ffps;print_newline();
+    frml#set_ffps sffps;
+(*
     print_string "frame modif : ";print_float (fmod);print_newline();
 *)
-      frml#set_fmod (fmod);
+(*      frml#set_fmod (fmod); *)
       
   method init_message_handler (mph:message_parser_handler)=
     mph#handler_add "set_state" (new set_state_object_message_handler map#is_object map#set_object_state); 
