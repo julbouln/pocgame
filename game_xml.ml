@@ -1,5 +1,6 @@
 open Value_xml;;
 open Value_val;;
+open Value_lua;;
 open Value_xmlparser;;
 
 open Core_cursor;;
@@ -223,9 +224,20 @@ object (self)
 
 end;;
 
+open Net_xml;;
+
 class xml_net_client_game_engine_stage_parser=
 object (self)
   inherit xml_game_engine_stage_parser as super
+
+  val mutable msg_handler_parser=new xml_net_msg_handlers_parser
+
+  method parse_child k v=
+    super#parse_child k v;
+    match k with
+      | "net_message_handlers" -> msg_handler_parser#parse v 
+      | _ -> ()
+
 
   method get_val=
     let ofun()=
@@ -239,6 +251,7 @@ object (self)
 	map_type_parser#init o#get_map#add_object_map o#get_map#add_tile_layer;
 	let inter=(snd interaction_parser#get_val)() in
 	  o#set_interaction inter;
+	  msg_handler_parser#init o#add_message_handler (o:>lua_object);
 	self#init_object (o:>stage);
 	(o:>stage)	  
     in      
@@ -251,6 +264,14 @@ class xml_net_server_game_engine_stage_parser=
 object (self)
   inherit xml_game_engine_stage_parser as super
 
+  val mutable msg_handler_parser=new xml_net_msg_handlers_parser
+
+  method parse_child k v=
+    super#parse_child k v;
+    match k with
+      | "net_message_handlers" -> msg_handler_parser#parse v 
+      | _ -> ()
+
   method get_val=
     let ofun()=
       let o=
@@ -261,6 +282,7 @@ object (self)
 	map_type_parser#init o#get_map#add_object_map o#get_map#add_tile_layer;
 	let inter=(snd interaction_parser#get_val)() in
 	  o#set_interaction inter;
+	  msg_handler_parser#init o#add_message_handler (o:>lua_object);
 	self#init_object (o:>stage);
 	(o:>stage)	  
     in      
@@ -268,26 +290,6 @@ object (self)
 
 end;;
 
-
-open Net_message;;
-
-class add_object_type_message_handler (add_object_type:string->string->(unit->game_object)->unit)=
-object(self)
-  inherit message_handler
-  method parse msg=
-    let mid=(string_of_val (msg#get_values#get_val (`String "map_layer"))) in
-(*    let otype=(string_of_val (msg#get_values#get_val (`String "type"))) in *)
-
-    let t_parser=new xml_game_object_type_parser in
-      t_parser#parse msg#get_data;
-    let t=t_parser#get_val in
-      add_object_type mid (fst t) (snd t);
-	
-      message_generic_response msg;
-
-  method check msg=
-    true
-end;;
 
 
 

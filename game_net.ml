@@ -139,6 +139,7 @@ object(self)
     print_string "frame modif : ";print_float (fmod);print_newline();
 *)
 (*      frml#set_fmod (fmod); *)
+
       
   method init_message_handler (mph:message_parser_handler)=
     mph#handler_add "set_state" (new set_state_object_message_handler map#is_object map#set_object_state); 
@@ -149,6 +150,17 @@ object(self)
   method map_from_xml xml=
     map#set_xml xml;
     map#xml_of_init();
+
+
+  method net_lua_message (conn:network_object) dst tp (va:val_generic_handler)=
+   conn#message_send   (xml_message_of_string (
+	       "<message type=\""^tp^"\" dst=\""^dst^"\">
+                        "^va#to_xml_string^"                        
+                       </message>
+                      ")
+	    );
+
+
 
   method net_set_object_state (conn:network_object) dst mid n st_id st_v=
     st_v#set_id "args";
@@ -166,6 +178,8 @@ object(self)
                       ")
       );
     map#set_object_state mid n (Some st_id) st_v
+
+
 
   method net_set_object_no_state (conn:network_object) dst mid n=
     conn#message_send 
@@ -232,6 +246,20 @@ object(self)
 
 
   method net_lua_init conn=
+
+    lua#set_val (OLuaVal.String "net_lua_message") 
+      (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->  OLuaVal.table **->> OLuaVal.unit) 
+	 (fun dst tp v->
+	    let lo=new lua_obj in
+	      lo#from_table v;
+	      let vh=new val_generic_handler in
+		vh#from_lua lo;
+		vh#set_id "values";
+
+	    self#net_lua_message conn dst tp (vh);()
+	 )
+      );
+
     lua#set_val (OLuaVal.String "net_set_object_state") 
       (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.table **->> OLuaVal.unit) 
 	 (fun dst mid id n v->
@@ -240,6 +268,9 @@ object(self)
 	    self#net_set_object_state conn dst mid id (n) (val_ext_handler_of_format (ValLua lo))
 	 )
       );
+
+
+
     lua#set_val (OLuaVal.String "net_set_object_no_state") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) (self#net_set_object_no_state conn));
     lua#set_val (OLuaVal.String "net_add_object") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) (self#net_add_object_named_from_type conn));
     lua#set_val (OLuaVal.String "net_delete_object") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) (self#net_delete_object conn));
@@ -252,6 +283,11 @@ class net_client_game_engine curs saddr sport cport=
 object(self)
   inherit net_game_engine curs as super
   val mutable cli=new network_client cport
+
+
+  method add_message_handler id h=
+    cli#get_mph#handler_add id h
+
 
   method on_load()=
     self#init_message_handler cli#get_mph;
@@ -281,6 +317,9 @@ object(self)
     sync_time#add_task {h=0;m=0;s=30;f=0} (fun()->self#net_sync_objects (serv:>network_object) "*");
     sync_time#start();
     
+
+  method add_message_handler id h=
+    serv#get_mph#handler_add id h
 
   method on_load()=
     self#init_message_handler serv#get_mph;
