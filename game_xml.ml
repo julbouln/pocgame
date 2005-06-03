@@ -200,13 +200,13 @@ object (self)
   inherit xml_stage_parser as super
 
   val mutable map_type_parser=new xml_game_map_type_parser
-  val mutable interaction_parser=new xml_interaction_object_parser
+  val mutable interaction_parser=new xml_interaction_objects_parser
 
   method parse_child k v=
     super#parse_child k v;
     match k with
       | "game_map_type" -> map_type_parser#parse v 
-      | "interaction"->	  interaction_parser#parse v
+      | "interactions"->	  interaction_parser#parse v
       | _ -> ()
 
   method get_val=
@@ -215,8 +215,10 @@ object (self)
 	new game_engine generic_cursor 
       in
 	map_type_parser#init o#get_map#add_object_map o#get_map#add_tile_layer;
-	let inter=(snd interaction_parser#get_val)() in
+(*	let inter=(snd interaction_parser#get_val)() in
 	  o#set_interaction inter;
+*)
+	interaction_parser#init o#get_interaction#add_interaction;
 	self#init_object (o:>stage); 
 	(o:>stage)	  
     in      
@@ -249,8 +251,9 @@ object (self)
 	new net_client_game_engine curs saddr sport cport
       in
 	map_type_parser#init o#get_map#add_object_map o#get_map#add_tile_layer;
-	let inter=(snd interaction_parser#get_val)() in
-	  o#set_interaction inter;
+(*	let inter=(snd interaction_parser#get_val)() in
+	  o#set_interaction inter;*)
+	interaction_parser#init o#get_interaction#add_interaction;
 	  msg_handler_parser#init o#add_message_handler (o:>lua_object);
 	self#init_object (o:>stage);
 	(o:>stage)	  
@@ -280,8 +283,9 @@ object (self)
 	  new net_server_game_engine sport
       in
 	map_type_parser#init o#get_map#add_object_map o#get_map#add_tile_layer;
-	let inter=(snd interaction_parser#get_val)() in
-	  o#set_interaction inter;
+(*	let inter=(snd interaction_parser#get_val)() in
+	  o#set_interaction inter;*)
+	interaction_parser#init o#get_interaction#add_interaction;
 	  msg_handler_parser#init o#add_message_handler (o:>lua_object);
 	self#init_object (o:>stage);
 	(o:>stage)	  

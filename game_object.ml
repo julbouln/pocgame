@@ -63,7 +63,7 @@ object(self)
 
  
     (** time *)
-    val mutable time=new timer
+    val mutable time=new lua_timer
     initializer
       time#start();
       time#set_limit       
@@ -198,6 +198,9 @@ object(self)
     lua#set_val (OLuaVal.String "get_pixel_y") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_pixel_y));
     lua#set_val (OLuaVal.String "init_bcentre") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) (self#init_bcentre));
 
+
+    ignore(time#lua_init()); 
+    self#lua_parent_of "timer" (time:>lua_object);
 
     lua#set_val (OLuaVal.String "turn") (OLuaVal.efunc (OLuaVal.int **->> OLuaVal.unit) self#turn);
     lua#set_val (OLuaVal.String "get_direction") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.int) (fun()->self#get_direction));

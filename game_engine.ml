@@ -21,8 +21,9 @@ class game_engine curs=
 object(self)
   inherit stage curs as super
 
-  val mutable interaction=new interaction_lua
+  val mutable interaction=new interaction_objects
   method set_interaction i=interaction<-i
+  method get_interaction=interaction
 
   val mutable grille=
     new graphic_from_drawing "grille"
@@ -107,7 +108,12 @@ object(self)
 
   method ev_parser e=
     super#ev_parser e;
-    interaction#ev_parser e
+
+    interaction#foreach_object (
+      fun ii i->
+	i#ev_parser e
+    )
+
 
   method lua_init()=
     lua#set_val (OLuaVal.String "put_object_map_grille") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) (self#put_object_map_grille));

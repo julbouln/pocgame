@@ -4,6 +4,7 @@ open Value_xml;;
 open Value_xinclude;;
 open Value_val;;
 
+open Core_fun;;
 open Core_val;;
 open Core_medias;;
 open Core_graphic;;
@@ -32,6 +33,9 @@ object(self)
   inherit lua_object as lo
   inherit xml_object
   inherit [game_object] game_obj_layer wi hi as super
+
+  val mutable fnode=new core_fun_node
+  method get_fnode=fnode
 
   val mutable canvas=None
   method set_canvas (c:canvas option)=canvas<-c
@@ -67,6 +71,8 @@ object(self)
     self#add_object_to_canvas o;
     let n=self#add_object id o in
       o#fun_init();
+      o#get_fnode#set_parent fnode;
+      fnode#get_children#add_object (Some n) o#get_fnode;
       ignore(o#lua_init());
       self#lua_parent_of n (o:>lua_object);
       o#move x y;
@@ -75,6 +81,9 @@ object(self)
   method update()=
     self#update_obj_all();
     self#update_action(); 
+
+  method functionize : functionizer=
+    `GameObjectMapFun (self:>game_object_map_fun)
 
 
   method add_object_from_type id t x y=
@@ -227,6 +236,10 @@ class game_map w h=
 object(self)
   inherit lua_object as lo
   inherit xml_object
+
+  val mutable fnode=new core_fun_node
+  method get_fnode=fnode
+
   method get_id="map"
   val mutable actions=new state_object
 
@@ -235,6 +248,9 @@ object(self)
 
   val mutable rect=new rectangle 0 0 w h
   method get_rect=rect
+
+  method functionize : functionizer=
+    `GameMapFun (self:>game_map_fun)
 
   method resize nw nh=
     self#foreach_tile_layer 
@@ -278,6 +294,8 @@ object(self)
   method add_object_map (s:string) (o:game_object_map)=
 (*    print_string "add object map";print_newline(); *)
     o#set_canvas canvas;
+    o#get_fnode#set_parent fnode;
+    fnode#get_children#add_object (Some s) o#get_fnode;
     ignore(object_maps#add_object (Some s) o);
     ignore(o#lua_init()); 
     self#lua_parent_of s (o:>lua_object);
