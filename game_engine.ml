@@ -5,6 +5,7 @@ open Core_stage;;
 open Core_xml;;
 open Core_main;;
 open Core_event;;
+open Core_interaction;;
 open Core_video;;
 open Core_stage;;
 open Core_medias;;
@@ -96,7 +97,10 @@ object(self)
   method on_loop()=
     super#on_loop();
     map#update();
-
+    interaction#foreach_object (
+      fun ii i->
+	i#on_loop()
+    );
 
   method on_loop_graphic()=
     map#foreach_tile_layer (
