@@ -17,9 +17,6 @@ class interaction_mouse_scroll s b=
 object(self)
   inherit interaction_lua
 
-  val mutable fnode=new core_fun_node
-  method get_fnode=fnode
-
   val mutable border=b
   val mutable scroll=s  
 
@@ -36,7 +33,7 @@ object(self)
       | NoScroll -> ();
     
 
-  method ev_parse e=
+  method ev_parser e=
     (match e with
        | EventMouse em ->
 	   (match em with 
@@ -47,7 +44,7 @@ object(self)
        | _ -> ()
     )
 
-  method parse x y=
+  method private parse x y=
     dir<-NoScroll;
     if x<border then dir<-ScrollLeft;
     if x>(main#scr_w-border) then dir<-ScrollRight;

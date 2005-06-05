@@ -34,8 +34,18 @@ object(self)
   inherit xml_object
   inherit [game_object] game_obj_layer wi hi as super
 
+  (* fun part *)
   val mutable fnode=new core_fun_node
   method get_fnode=fnode
+
+  method get_object_id_at_position x y=
+    self#get_position x y
+      
+  method functionize : functionizer=
+    `GameObjectMapFun (self:>game_object_map_fun)
+
+  method fun_init()=
+    fnode#set_fun self#functionize;
 
   val mutable canvas=None
   method set_canvas (c:canvas option)=canvas<-c
@@ -81,9 +91,6 @@ object(self)
   method update()=
     self#update_obj_all();
     self#update_action(); 
-
-  method functionize : functionizer=
-    `GameObjectMapFun (self:>game_object_map_fun)
 
 
   method add_object_from_type id t x y=
@@ -166,7 +173,7 @@ object(self)
 		    o#reinit_lua_props();
 (*		    o#set_props props; *)
     ) xml#children;
-    
+
 
 
  method lua_init()=
@@ -210,6 +217,7 @@ object(self)
 	 )
       );
 
+    obj_type#lua_init();
     self#lua_parent_of "types" (obj_type:>lua_object); 
 
     lo#lua_init();
@@ -237,8 +245,15 @@ object(self)
   inherit lua_object as lo
   inherit xml_object
 
+(* fun part *)
   val mutable fnode=new core_fun_node
   method get_fnode=fnode
+
+  method functionize : functionizer=
+    `GameMapFun (self:>game_map_fun)
+
+  method fun_init()=
+    fnode#set_fun self#functionize;
 
   method get_id="map"
   val mutable actions=new state_object
@@ -249,8 +264,6 @@ object(self)
   val mutable rect=new rectangle 0 0 w h
   method get_rect=rect
 
-  method functionize : functionizer=
-    `GameMapFun (self:>game_map_fun)
 
   method resize nw nh=
     self#foreach_tile_layer 
@@ -294,8 +307,11 @@ object(self)
   method add_object_map (s:string) (o:game_object_map)=
 (*    print_string "add object map";print_newline(); *)
     o#set_canvas canvas;
+
+    o#fun_init();
     o#get_fnode#set_parent fnode;
     fnode#get_children#add_object (Some s) o#get_fnode;
+
     ignore(object_maps#add_object (Some s) o);
     ignore(o#lua_init()); 
     self#lua_parent_of s (o:>lua_object);

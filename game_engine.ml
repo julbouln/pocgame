@@ -119,11 +119,25 @@ object(self)
     )
 
 
+  (* fun part *)
+  method fun_init()=
+    interaction#get_fnode#set_parent fnode;
+    fnode#get_children#add_object (Some "interactions") interaction#get_fnode;
+
+    map#fun_init();
+    map#get_fnode#set_parent fnode;
+    fnode#get_children#add_object (Some "map") map#get_fnode;
+
+    vrect#fun_init();
+    vrect#get_fnode#set_parent fnode;
+    fnode#get_children#add_object (Some "visual") vrect#get_fnode;
+    ()
+
   method lua_init()=
     lua#set_val (OLuaVal.String "put_object_map_grille") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) (self#put_object_map_grille));
 
     ignore(interaction#lua_init());
-    self#lua_parent_of "interaction" (interaction:>lua_object);
+    self#lua_parent_of "interactions" (interaction:>lua_object);
 
     ignore(map#lua_init());
     self#lua_parent_of "map" (map:>lua_object);

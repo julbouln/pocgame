@@ -14,9 +14,15 @@ open Core_val;;
 open Game_object;;
 open Game_tile_layer;;
 open Game_map;;
+open Game_interaction;;
+
 open Game_engine;;
 
+
+
 open Game_net;;
+
+
 
 (** Game xml interface *)
 
@@ -195,12 +201,33 @@ end;;
 
 
 
+class xml_interaction_mouse_scroll_parser=
+object(self)
+  inherit xml_interaction_object_parser as super
+  method get_type=nm
+
+  method get_val=
+    let ofun()=
+      let args=args_parser#get_val in
+      let s=(int_of_val(args#get_val (`String "scroll"))) and
+	b=(int_of_val(args#get_val (`String "border"))) in	
+      let o=
+	new interaction_mouse_scroll s b
+      in
+	self#init_object o;
+	o	  
+    in      
+      (id,ofun)
+
+end;;
+
+
 class xml_game_engine_stage_parser=
 object (self)
   inherit xml_stage_parser as super
 
   val mutable map_type_parser=new xml_game_map_type_parser
-  val mutable interaction_parser=new xml_interaction_objects_parser
+  val mutable interaction_parser=(Global.get xml_default_interactions_parser)()
 
   method parse_child k v=
     super#parse_child k v;
@@ -208,6 +235,11 @@ object (self)
       | "game_map_type" -> map_type_parser#parse v 
       | "interactions"->	  interaction_parser#parse v
       | _ -> ()
+
+
+  method init_object o=
+    super#init_object o;
+    o#fun_init();
 
   method get_val=
     let ofun()=
@@ -295,6 +327,13 @@ object (self)
 end;;
 
 
+
+let xml_game_interactions_parser()=
+  let p=xml_generic_interactions_parser() in
+    p#parser_add "interaction_mouse_scroll" (fun()->new xml_interaction_mouse_scroll_parser);
+    p;;
+
+Global.set xml_default_interactions_parser  xml_game_interactions_parser;;
 
 
 let xml_engine_stages_parser()=

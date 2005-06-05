@@ -24,6 +24,7 @@ open Core_video;;
 open Core_medias;;
 open Core_main;;
 open Core_event;;
+open Core_fun;;
 
 open Binding;;
 
@@ -32,6 +33,18 @@ open Binding;;
 class game_visual vx vy=
 object(self)
   inherit lua_object as lo 
+
+  val mutable fnode=new core_fun_node
+  method get_fnode=fnode
+
+  method fun_init()=
+    fnode#set_id "visual";
+    fnode#set_fun self#functionize;
+
+  method functionize : functionizer=
+    `GameVisualFun
+      (self :> game_visual_fun)
+
   method get_id="visual"
  val mutable rect=new rectangle vx vy (video#get_w) (video#get_h)
   val mutable change=false
