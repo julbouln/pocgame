@@ -48,10 +48,18 @@ object(self)
 
 
 (** stage part : get & add & delete graphic in object id with graphic id *)
-  method get_graphic id gid=
+(*  method get_graphic id gid=
     let (mid,oid)=map#object_map_id id in
     let m=map#get_object_map mid in
     let o=m#get_object oid in
+      (Some (o#get_graphic gid))
+*)
+  method get_graphic id gid=
+    let (mid,oid)=map#object_map_id id in
+    let m=map#get_object_map mid in
+    let oi=m#get_object oid in
+    let ot=m#get_obj_type#get_object oi#get_name in
+    let o=ot in
       (Some (o#get_graphic gid))
 
   method add_graphic id gid go=
