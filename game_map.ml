@@ -358,9 +358,32 @@ object(self)
       (mid,oid)
 
 (** comp *)
+  method object_map_get_map_id id=
+    let (mid,oid)=self#object_map_id id in
+      mid
+  method object_map_get_object_id id=
+    let (mid,oid)=self#object_map_id id in
+      oid
+
   method add_object_named_from_type_comp id t x y=
     let (mid,oid)=self#object_map_id id in
       self#add_object_named_from_type mid oid t x y
+
+  method get_object_id_at_position_comp x y=
+    let r=ref (None:string option) in
+      self#foreach_object_map (
+	fun mid m->
+	  let rr=m#get_object_id_at_position x y in
+	    match rr with
+	      | Some oid->r:=Some (mid^"#"^oid)
+	      | None -> ()
+      );
+
+      !r
+
+  method delete_object_comp id=
+    let (mid,oid)=self#object_map_id id in
+      self#delete_object mid oid
 
 (** obj map methods *)
   method add_object_from_type mid id t x y=
@@ -522,6 +545,20 @@ object(self)
 (* compatible with map object funcs *)
     lua#set_val (OLuaVal.String "add_object_named_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#add_object_named_from_type_comp);
 
+    lua#set_val (OLuaVal.String "object_get_map_id") (OLuaVal.efunc (OLuaVal.string **->>  OLuaVal.string) self#object_map_get_map_id);
+    lua#set_val (OLuaVal.String "object_get_object_id") (OLuaVal.efunc (OLuaVal.string **->>  OLuaVal.string) self#object_map_get_object_id);
+
+    lua#set_val (OLuaVal.String "delete_object") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) self#delete_object_comp);
+    lua#set_val (OLuaVal.String "get_object_id_at_position") 
+      (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.value) 
+	 (fun x y->
+	    let n=self#get_object_id_at_position_comp x y in
+	      match n with 
+		| Some i -> OLuaVal.String i
+		| None -> OLuaVal.Nil
+	 )
+      );
+
 (* DEPRECATED use mapname.func instead *)
 (*
     lua#set_val (OLuaVal.String "add_object_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.string) (fun m t x y->self#add_object_from_type m None t x y));
@@ -530,6 +567,7 @@ object(self)
 *)
 
 
+(*
     lua#set_val (OLuaVal.String "delete_object") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#delete_object);
     lua#set_val (OLuaVal.String "get_object_id_at_position") 
       (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.value) 
@@ -540,7 +578,20 @@ object(self)
 		| None -> OLuaVal.Nil
 	 )
       );
+*)
 (* /DEPRECATED *)
+
+
+   lua#set_val (OLuaVal.String "foreach_object_map") 
+     (OLuaVal.efunc (OLuaVal.value **->> OLuaVal.unit) 
+	(fun f->
+	   let g k v=
+	     match f with
+	       | OLuaVal.Function (s,f)->
+		   f [OLuaVal.String k;OLuaVal.Table v#get_lua#to_table];()
+	       | _ -> () in
+	     self#foreach_object_map g
+	));
 
     lua#set_val (OLuaVal.String "move_object_to_map") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#move_object_to_map);
 
