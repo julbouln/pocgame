@@ -83,7 +83,31 @@ object(self)
     black#set_cur_drawing (0);
     black#put();
 
+  method lua_init()=
+(*    ignore(tiles#lua_init()); 
+    self#lua_parent_of "tiles" (tiles:>lua_object); 
+*)
+    lua#set_val (OLuaVal.String "set_tile_position") 
+      (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **-> OLuaVal.value **->> OLuaVal.unit) 
+	 (fun x y v->
+	      match v with 
+		| OLuaVal.Number i -> self#set_position x y (Some (int_of_float i))
+		| OLuaVal.Nil -> self#set_position x y None
+		| _ -> ()
+	 )
+      );
 
+    lua#set_val (OLuaVal.String "get_tile_position") 
+      (OLuaVal.efunc (OLuaVal.int **-> OLuaVal.int **->> OLuaVal.value) 
+	 (fun x y->
+	    let n=self#get_position x y in
+	      match n with 
+		| Some i -> OLuaVal.Number (float i)
+		| None -> OLuaVal.Nil
+	 )
+      );
+
+    super#lua_init()
 	
 end;;
 

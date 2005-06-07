@@ -283,7 +283,9 @@ object(self)
 
   method add_tile_layer (s:string) (o:game_generic_tile_layer)=
 (*    print_string "add tile layer";print_newline(); *)
-    ignore(tile_layers#add_object (Some s) o)
+    ignore(tile_layers#add_object (Some s) o);
+    ignore(o#lua_init()); 
+    self#lua_parent_of s (o:>lua_object);
 
   method get_tile_layer (s:string)=
     tile_layers#get_object s
