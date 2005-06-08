@@ -57,6 +57,13 @@ object(self)
 	    if o#get_name=t then r:=true
 	);
       !r
+
+  method clear()=
+    super#clear();
+    (match canvas with 
+       | Some cvas->cvas#clear();
+       | None -> ());
+
 	
   val mutable obj_type=new game_object_types
   method get_obj_type=obj_type
@@ -177,6 +184,9 @@ object(self)
 
 
  method lua_init()=
+   lua#set_val (OLuaVal.String "clear") 
+     (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.unit) self#clear); 
+
    lua#set_val (OLuaVal.String "add_object_from_type") 
      (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.string) 
 	(fun t x y->self#add_object_from_type None t x y));
@@ -543,7 +553,16 @@ object(self)
       path#init();
 
 
+  method clear()=
+    self#foreach_object_map(
+      fun k om->
+	  om#clear()
+    );
+
   method lua_init()=
+   lua#set_val (OLuaVal.String "clear") 
+     (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.unit) self#clear); 
+
 (* compatible with map object funcs *)
     lua#set_val (OLuaVal.String "add_object_named_from_type") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.int **->> OLuaVal.unit) self#add_object_named_from_type_comp);
 

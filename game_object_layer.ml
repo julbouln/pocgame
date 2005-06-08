@@ -24,6 +24,7 @@ class ['a] game_obj_layer wi hi=
 
 
     method clear()=
+      super#clear();
       oh#clear()
 
 
