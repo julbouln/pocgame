@@ -13,8 +13,76 @@ open Core_graphic;;
 open Core_font;;
 open Binding;;
 
+open Value_common;;
+
 open Game_visual;;
 open Game_map;;
+
+
+
+(** World *)
+class game_world=
+object(self)
+  
+  inherit [game_map] generic_object_handler as super
+  inherit lua_object as lo
+
+  method get_id="world"
+
+  method add_map s o=
+    ignore(self#add_object (Some s) o);
+    ignore(o#lua_init()); 
+    self#lua_parent_of s (o:>lua_object);
+
+  val mutable init_map=(fun m->())
+
+  method set_init_map f=init_map<-f
+
+  method new_map_from_file s f=
+    let nm=new game_map 0 0 in
+      init_map nm;
+      nm#load_from_file f;
+      self#add_map s nm
+
+
+  method set_object_state m=
+    let map=self#get_object m in
+      map#set_object_state
+
+  method add_object_from_type m=
+    let map=self#get_object m in
+      map#add_object_from_type
+
+  method delete_map_object m=
+    let map=self#get_object m in
+      map#delete_object
+
+  method is_map_object m=
+    let map=self#get_object m in
+      map#is_object
+
+  method update()=
+    self#foreach_object(
+      fun k v->
+	v#update();
+    );
+
+  method lua_init()=
+   lua#set_val (OLuaVal.String "foreach_map") 
+     (OLuaVal.efunc (OLuaVal.value **->> OLuaVal.unit) 
+	(fun f->
+	   let g k v=
+	     match f with
+	       | OLuaVal.Function (s,f)->
+		   f [OLuaVal.String k;OLuaVal.Table v#get_lua#to_table];()
+	       | _ -> () in
+	     self#foreach_object g
+	));
+
+   lua#set_val (OLuaVal.String "new_map_from_file") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#new_map_from_file);
+
+    lo#lua_init();
+end;;
 
 (** Engine *)
 
@@ -39,21 +107,11 @@ object(self)
 	[|dr|]
     )
 
-(*
-  val mutable canvas=new canvas
-  method get_canvas=canvas
-*)
   val mutable map=new game_map 0 0
   method get_map=map
 
 
 (** stage part : get & add & delete graphic in object id with graphic id *)
-(*  method get_graphic id gid=
-    let (mid,oid)=map#object_map_id id in
-    let m=map#get_object_map mid in
-    let o=m#get_object oid in
-      (Some (o#get_graphic gid))
-*)
   method get_graphic id gid=
     let (mid,oid)=map#object_map_id id in
     let m=map#get_object_map mid in
@@ -152,6 +210,56 @@ object(self)
 
     ignore(vrect#lua_init());
     self#lua_parent_of "visual" (vrect:>lua_object);
+
+    super#lua_init();
+  
+end;;
+
+
+(* game world engine *)
+class game_world_engine curs=
+object(self)
+  inherit stage curs as super
+
+  val mutable interaction=new interaction_objects
+  method set_interaction i=interaction<-i
+  method get_interaction=interaction
+
+  val mutable world=new game_world
+  method get_world=world
+
+  method on_load()=
+    super#on_load();
+    ignore(self#lua_init());
+
+
+  method on_loop()=
+    super#on_loop();
+    world#update();
+    interaction#foreach_object (
+      fun ii i->
+	i#on_loop()
+    );
+
+  method ev_parser e=
+    super#ev_parser e;
+    interaction#foreach_object (
+      fun ii i->
+	i#ev_parser e
+    )
+
+  (* fun part *)
+  method fun_init()=
+    interaction#get_fnode#set_parent fnode;
+    fnode#get_children#add_object (Some "interactions") interaction#get_fnode;
+    ()
+
+  method lua_init()=
+    ignore(interaction#lua_init());
+    self#lua_parent_of "interactions" (interaction:>lua_object);
+
+    ignore(world#lua_init());
+    self#lua_parent_of "world" (world:>lua_object);
 
     super#lua_init();
   

@@ -258,6 +258,40 @@ object (self)
 
 end;;
 
+(* game world *)
+class xml_game_world_engine_stage_parser=
+object (self)
+  inherit xml_stage_parser as super
+
+  val mutable map_type_parser=new xml_game_map_type_parser
+  val mutable interaction_parser=(Global.get xml_default_interactions_parser)()
+
+  method parse_child k v=
+    super#parse_child k v;
+    match k with
+      | "game_map_type" -> map_type_parser#parse v 
+      | "interactions"->	  interaction_parser#parse v
+      | _ -> ()
+
+
+  method init_object o=
+    super#init_object o;
+    o#fun_init();
+
+  method get_val=
+    let ofun()=
+      let o=
+	new game_world_engine generic_cursor 
+      in
+	o#get_world#set_init_map (fun m->map_type_parser#init m#add_object_map m#add_tile_layer);
+	interaction_parser#init o#get_interaction#add_interaction;
+	self#init_object (o:>stage); 
+	(o:>stage)	  
+    in      
+      (id,ofun)
+
+end;;
+
 open Net_xml;;
 
 class xml_net_client_game_engine_stage_parser=
@@ -327,6 +361,35 @@ object (self)
 end;;
 
 
+class xml_net_server_game_world_engine_stage_parser=
+object (self)
+  inherit xml_game_world_engine_stage_parser as super
+
+  val mutable msg_handler_parser=new xml_net_msg_handlers_parser
+
+  method parse_child k v=
+    super#parse_child k v;
+    match k with
+      | "net_message_handlers" -> msg_handler_parser#parse v 
+      | _ -> ()
+
+  method get_val=
+    let ofun()=
+      let o=
+	let args=args_parser#get_val in
+	let sport=(int_of_val(args#get_val (`String "server_port"))) in
+	  new net_server_game_world_engine sport
+      in
+	o#get_world#set_init_map (fun m->map_type_parser#init m#add_object_map m#add_tile_layer);
+	interaction_parser#init o#get_interaction#add_interaction;
+	  msg_handler_parser#init o#add_message_handler (o:>lua_object);
+	self#init_object (o:>stage);
+	(o:>stage)	  
+    in      
+      (id,ofun)
+
+end;;
+
 
 let xml_game_interactions_parser()=
   let p=xml_generic_interactions_parser() in
@@ -339,7 +402,9 @@ Global.set xml_default_interactions_parser  xml_game_interactions_parser;;
 let xml_engine_stages_parser()=
   let p=xml_factory_stages_parser() in
     p#parser_add "game_engine" (fun()->new xml_game_engine_stage_parser);
+    p#parser_add "game_world" (fun()->new xml_game_world_engine_stage_parser);
     p#parser_add "net_client_game_engine" (fun()->new xml_net_client_game_engine_stage_parser);
     p#parser_add "net_server_game_engine" (fun()->new xml_net_server_game_engine_stage_parser);
+    p#parser_add "net_server_game_world" (fun()->new xml_net_server_game_world_engine_stage_parser);
     p;;
 

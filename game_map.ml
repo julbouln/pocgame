@@ -252,8 +252,12 @@ end;;
 
 class game_map w h=
 object(self)
+  inherit generic_object as go
   inherit lua_object as lo
   inherit xml_object
+
+  initializer
+    go#set_id "map"
 
 (* fun part *)
   val mutable fnode=new core_fun_node
@@ -265,7 +269,7 @@ object(self)
   method fun_init()=
     fnode#set_fun self#functionize;
 
-  method get_id="map"
+
   val mutable actions=new state_object
 
   val mutable canvas=None
