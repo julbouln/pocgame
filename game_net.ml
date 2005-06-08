@@ -121,10 +121,6 @@ object(self)
     
   method get_frames()=frames
   method set_frames f=
-(*    print_string "frame diff:";print_int (f-frames);print_newline(); 
-    print_string "server : ";print_int f;print_newline();
-    print_string "me : ";print_int frames;print_newline();
-*)
     if nsync>0 then (
     tframes<-tframes+(f-frames);
     mframes<-tframes/nsync;
@@ -133,17 +129,7 @@ object(self)
     nsync<-nsync+1;
 
     let sffps=30. +. ((float mframes)/.(float 30)) in
-(*    let fmod=((float mframes)/.(float 900)) in*)
-(*    print_string "frame per sync : ";print_int mframes;print_newline(); *)
-(*    print_string "serv fps : ";print_float (sffps);print_newline(); 
-    print_string "fps : ";print_float frml#get_ffps;print_newline();
-*)
     frml#set_ffps sffps;
-(*
-    print_string "frame modif : ";print_float (fmod);print_newline();
-*)
-(*      frml#set_fmod (fmod); *)
-
       
   method init_message_handler (mph:message_parser_handler)=
     mph#handler_add "set_state" (new set_state_object_message_handler 
@@ -172,7 +158,8 @@ object(self)
 
 
   method net_lua_message (conn:network_object) dst tp (va:val_generic_handler)=
-   conn#message_send   (xml_message_of_string (
+    va#set_id "values";
+    conn#message_send   (xml_message_of_string (
 	       "<message type=\""^tp^"\" dst=\""^dst^"\">
                         "^va#to_xml_string^"                        
                        </message>
@@ -277,7 +264,7 @@ object(self)
 	      lo#from_table v;
 	      let vh=new val_generic_handler in
 		vh#from_lua lo;
-		vh#set_id "values";
+
 
 	    self#net_lua_message conn dst tp (vh);()
 	 )
@@ -377,12 +364,37 @@ object(self)
 end;;
 
 
+
+
+
 (* MULTIMAP *)
+
 class net_server_game_world_engine sport=
 object(self)
-  inherit net_game_engine generic_cursor as ge 
+(*  inherit net_game_engine generic_cursor as ge *)
   inherit game_world_engine generic_cursor as super
   val mutable serv=new network_server sport
+
+  val mutable nsync=0
+  val mutable frames=0
+  val mutable tframes=0
+  val mutable mframes=0
+
+  method on_loop()=
+    super#on_loop();
+    frames<-frames+1;
+    
+  method get_frames()=frames
+  method set_frames f=
+    if nsync>0 then (
+    tframes<-tframes+(f-frames);
+    mframes<-tframes/nsync;
+    );
+    frames<-f;
+    nsync<-nsync+1;
+
+    let sffps=30. +. ((float mframes)/.(float 30)) in
+    frml#set_ffps sffps;
 
   method map_from_xml m xml=
     let nmap=world#get_object m in
@@ -417,10 +429,8 @@ object(self)
   method init_sync()=
     sync_time#start();
     
-
   method add_message_handler id h=
     serv#get_mph#handler_add id h
-
 
   method new_map_from_file s f=
     world#new_map_from_file s f;
@@ -446,6 +456,15 @@ object(self)
   val mutable on_disconnect_fun=fun v->[OLuaVal.Nil]
   method on_disconnect c=
     ignore(on_disconnect_fun [OLuaVal.String c])
+
+  method net_lua_message (conn:network_object) dst tp (va:val_generic_handler)=
+    va#set_id "values";
+    conn#message_send   (xml_message_of_string (
+	       "<message type=\""^tp^"\" dst=\""^dst^"\">
+                        "^va#to_xml_string^"                        
+                       </message>
+                      ")
+	    );
 
   method net_set_object_state (conn:network_object) dst m mid n st_id st_v=
     let nmap=world#get_object m in
@@ -539,7 +558,6 @@ object(self)
                       ")
       );()
 
-(* bullshit because present in ge *)
   method net_lua_init conn=
     lua#set_val (OLuaVal.String "net_lua_message") 
       (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->  OLuaVal.table **->> OLuaVal.unit) 
@@ -548,7 +566,6 @@ object(self)
 	      lo#from_table v;
 	      let vh=new val_generic_handler in
 		vh#from_lua lo;
-		vh#set_id "values";
 
 	    self#net_lua_message conn dst tp (vh);()
 	 )
