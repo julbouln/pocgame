@@ -164,23 +164,7 @@ object(self)
     match [b (x-1) (y-1);b x (y-1);b (x+1) (y-1);
 	   b (x-1) (y);b x y;b (x+1) (y);
 	   b (x-1) (y+1);b x (y+1);b (x+1) (y+1)] with
-(*      | [_   ;_;_   ;
-	 BTop;x;BTop;
-	 _   ;_;_   ] ->BTop
 
-
-      | [_      ;_;_   ;
-	 BBottom;x;BBottom;
-	 _      ;_;_   ] ->BBottom
-
-      | [_;BLeft;_;
-	 _;x    ;_;
-	 _;BLeft;_] ->BLeft
-
-      | [_;BRight;_;
-	 _;x    ;_;
-	 _;BRight;_] ->BRight
-*)
 (* *)
       | [_   ;_     ;_;
 	 BTop;x     ;_;
