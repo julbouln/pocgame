@@ -169,6 +169,7 @@ object(self)
 
 
   method net_set_object_state (conn:network_object) dst m mid n st_id st_v=
+    map#set_object_state mid n (Some st_id) st_v;
     st_v#set_id "args";
     conn#message_send 
       (xml_message_of_string (
@@ -184,11 +185,13 @@ object(self)
                        </message>
                       ")
       );
-    map#set_object_state mid n (Some st_id) st_v
+    ()
+
 
 
 
   method net_set_object_no_state (conn:network_object) dst m mid n=
+    map#set_object_state mid n (None) (new val_ext_handler);
     conn#message_send 
       (xml_message_of_string (
 	 "<message type=\"set_state\" dst=\""^dst^"\">
@@ -200,7 +203,7 @@ object(self)
                        </message>
                       ")
       );
-    map#set_object_state mid n (None) (new val_ext_handler)
+    ()
 
   method net_add_object_named_from_type (conn:network_object) dst m mid n t x y=
     conn#message_send 
@@ -221,7 +224,10 @@ object(self)
                       ")
       );
     if map#is_object mid n=false then (
-      map#add_object_from_type mid (Some n) t x y;())
+      ignore(map#add_object_from_type mid (Some n) t x y)
+    );
+
+
 
   method net_delete_object (conn:network_object) dst m mid n=
     conn#message_send 
@@ -468,6 +474,7 @@ object(self)
 
   method net_set_object_state (conn:network_object) dst m mid n st_id st_v=
     let nmap=world#get_object m in
+    nmap#set_object_state mid n (Some st_id) st_v;
     st_v#set_id "args";
     conn#message_send 
       (xml_message_of_string (
@@ -483,12 +490,13 @@ object(self)
                        </message>
                       ")
       );
-    nmap#set_object_state mid n (Some st_id) st_v
+    ()
 
 
 
   method net_set_object_no_state (conn:network_object) dst m mid n=
     let nmap=world#get_object m in
+    nmap#set_object_state mid n (None) (new val_ext_handler);
     conn#message_send 
       (xml_message_of_string (
 	 "<message type=\"set_state\" dst=\""^dst^"\">
@@ -500,7 +508,7 @@ object(self)
                        </message>
                       ")
       );
-    nmap#set_object_state mid n (None) (new val_ext_handler)
+    ()
 
   method net_add_object_named_from_type (conn:network_object) dst m mid n t x y=
     let nmap=world#get_object m in
