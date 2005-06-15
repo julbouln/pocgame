@@ -18,14 +18,15 @@ open Value_common;;
 open Game_visual;;
 open Game_map;;
 
-
+open Core_mysql;;
 
 (** World *)
 class game_world=
 object(self)
-  
   inherit [game_map] generic_object_handler as super
   inherit lua_object as lo
+
+  val mutable sql=new sql_xml
 
   method get_id="world"
 
@@ -78,6 +79,9 @@ object(self)
 	       | _ -> () in
 	     self#foreach_object g
 	));
+
+   lua#set_val (OLuaVal.String "sql_connect") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.int **-> OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) sql#connect);
+   lua#set_val (OLuaVal.String "sql_disconnect") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.unit) sql#disconnect);
 
    lua#set_val (OLuaVal.String "new_map_from_file") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#new_map_from_file);
 
