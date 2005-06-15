@@ -537,6 +537,14 @@ object(self)
   val mutable path=new pathfinding_map w h
 
 
+  method to_node=
+    self#xml_to_init();
+    xml
+
+  method of_node n=
+    xml#of_node n;
+    self#xml_of_init();
+
   method save_to_file f=
     let fo=open_out f in
       self#xml_to_init();

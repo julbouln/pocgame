@@ -372,7 +372,7 @@ end;;
 
 
 
-
+open Core_mysql;;
 (* MULTIMAP *)
 
 class net_server_game_world_engine sport=
@@ -380,6 +380,10 @@ object(self)
 (*  inherit net_game_engine generic_cursor as ge *)
   inherit game_world_engine generic_cursor as super
   val mutable serv=new network_server sport
+
+  val mutable sql=new sql_xml
+
+
 
   val mutable nsync=0
   val mutable frames=0
@@ -442,6 +446,25 @@ object(self)
     world#new_map_from_file s f;
     serv#get_trans#group_add s [];
     sync_time#add_task {h=0;m=0;s=30;f=0} (fun()->self#net_sync_objects (serv:>network_object) ("#"^s) s);
+
+  method new_map_from_db tbl s =
+    let n=sql#load_node tbl s in
+    world#new_map_of_node s n#to_node;
+    serv#get_trans#group_add s [];
+    sync_time#add_task {h=0;m=0;s=30;f=0} (fun()->self#net_sync_objects (serv:>network_object) ("#"^s) s);
+
+(* DATABASE *)
+  method db_add_map tbl m=
+    sql#add_node tbl m (world#map_to_node m)
+
+  method db_load_map tbl m=
+    let n=sql#load_node tbl m in
+      world#map_of_node m n#to_node
+
+  method db_save_map tbl m=
+    let n=world#map_to_node m in
+    sql#save_node tbl m n
+    
 
   method on_load()=
     self#init_message_handler serv#get_mph;
@@ -598,6 +621,15 @@ object(self)
 
 
   method lua_init()=
+   lua#set_val (OLuaVal.String "sql_connect") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) sql#connect);
+   lua#set_val (OLuaVal.String "sql_disconnect") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.unit) sql#disconnect);
+
+   lua#set_val (OLuaVal.String "db_add_map") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#db_add_map);
+   lua#set_val (OLuaVal.String "db_load_map") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#db_load_map);
+   lua#set_val (OLuaVal.String "db_save_map") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#db_save_map);
+
+   lua#set_val (OLuaVal.String "new_map_from_db") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#new_map_from_db);
+
    lua#set_val (OLuaVal.String "new_map_from_file") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#new_map_from_file);
 
     lua#set_val (OLuaVal.String "group_add_dest") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) serv#get_trans#group_add_dest);
