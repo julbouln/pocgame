@@ -304,6 +304,9 @@ object(self)
   method add_message_handler id h=
     cli#get_mph#handler_add id h
 
+  method on_leave()=
+    cli#disconnect();
+    super#on_leave();
 
   method on_load()=
     self#init_message_handler cli#get_mph;

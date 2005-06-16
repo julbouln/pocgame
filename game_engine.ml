@@ -174,6 +174,9 @@ object(self)
     super#on_load();
     ignore(self#lua_init());
 
+  method on_leave()=
+    map#clear();
+
   method on_loop()=
     super#on_loop();
     map#update();
