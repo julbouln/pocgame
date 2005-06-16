@@ -449,7 +449,7 @@ object(self)
 
   method new_map_from_db tbl s =
     let n=sql#load_node tbl s in
-    world#new_map_of_node s n#to_node;
+    world#new_map_of_node s (n.(0))#to_node;
     serv#get_trans#group_add s [];
     sync_time#add_task {h=0;m=0;s=30;f=0} (fun()->self#net_sync_objects (serv:>network_object) ("#"^s) s);
 
@@ -459,12 +459,21 @@ object(self)
 
   method db_load_map tbl m=
     let n=sql#load_node tbl m in
-      world#map_of_node m n#to_node
+      world#map_of_node m (n.(0))#to_node
 
   method db_save_map tbl m=
     let n=world#map_to_node m in
-    sql#save_node tbl m n
+    sql#save_node tbl None m n
     
+  method db_load_luaval tbl lid=
+    let n=sql#load_node tbl lid in
+    let ve=new val_ext_handler in
+      ve#from_xml n.(0);
+      ve
+
+  method db_save_luaval tbl lid (ve:val_ext_handler)=
+    sql#save_node tbl None lid ve#to_xml
+
 
   method on_load()=
     self#init_message_handler serv#get_mph;
@@ -628,6 +637,28 @@ object(self)
    lua#set_val (OLuaVal.String "db_load_map") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#db_load_map);
    lua#set_val (OLuaVal.String "db_save_map") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#db_save_map);
 
+
+    lua#set_val (OLuaVal.String "db_save_lua") 
+      (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->  OLuaVal.table **->> OLuaVal.unit) 
+	 (fun tbl lid v->
+	    let lo=new lua_obj in
+	      lo#from_table v;
+	      let vh=new val_ext_handler in
+		vh#set_id "values";
+		vh#from_lua lo;
+		self#db_save_luaval tbl lid vh
+	 )
+      );
+
+    lua#set_val (OLuaVal.String "db_load_lua") 
+      (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->>  OLuaVal.table) 
+	 (fun tbl lid->
+	    let vh=self#db_load_luaval tbl lid in
+	      vh#to_lua#to_table
+	 )
+      );
+
+
    lua#set_val (OLuaVal.String "new_map_from_db") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#new_map_from_db);
 
    lua#set_val (OLuaVal.String "new_map_from_file") (OLuaVal.efunc (OLuaVal.string **-> OLuaVal.string **->> OLuaVal.unit) self#new_map_from_file);
@@ -637,6 +668,9 @@ object(self)
 
     lua#set_val (OLuaVal.String "on_connect") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) (fun cli->()));
     lua#set_val (OLuaVal.String "on_disconnect") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) (fun cli->()));
+
+    lua#set_val (OLuaVal.String "disconnect") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) serv#on_disconnect);
+
     self#net_lua_init (serv:>network_object); 
     super#lua_init();
     on_connect_fun<-lua#get_fun (OLuaVal.String "on_connect");
