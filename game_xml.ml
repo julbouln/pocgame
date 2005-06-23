@@ -22,10 +22,23 @@ open Game_engine;;
 
 open Game_net;;
 
-
+open Game_action;;
 
 (** Game xml interface *)
 
+
+(** action pathfinding parser *)
+class xml_action_pathfinding_parser=
+object(self)
+  inherit [action_lua] xml_object_parser (fun()->new action_pathfinding)
+end;;
+
+let xml_game_actions_parser()=
+  let p=xml_factory_actions_parser() in
+    p#parser_add "action_pathfinding" (fun()->new xml_action_pathfinding_parser);
+    p;;
+
+Global.set xml_default_actions_parser xml_game_actions_parser;;
 
 class xml_game_object_type_parser=
 object(self)

@@ -259,17 +259,6 @@ object(self)
   initializer
     go#set_id "map"
 
-(* fun part *)
-  val mutable fnode=new core_fun_node
-  method get_fnode=fnode
-
-  method functionize : functionizer=
-    `GameMapFun (self:>game_map_fun)
-
-  method fun_init()=
-    fnode#set_fun self#functionize;
-
-
   val mutable actions=new state_object
 
   val mutable canvas=None
@@ -277,6 +266,35 @@ object(self)
 
   val mutable rect=new rectangle 0 0 w h
   method get_rect=rect
+
+
+
+  (** PATHFINDING *)
+  val mutable path=new pathfinding_map w h
+
+  method pathfinding_init()=
+    path#init_empty rect#get_w rect#get_h;
+    self#foreach_map_object (fun oid o->
+			       if o#get_blocking=true then (
+				 path#set_position (o#get_case_x) (o#get_case_y) false
+							      
+			       )
+			    );
+    path#init();
+
+(* fun part *)
+  val mutable fnode=new core_fun_node
+  method get_fnode=fnode
+
+  method path_calc cur dest=
+    path#path_calc cur dest
+
+  method functionize : functionizer=
+    `GameMapFun (self:>game_map_fun)
+
+  method fun_init()=
+    fnode#set_fun self#functionize;
+
 
 
   method resize nw nh=
@@ -533,10 +551,8 @@ object(self)
       ) xml#children;
 
 
-  (** PATHFINDING *)
-  val mutable path=new pathfinding_map w h
 
-
+    
   method to_node=
     self#xml_to_init();
     xml
@@ -639,6 +655,9 @@ object(self)
 
     lua#set_val (OLuaVal.String "load_from_file") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) self#load_from_file);
     lua#set_val (OLuaVal.String "save_to_file") (OLuaVal.efunc (OLuaVal.string **->> OLuaVal.unit) self#save_to_file);
+
+
+    lua#set_val (OLuaVal.String "pathfinding_init") (OLuaVal.efunc (OLuaVal.unit **->> OLuaVal.unit) self#pathfinding_init);
 
 
     actions#set_id "actions";
