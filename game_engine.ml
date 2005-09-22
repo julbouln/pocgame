@@ -18,6 +18,7 @@
 *)
 
 open Value_lua;;
+open Value_object;;
 open Value_val;;
 
 open Core_stage;;

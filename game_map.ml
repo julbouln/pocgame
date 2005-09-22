@@ -18,6 +18,7 @@
 *)
 
 open Value_common;;
+open Value_object;;
 open Value_lua;;
 open Value_xml;;
 open Value_xinclude;;
