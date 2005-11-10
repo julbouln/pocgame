@@ -20,7 +20,6 @@
 open Value_lua;;
 
 open Core_rect;;
-open Core_video;;
 open Core_medias;;
 open Core_main;;
 open Core_event;;
@@ -30,7 +29,7 @@ open Binding;;
 
 (** Visual *)
 
-class game_visual vx vy=
+class game_visual vx vy scr_w scr_h=
 object(self)
   inherit lua_object as lo 
 
@@ -46,7 +45,7 @@ object(self)
       (self :> game_visual_fun)
 
   method get_id="visual"
- val mutable rect=new rectangle vx vy (video#get_w) (video#get_h)
+ val mutable rect=new rectangle vx vy (scr_w) (scr_h)
   val mutable change=false
 
   method is_in x y=

@@ -24,7 +24,6 @@ open Value_xml;;
 open Value_lua;;
 
 open Core_rect;;
-open Core_video;;
 open Core_medias;;
 open Core_graphic;;
 open Core_drawing;;
@@ -397,12 +396,12 @@ object(self)
   method put_map (vrect:game_visual)=()
 end;;
 
-class game_tile_layer w h tw th file =
+class game_tile_layer drawing_vault w h tw th file =
 object(self)
   inherit game_generic_tile_layer w h tw th as super
-  val mutable tiles=new graphic_from_file file tw th 
+  val mutable tiles=new graphic_from_file drawing_vault file tw th 
   method get_tiles=tiles
-  val mutable black=new graphic_from_drawing ("black_"^string_of_int tw^"x"^string_of_int th) 
+  val mutable black=new graphic_from_drawing drawing_vault ("black_"^string_of_int tw^"x"^string_of_int th) 
     (fun()->
        let dr=drawing_vault#new_drawing() in 
 	 dr#create tw th (0,0,0);

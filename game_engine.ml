@@ -26,7 +26,6 @@ open Core_xml;;
 open Core_main;;
 open Core_event;;
 open Core_interaction;;
-open Core_video;;
 open Core_stage;;
 open Core_medias;;
 open Core_graphic;;
@@ -120,16 +119,16 @@ end;;
 
 (** Engine *)
 
-class game_engine curs=
+class game_engine drawing_vault curs=
 object(self)
-  inherit stage curs as super
+  inherit stage drawing_vault curs as super
 
   val mutable interaction=new interaction_objects
   method set_interaction i=interaction<-i
   method get_interaction=interaction
 
   val mutable grille=
-    new graphic_from_drawing "grille"
+    new graphic_from_drawing drawing_vault "grille"
       (
       fun()->
 	let dr=drawing_vault#new_drawing() in
@@ -171,7 +170,7 @@ object(self)
 
 
 
-  val mutable vrect=new game_visual 0 0
+  val mutable vrect=new game_visual 0 0 drawing_vault#get_w drawing_vault#get_h
   method get_vrect=vrect
 
   method put_object_map_grille m=
@@ -254,9 +253,9 @@ end;;
 
 
 (* game world engine *)
-class game_world_engine curs=
+class game_world_engine drawing_vault curs=
 object(self)
-  inherit stage curs as super
+  inherit stage drawing_vault curs as super
 
   val mutable interaction=new interaction_objects
   method set_interaction i=interaction<-i

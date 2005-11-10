@@ -125,9 +125,9 @@ end;;
 
 (** game net stages *)
 
-class net_game_engine curs=
+class net_game_engine drawing_vault curs=
 object(self)
-  inherit game_engine curs as super
+  inherit game_engine drawing_vault curs as super
 
   val mutable nsync=0
   val mutable frames=0
@@ -314,9 +314,9 @@ object(self)
 end;;
 
 
-class net_client_game_engine curs saddr sport cport=
+class net_client_game_engine drawing_vault curs saddr sport cport=
 object(self)
-  inherit net_game_engine curs as super
+  inherit net_game_engine drawing_vault curs as super
   val mutable cli=new network_client cport
 
 
@@ -341,9 +341,9 @@ object(self)
 end;;
 
 (* FIXME : must handle multiple map *)
-class net_server_game_engine sport=
+class net_server_game_engine drawing_vault sport=
 object(self)
-  inherit net_game_engine generic_cursor as super
+  inherit net_game_engine drawing_vault (generic_cursor drawing_vault) as super
   val mutable serv=new network_server sport
 
 
@@ -397,10 +397,10 @@ end;;
 open Core_mysql;;
 (* MULTIMAP *)
 
-class net_server_game_world_engine sport=
+class net_server_game_world_engine drawing_vault sport=
 object(self)
 (*  inherit net_game_engine generic_cursor as ge *)
-  inherit game_world_engine generic_cursor as super
+  inherit game_world_engine drawing_vault (generic_cursor drawing_vault) as super
   val mutable serv=new network_server sport
 
   val mutable sql=new sql_xml

@@ -32,7 +32,7 @@ type scroll_dir=
 | NoScroll;;
 
 
-class interaction_mouse_scroll s b=
+class interaction_mouse_scroll s b scr_w scr_h=
 object(self)
   inherit interaction_lua
 
@@ -66,9 +66,9 @@ object(self)
   method private parse x y=
     dir<-NoScroll;
     if x<border then dir<-ScrollLeft;
-    if x>(main#scr_w-border) then dir<-ScrollRight;
+    if x>(scr_w-border) then dir<-ScrollRight;
     if y<border then dir<-ScrollUp;
-    if y>(main#scr_h-border) then dir<-ScrollDown;
+    if y>(scr_h-border) then dir<-ScrollDown;
     
      
 end;;

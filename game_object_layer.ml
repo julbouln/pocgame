@@ -21,7 +21,6 @@ open Value_common;;
 open Value_object;;
 
 open Core_rect;;
-open Core_video;;
 open Core_medias;;
 open Core_type;;
 

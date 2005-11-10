@@ -23,7 +23,6 @@ open Value_lua;;
 
 open Core_val;;
 open Core_rect;;
-open Core_video;;
 open Core_medias;;
 open Core_drawing;;
 open Core_graphic;;
