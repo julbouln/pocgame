@@ -245,7 +245,7 @@ object(self)
 	b=(int_of_val(args#get_val (`String "border"))) in	
       let o=
 (* FIXME : must be scr_w scr_h *)
-	new interaction_mouse_scroll s b 0 0
+	new interaction_mouse_scroll s b 800 600
       in
 	self#init_object o;
 	o	  
