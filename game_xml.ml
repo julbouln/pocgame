@@ -62,7 +62,7 @@ Global.set xml_default_actions_parser xml_game_actions_parser;;
 class xml_game_object_type_parser drawing_vault=
 object(self)
   inherit [game_object] xml_object_parser (fun()->new game_object) as super
-  val mutable props_parser=new xml_val_ext_list_parser "properties"
+  val mutable props_parser=new xml_val_ext_list_parser "variables"
 
   val mutable graphics_parser=(Global.get xml_default_graphics_parser) drawing_vault
   val mutable states_parser=new xml_state_actions_parser    
